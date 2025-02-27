@@ -1,0 +1,5 @@
+# Reglas para especificar cómo Git debe tratar ciertos tipos de archivos 
+*.cpp text eol=lf
+*.h text eol=lf
+*.sh text eol=lf
+*.txt text eol=crlf
