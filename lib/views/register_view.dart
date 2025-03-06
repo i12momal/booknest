@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:booknest/controllers/user_controller.dart';
 
+// Vista para la acción de registro del usuario.
 class RegisterView extends StatefulWidget {
   const RegisterView ({super.key});
 
@@ -39,7 +40,6 @@ class _RegisterViewState extends State<RegisterView> {
             TextField(
               controller: _userNameController,
               decoration: const InputDecoration(labelText: 'Nombre Usuario'),
-              obscureText: true,
             ),
             TextField(
               controller: _ageController,
@@ -60,6 +60,7 @@ class _RegisterViewState extends State<RegisterView> {
             TextField(
               controller: _passwordController,
               decoration: const InputDecoration(labelText: 'Contraseña'),
+              obscureText: true,
             ),
             TextField(
               controller: _imageController,

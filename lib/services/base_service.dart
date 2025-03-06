@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+// Servicio base para la derivación de clases y atributos generales de los servicios.
 class BaseService {
   // Inicializamos la instancia de Supabase una sola vez
   static final SupabaseClient _supabaseClient = Supabase.instance.client;
