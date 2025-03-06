@@ -3,3 +3,6 @@
 *.h text eol=lf
 *.sh text eol=lf
 *.txt text eol=crlf
+*.cc eol=crlf
+*.cmake eol=crlf
+*.swift eol=crlf
