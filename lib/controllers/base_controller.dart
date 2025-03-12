@@ -1,7 +1,7 @@
-import 'package:booknest/services/user_service.dart';
+import 'package:booknest/services/account_service.dart';
 
 abstract class BaseController {
-  final UserService userService = UserService();
+  final AccountService accountService = AccountService();
 
   BaseController();
 }

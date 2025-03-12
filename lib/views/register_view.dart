@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:booknest/controllers/user_controller.dart';
+import 'package:booknest/controllers/account_controller.dart';
 
 // Vista para la acción de registro del usuario.
 class RegisterView extends StatefulWidget {
@@ -19,7 +19,7 @@ class _RegisterViewState extends State<RegisterView> {
   final _passwordController = TextEditingController();
   final _imageController = TextEditingController();
   
-  final UserController _userController = UserController();
+  final AccountController _userController = AccountController();
 
   // Variable para mostrar el mensaje de error o éxito
   String _message = '';
@@ -72,7 +72,7 @@ class _RegisterViewState extends State<RegisterView> {
               child: const Text('Registrarse'),
             ),
             const SizedBox(height: 20),
-            Text(_message, style: const TextStyle(color: Colors.red)),
+            Text(_message, style: const TextStyle(color: Color.fromARGB(255, 73, 244, 54))),
           ],
         ),
       ),
@@ -90,7 +90,8 @@ class _RegisterViewState extends State<RegisterView> {
     final password = _passwordController.text;
     final image = _imageController.text;
 
-    final result = await _userController.registerUser(name, userName, age, email, phoneNumber, address, password, image);
+    // Llamar al controlador para registrar el usuario
+    final result = await _userController.registerUser(name, userName, age, email, phoneNumber, address, password, image,);
 
     setState(() {
       if (result['success']) {

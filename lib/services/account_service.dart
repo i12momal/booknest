@@ -1,7 +1,8 @@
+import 'package:booknest/entities/viewmodels/account_view_model.dart';
 import 'package:booknest/services/base_service.dart';
 
 // Servicio con los métodos de negocio de la entidad Usuario.
-class UserService extends BaseService {
+class AccountService extends BaseService {
 
   /* 
     Método asíncrono que permite el registro de un nuevo usuario.
@@ -20,7 +21,7 @@ class UserService extends BaseService {
         - message: Proporciona un mensaje de estado.
         - data (Opcional): Información del usuario registrado si la operación fue exitosa.
   */
-  Future<Map<String, dynamic>> registerUser(String name, String userName, int age, String email, int phoneNumber, String address, String password, String image) async {
+  Future<Map<String, dynamic>> registerUser(RegisterUserViewModel registerUserViewModel) async {
     try {
       // Comprobamos si la conexión a Supabase está activa.
       if (BaseService.client == null) {
@@ -29,15 +30,15 @@ class UserService extends BaseService {
 
       // Llamada a la base de datos para insertar el usuario y devolver los datos insertados.
       final response = await BaseService.client.from('User').insert({
-        'name': name,
-        'userName': userName,
-        'age': age,
-        'email': email,
-        'phoneNumber': phoneNumber,
-        'address': address,
-        'password': password,
-        'image': image,
-        'role': 'usuario',
+        'name': registerUserViewModel.name,
+        'userName': registerUserViewModel.userName,
+        'age': registerUserViewModel.age,
+        'email': registerUserViewModel.email,
+        'phoneNumber': registerUserViewModel.phoneNumber,
+        'address': registerUserViewModel.address,
+        'password': registerUserViewModel.password,
+        'image': registerUserViewModel.image,
+        'role': registerUserViewModel.role,
       }).select().single();
 
       // Verificamos si la respuesta contiene datos.

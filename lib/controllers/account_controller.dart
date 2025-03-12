@@ -1,7 +1,9 @@
+import "package:booknest/entities/viewmodels/account_view_model.dart";
+
 import "base_controller.dart";
 
 // Controlador con los métodos de las acciones de Usuarios.
-class UserController extends BaseController{
+class AccountController extends BaseController{
 
   /* 
     Método asíncrono que permite el registro de un nuevo usuario.
@@ -20,7 +22,23 @@ class UserController extends BaseController{
         - message: Proporciona un mensaje de estado.
         - data (Opcional): Información del usuario registrado si la operación fue exitosa.
   */
-  Future<Map<String, dynamic>> registerUser(String name, String userName, int age, String email, int phoneNumber, String address, String password, String image) async {
-    return await userService.registerUser(name, userName, age, email, phoneNumber, address, password, image);
+  Future<Map<String, dynamic>> registerUser(String name, String userName, int age,String email, int phoneNumber,
+    String address, String password,String image) async {
+
+    // Creación del viewModel
+    final registerUserViewModel = RegisterUserViewModel(
+      name: name,
+      userName: userName,
+      age: age,
+      email: email,
+      phoneNumber: phoneNumber,
+      address: address,
+      password: password,
+      image: image,
+      role: 'usuario',
+    );
+    
+    // Llamada al servicio para registrar al usuario
+    return await accountService.registerUser(registerUserViewModel);
   }
 }

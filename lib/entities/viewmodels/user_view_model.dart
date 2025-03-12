@@ -1,5 +1,6 @@
 // Modelo de vista del Index
 class IndexUserViewModel {
+  final int id;
   final String name;
   final String userName;
   final int age;
@@ -12,6 +13,7 @@ class IndexUserViewModel {
 //All required fields from class User
   IndexUserViewModel(
     {
+    required this.id,
     required this.name,
     required this.userName,
     required this.age,
@@ -26,7 +28,6 @@ class IndexUserViewModel {
 
 // Modelo de vista del formulario de creación
 class CreateUserViewModel {
-  final int id;
   final String name;
   final String userName;
   final int age;
@@ -39,8 +40,7 @@ class CreateUserViewModel {
 
 //All required fields from class User
   CreateUserViewModel(
-    {
-    required this.id,  
+    {  
     required this.name,
     required this.userName,
     required this.age,
