@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart'; 
 import 'services/base_service.dart';
-import 'views/register_view.dart';
+import 'views/login_view.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -51,7 +51,7 @@ class _MyHomePageState extends State<MyHomePage> {
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const RegisterView()),
+              MaterialPageRoute(builder: (context) => const LoginView()),
             );
           },
           style: ElevatedButton.styleFrom(
