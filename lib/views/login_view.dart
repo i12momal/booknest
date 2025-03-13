@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:booknest/views/register_view.dart';
 import 'package:booknest/views/shared/background.dart';
+import 'package:booknest/widgets/custom_text_field_login.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -10,7 +11,6 @@ class LoginView extends StatefulWidget {
 }
 
 class _LoginViewState extends State<LoginView> {
-  bool _isPasswordVisible = false;
 
   @override
   Widget build(BuildContext context) {
@@ -58,7 +58,7 @@ class _LoginViewState extends State<LoginView> {
                         fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 5),
-                  _buildTextField(Icons.email, 'ejemplo@gmail.com'),
+                  const CustomTextField(icon: Icons.email, hint: 'ejemplo@gmail.com'),
                   const SizedBox(height: 15),
                   const Text(
                     'Password',
@@ -68,7 +68,7 @@ class _LoginViewState extends State<LoginView> {
                         fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 5),
-                  _buildTextField(Icons.lock, '*************', isPassword: true),
+                  const CustomTextField(icon: Icons.lock, hint: '*************', isPassword: true),
                   const SizedBox(height: 10),
                   Align(
                     alignment: Alignment.center,
@@ -112,48 +112,6 @@ class _LoginViewState extends State<LoginView> {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTextField(IconData icon, String hint, {bool isPassword = false}) {
-    return TextField(
-      obscureText: isPassword ? !_isPasswordVisible : false,
-      decoration: InputDecoration(
-        filled: true,
-        fillColor: Colors.white,
-        suffixIcon: isPassword
-            ? IconButton(
-                icon: Icon(
-                  _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                  color: const Color.fromRGBO(184, 184, 184, 100),
-                ),
-                onPressed: () {
-                  setState(() {
-                    _isPasswordVisible = !_isPasswordVisible;
-                  });
-                },
-              )
-            : Icon(icon, color: const Color.fromRGBO(184, 184, 184, 100)),
-        hintText: hint,
-        hintStyle: const TextStyle(
-          color: Color.fromRGBO(164, 164, 164, 100),
-          fontSize: 16,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-            color: Color(0xFF112363),
-            width: 2.5,
-          ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-            color: Color(0xFF112363),
-            width: 2.5,
-          ),
         ),
       ),
     );

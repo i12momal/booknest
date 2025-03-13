@@ -1,0 +1,64 @@
+import 'package:flutter/material.dart';
+
+class CustomTextField extends StatefulWidget {
+  final IconData icon;
+  final String hint;
+  final bool isPassword;
+
+  const CustomTextField({
+    super.key,
+    required this.icon,
+    required this.hint,
+    this.isPassword = false,
+  });
+
+  @override
+  State<CustomTextField> createState() => _CustomTextFieldState();
+}
+
+class _CustomTextFieldState extends State<CustomTextField> {
+  bool _isPasswordVisible = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      obscureText: widget.isPassword ? !_isPasswordVisible : false,
+      decoration: InputDecoration(
+        filled: true,
+        fillColor: Colors.white,
+        suffixIcon: widget.isPassword
+            ? IconButton(
+                icon: Icon(
+                  _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                  color: const Color.fromRGBO(184, 184, 184, 100),
+                ),
+                onPressed: () {
+                  setState(() {
+                    _isPasswordVisible = !_isPasswordVisible;
+                  });
+                },
+              )
+            : Icon(widget.icon, color: const Color.fromRGBO(184, 184, 184, 100)),
+        hintText: widget.hint,
+        hintStyle: const TextStyle(
+          color: Color.fromRGBO(164, 164, 164, 100),
+          fontSize: 16,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(
+            color: Color(0xFF112363),
+            width: 2.5,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(
+            color: Color(0xFF112363),
+            width: 2.5,
+          ),
+        ),
+      ),
+    );
+  }
+}
