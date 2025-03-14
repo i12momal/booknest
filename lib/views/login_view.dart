@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:booknest/views/register_view.dart';
-import 'package:booknest/views/shared/background.dart';
+import 'package:booknest/widgets/background.dart';
 import 'package:booknest/widgets/custom_text_field_login.dart';
 
 class LoginView extends StatefulWidget {
