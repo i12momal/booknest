@@ -90,7 +90,7 @@ class _LoginViewState extends State<LoginView> {
                   Center(
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromARGB(255, 191, 2, 2),
+                        backgroundColor: const Color(0xFFAD0000),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30),
                           side: const BorderSide(color: Colors.white, width: 3),

@@ -3,7 +3,6 @@ class IndexUserViewModel {
   final int id;
   final String name;
   final String userName;
-  final int age;
   final String email;
   final int phoneNumber;
   final String address;
@@ -16,7 +15,6 @@ class IndexUserViewModel {
     required this.id,
     required this.name,
     required this.userName,
-    required this.age,
     required this.email,
     required this.phoneNumber,
     required this.address,
@@ -30,7 +28,6 @@ class IndexUserViewModel {
 class CreateUserViewModel {
   final String name;
   final String userName;
-  final int age;
   final String email;
   final int phoneNumber;
   final String address;
@@ -43,7 +40,6 @@ class CreateUserViewModel {
     {  
     required this.name,
     required this.userName,
-    required this.age,
     required this.email,
     required this.phoneNumber,
     required this.address,
@@ -59,7 +55,6 @@ class EditUserViewModel {
   final int id;
   final String name;
   final String userName;
-  final int age;
   final String email;
   final int phoneNumber;
   final String address;
@@ -72,7 +67,6 @@ class EditUserViewModel {
     required this.id,  
     required this.name,
     required this.userName,
-    required this.age,
     required this.email,
     required this.phoneNumber,
     required this.address,

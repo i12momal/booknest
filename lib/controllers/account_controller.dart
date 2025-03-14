@@ -22,14 +22,13 @@ class AccountController extends BaseController{
         - message: Proporciona un mensaje de estado.
         - data (Opcional): Información del usuario registrado si la operación fue exitosa.
   */
-  Future<Map<String, dynamic>> registerUser(String name, String userName, int age,String email, int phoneNumber,
+  Future<Map<String, dynamic>> registerUser(String name, String userName, String email, int phoneNumber,
     String address, String password,String image) async {
 
     // Creación del viewModel
     final registerUserViewModel = RegisterUserViewModel(
       name: name,
       userName: userName,
-      age: age,
       email: email,
       phoneNumber: phoneNumber,
       address: address,

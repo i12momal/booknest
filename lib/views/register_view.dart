@@ -12,7 +12,6 @@ class RegisterView extends StatefulWidget {
 class _RegisterViewState extends State<RegisterView> {
   final _nameController = TextEditingController();
   final _userNameController = TextEditingController();
-  final _ageController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneNumberController = TextEditingController();
   final _addressController = TextEditingController();
@@ -40,10 +39,6 @@ class _RegisterViewState extends State<RegisterView> {
             TextField(
               controller: _userNameController,
               decoration: const InputDecoration(labelText: 'Nombre Usuario'),
-            ),
-            TextField(
-              controller: _ageController,
-              decoration: const InputDecoration(labelText: 'Edad'),
             ),
             TextField(
               controller: _emailController,
@@ -83,7 +78,6 @@ class _RegisterViewState extends State<RegisterView> {
   Future<void> _registerUser() async {
     final name = _nameController.text;
     final userName = _userNameController.text;
-    final age = int.tryParse(_ageController.text) ?? 0;
     final email = _emailController.text;
     final phoneNumber = int.tryParse(_phoneNumberController.text) ?? 0;
     final address = _addressController.text;
@@ -91,7 +85,7 @@ class _RegisterViewState extends State<RegisterView> {
     final image = _imageController.text;
 
     // Llamar al controlador para registrar el usuario
-    final result = await _userController.registerUser(name, userName, age, email, phoneNumber, address, password, image,);
+    final result = await _userController.registerUser(name, userName, email, phoneNumber, address, password, image,);
 
     setState(() {
       if (result['success']) {

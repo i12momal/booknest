@@ -9,7 +9,6 @@ class AccountService extends BaseService {
     Parámetros:
       - name: Cadena con el nombre completo del usuario.
       - userName: Cadena con el nombre de usuario.
-      - Age: Entero con la edad del usuario.
       - Email: Cadena con el email del usuario.
       - phoneNumber: Entero con el número de teléfono del usuario.
       - address: Cadena con la dirección del usuario.
@@ -32,7 +31,6 @@ class AccountService extends BaseService {
       final response = await BaseService.client.from('User').insert({
         'name': registerUserViewModel.name,
         'userName': registerUserViewModel.userName,
-        'age': registerUserViewModel.age,
         'email': registerUserViewModel.email,
         'phoneNumber': registerUserViewModel.phoneNumber,
         'address': registerUserViewModel.address,
