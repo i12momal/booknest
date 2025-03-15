@@ -4,12 +4,24 @@ class CustomTextField extends StatefulWidget {
   final IconData icon;
   final String hint;
   final bool isPassword;
+  final TextEditingController controller; 
+  final String? Function(String?)? validator;
+  final Function(String)? onChanged;
+  final FocusNode? focusNode;
+  final FocusNode? nextFocusNode;
+  final VoidCallback? onEditingComplete;
 
   const CustomTextField({
     super.key,
     required this.icon,
     required this.hint,
     this.isPassword = false,
+    required this.controller, 
+    this.validator,
+    this.onChanged,
+    this.focusNode,
+    this.nextFocusNode,
+    this.onEditingComplete,
   });
 
   @override
@@ -21,8 +33,12 @@ class _CustomTextFieldState extends State<CustomTextField> {
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
+    return TextFormField(
+      controller: widget.controller, 
       obscureText: widget.isPassword ? !_isPasswordVisible : false,
+      onChanged: widget.onChanged,
+      focusNode: widget.focusNode,
+      onEditingComplete: widget.onEditingComplete,
       decoration: InputDecoration(
         filled: true,
         fillColor: Colors.white,
@@ -59,6 +75,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
           ),
         ),
       ),
+      validator: widget.validator,
     );
   }
 }

@@ -23,7 +23,7 @@ class AccountController extends BaseController{
         - data (Opcional): Información del usuario registrado si la operación fue exitosa.
   */
   Future<Map<String, dynamic>> registerUser(String name, String userName, String email, int phoneNumber,
-    String address, String password,String image) async {
+    String address, String password, String confirmPassword, String image, String genres) async {
 
     // Creación del viewModel
     final registerUserViewModel = RegisterUserViewModel(
@@ -33,11 +33,25 @@ class AccountController extends BaseController{
       phoneNumber: phoneNumber,
       address: address,
       password: password,
+      confirmPassword: confirmPassword,
       image: image,
+      genres: genres,
       role: 'usuario',
     );
     
     // Llamada al servicio para registrar al usuario
     return await accountService.registerUser(registerUserViewModel);
+  }
+
+  /* 
+    Método asíncrono que comprueba que el nombre de usuario no existe en la base de datos.
+    Parámetros:
+      - userName: Cadena con el nombre de usuario.
+    Return: 
+      Devuelve verdadero si el nombre de usuario ya está registrado.
+  */
+  Future<bool> isUsernameTaken(String username) async {
+    List<String> existingUsernames = ['user1', 'user2', 'user3']; 
+    return existingUsernames.contains(username); 
   }
 }

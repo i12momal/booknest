@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:booknest/views/register_view.dart';
 import 'package:booknest/widgets/background.dart';
-import 'package:booknest/widgets/custom_text_field_login.dart';
+import 'package:booknest/widgets/custom_text_field.dart';
 
+// Vista para la acción de Inicio de Sesión de Usuario
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
 
@@ -11,6 +12,8 @@ class LoginView extends StatefulWidget {
 }
 
 class _LoginViewState extends State<LoginView> {
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -51,24 +54,24 @@ class _LoginViewState extends State<LoginView> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Email',
+                    'Correo Electrónico',
                     style: TextStyle(
                         color: Colors.black,
                         fontSize: 16,
                         fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 5),
-                  const CustomTextField(icon: Icons.email, hint: 'ejemplo@gmail.com'),
+                  CustomTextField(icon: Icons.email, hint: '', controller: _emailController),
                   const SizedBox(height: 15),
                   const Text(
-                    'Password',
+                    'Contraseña',
                     style: TextStyle(
                         color: Colors.black,
                         fontSize: 16,
                         fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 5),
-                  const CustomTextField(icon: Icons.lock, hint: '*************', isPassword: true),
+                  CustomTextField(icon: Icons.visibility, hint: '', isPassword: true, controller: _passwordController),
                   const SizedBox(height: 10),
                   Align(
                     alignment: Alignment.center,

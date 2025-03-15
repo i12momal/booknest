@@ -35,7 +35,9 @@ class AccountService extends BaseService {
         'phoneNumber': registerUserViewModel.phoneNumber,
         'address': registerUserViewModel.address,
         'password': registerUserViewModel.password,
+        'confirmPassword': registerUserViewModel.confirmPassword,
         'image': registerUserViewModel.image,
+        'genres': registerUserViewModel.genres,
         'role': registerUserViewModel.role,
       }).select().single();
 
