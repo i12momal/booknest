@@ -4,8 +4,7 @@ import 'package:booknest/services/base_service.dart';
 // Servicio con los métodos de negocio de la entidad Usuario.
 class AccountService extends BaseService {
 
-  /* 
-    Método asíncrono que permite el registro de un nuevo usuario.
+  /* Método asíncrono que permite el registro de un nuevo usuario.
     Parámetros:
       - name: Cadena con el nombre completo del usuario.
       - userName: Cadena con el nombre de usuario.

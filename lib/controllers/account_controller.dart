@@ -1,12 +1,10 @@
 import "package:booknest/entities/viewmodels/account_view_model.dart";
-
 import "base_controller.dart";
 
 // Controlador con los métodos de las acciones de Usuarios.
 class AccountController extends BaseController{
 
-  /* 
-    Método asíncrono que permite el registro de un nuevo usuario.
+  /* Método asíncrono que permite el registro de un nuevo usuario.
     Parámetros:
       - name: Cadena con el nombre completo del usuario.
       - userName: Cadena con el nombre de usuario.
@@ -43,8 +41,7 @@ class AccountController extends BaseController{
     return await accountService.registerUser(registerUserViewModel);
   }
 
-  /* 
-    Método asíncrono que comprueba que el nombre de usuario no existe en la base de datos.
+  /* Método asíncrono que comprueba que el nombre de usuario no existe en la base de datos.
     Parámetros:
       - userName: Cadena con el nombre de usuario.
     Return: 
