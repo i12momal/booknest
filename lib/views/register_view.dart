@@ -5,6 +5,7 @@ import 'package:booknest/controllers/categories_controller.dart';
 import 'package:booknest/widgets/background.dart';
 import 'package:booknest/widgets/custom_text_field.dart';
 import 'package:booknest/widgets/success_dialog.dart';
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:email_validator/email_validator.dart';
 
 // Vista para la acción de Registro de Usuario 
@@ -190,6 +191,7 @@ class _RegisterViewState extends State<RegisterView> {
 
   @override
   Widget build(BuildContext context) {
+    
     return Background(
       title: 'Registro',
       onBack: prevPage,
@@ -436,79 +438,104 @@ class _RegisterViewState extends State<RegisterView> {
 
   // Página de registro: Selección de Géneros
   Widget _buildGenreSelectionPage() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
+    return LayoutBuilder(
+      builder: (context, constraints){
+        return Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Seleccione sus géneros favoritos',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              const Row(
+                children: [
+                  Text(
+                    'Seleccione sus géneros favoritos',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(width: 5),
+                  Icon(Icons.favorite_border, size: 20),
+                ],
               ),
-              SizedBox(width: 5),
-              Icon(Icons.favorite_border, size: 20),
+              const SizedBox(height: 18), 
+
+              Container(
+                width: constraints.maxWidth,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF687CFF), Color(0xFF2E3C94)],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    stops: [0.29, 0.55],
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: const Color(0xFF112363),
+                    width: 3,
+                  ),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 5,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+                padding: const EdgeInsets.all(16.0),
+                child: Wrap(
+                  spacing: 16.0, 
+                  runSpacing: 12.0, 
+                  children: genres.map((genre) => _buildGenreChip(genre)).toList(),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(_message, style: const TextStyle(color: Color(0xFFAD0000))),
+              const Spacer(), 
+              Align(
+                alignment: Alignment.center,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    FittedBox(
+                      fit: BoxFit.scaleDown, 
+                      child: TextButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const LoginView()),
+                          );
+                        },
+                        child: const Text(
+                          '¿Ya tiene una cuenta? ¡Inicie sesión!',
+                          style: TextStyle(color: Colors.black),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10), // Espacio entre los botones
+                    ElevatedButton(
+                      onPressed: _registerUser,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFAD0000),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                          side: const BorderSide(color: Color.fromARGB(255, 112, 1, 1), width: 3),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                      ),
+                      child: const Text(
+                        "Registrarse",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              )
             ],
           ),
-          const SizedBox(height: 20), 
-
-          Container(
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF687CFF), Color(0xFF2E3C94)],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                stops: [0.29, 0.55],
-              ),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: const Color(0xFF112363),
-                width: 3,
-              ),
-              boxShadow: const [
-                BoxShadow(
-                  color: Colors.black26,
-                  blurRadius: 5,
-                  spreadRadius: 2,
-                ),
-              ],
-            ),
-            padding: const EdgeInsets.all(16.0),
-            child: Wrap(
-              spacing: 16.0, 
-              runSpacing: 12.0, 
-              children: genres.map((genre) => _buildGenreChip(genre)).toList(),
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(_message, style: const TextStyle(color: Color(0xFFAD0000))),
-          const Spacer(), 
-
-          Align(
-            alignment: Alignment.center,
-            child: ElevatedButton(
-              onPressed: _registerUser,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFAD0000),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
-                  side: const BorderSide(color: Color.fromARGB(255, 112, 1, 1), width: 3),
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
-              ),
-              child: const Text(
-                "Registrarse",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          )
-        ],
-      ),
+        );
+      }
     );
   }
 
@@ -531,7 +558,7 @@ class _RegisterViewState extends State<RegisterView> {
         });
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         decoration: BoxDecoration(
           color: isSelected ? const Color(0xFFAD0000) : Colors.white,
           borderRadius: BorderRadius.circular(20),
@@ -540,7 +567,7 @@ class _RegisterViewState extends State<RegisterView> {
             width: 2,
           ),
         ),
-        child: Text(
+        child: AutoSizeText(
           genre,
           style: TextStyle(
             color: isSelected ? Colors.white : Colors.black, 
