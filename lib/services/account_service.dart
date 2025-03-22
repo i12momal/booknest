@@ -1,8 +1,39 @@
+import 'dart:io';
 import 'package:booknest/entities/viewmodels/account_view_model.dart';
 import 'package:booknest/services/base_service.dart';
 
 // Servicio con los métodos de negocio de la entidad Usuario.
 class AccountService extends BaseService {
+
+  // Subir la imagen a Supabase Storage
+  Future<String?> uploadImageToSupabase(File imageFile, String userName) async {
+    try {
+      if (!await imageFile.exists()) {
+        print("El archivo no existe en la ruta: ${imageFile.path}");
+        return null;
+      }
+
+      // Extraer la extensión del archivo (.jpg, .png, etc.)
+      final String fileExt = imageFile.path.split('.').last;
+      final String fileName = 'profiles/$userName.$fileExt';
+      print("Nombre del archivo: $fileName");
+
+       // Intentar subir la imagen
+      final response = await BaseService.client.storage.from('avatars').upload(fileName, imageFile);
+      print("Respuesta de la carga: $response");
+
+      // Obtener la URL pública de la imagen
+      final String imageUrl = BaseService.client.storage.from('avatars').getPublicUrl(fileName);
+      print("URL pública de la imagen: $imageUrl");
+
+      return imageUrl;
+    } catch (e, stacktrace) {
+      print('Error al subir la imagen: $e');
+      print('Detalles: $stacktrace');
+      return null;
+    }
+  }
+
 
   /* Método asíncrono que permite el registro de un nuevo usuario.
     Parámetros:

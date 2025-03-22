@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 import 'package:booknest/views/login_view.dart';
 import 'package:flutter/material.dart';
 import 'package:booknest/controllers/account_controller.dart';
@@ -24,7 +26,8 @@ class _RegisterViewState extends State<RegisterView> {
   final _addressController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  final _imageController = TextEditingController();
+  File? _imageFile;
+  final String _defaultImagePath = 'assets/images/default.png';
   final _formKey = GlobalKey<FormState>();
 
   final PageController _pageController = PageController();
@@ -42,6 +45,17 @@ class _RegisterViewState extends State<RegisterView> {
     super.initState();
     _fetchCategories();
   }
+
+  // Función para adjuntar una imagen
+  Future<void> _pickImage() async {
+    final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _imageFile = File(pickedFile.path);
+      });
+    }
+  }
+
 
   // Método para obtener las categorías
   void _fetchCategories() async {
@@ -93,10 +107,9 @@ class _RegisterViewState extends State<RegisterView> {
     final address = _addressController.text;
     final password = _passwordController.text;
     final confirmPassword = _confirmPasswordController.text;
-    final image = _imageController.text;
 
     final result = await _userController.registerUser(
-        name, userName, email, phoneNumber, address, password, confirmPassword, image, selectedGenres.join(", "));
+        name, userName, email, phoneNumber, address, password, confirmPassword, _imageFile, selectedGenres.join(", "));
 
     setState(() {
       _message = result['message'];
@@ -118,6 +131,8 @@ class _RegisterViewState extends State<RegisterView> {
       'Registro Exitoso', 
       '¡Tu cuenta ha sido creada con éxito!',
       () {
+        Navigator.pop(context);
+        
         // Redirigir a la pantalla de inicio de sesión después de que el usuario acepte
         Navigator.pushReplacement(
           context,
@@ -393,16 +408,48 @@ class _RegisterViewState extends State<RegisterView> {
                     },*/
                   ),
                   const SizedBox(height: 15),
-                  const Text(
-                    'Foto',
-                    style: TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start, // Alineamos los elementos a la izquierda
+                    children: [
+                      // Fila con texto "Foto" y el ícono de editar a la derecha
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween, // Esto coloca el icono a la derecha
+                        children: [
+                          const Text(
+                            'Foto',
+                            style: TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.file_present_sharp, color: Colors.black),
+                            onPressed: _pickImage, // Función para seleccionar imagen
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 6), // Espacio entre el texto/ícono y la imagen
+
+                      // Imagen circular centrada
+                      Center(
+                        child: ClipOval(
+                          child: _imageFile != null
+                              ? Image.file(
+                                  _imageFile!,
+                                  width: 100, // Tamaño de la imagen
+                                  height: 100,
+                                  fit: BoxFit.cover,
+                                )
+                              : Image.asset(
+                                  _defaultImagePath, // Imagen por defecto
+                                  width: 100,
+                                  height: 100,
+                                  fit: BoxFit.cover,
+                                ),
+                        ),
+                      ),
+                    ],
                   ),
-                  CustomTextField(
-                    icon: Icons.photo, 
-                    hint: '',
-                    controller: _imageController,
-                  ),
-                  const SizedBox(height: 15),
+
+                  const SizedBox(height: 22),
                   Align(
                     alignment: Alignment.center,
                     child: ElevatedButton(

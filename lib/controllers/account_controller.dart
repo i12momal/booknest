@@ -1,5 +1,6 @@
 import "package:booknest/entities/viewmodels/account_view_model.dart";
 import "base_controller.dart";
+import 'dart:io';
 
 // Controlador con los métodos de las acciones de Usuarios.
 class AccountController extends BaseController{
@@ -21,7 +22,17 @@ class AccountController extends BaseController{
         - data (Opcional): Información del usuario registrado si la operación fue exitosa.
   */
   Future<Map<String, dynamic>> registerUser(String name, String userName, String email, int phoneNumber,
-    String address, String password, String confirmPassword, String image, String genres) async {
+    String address, String password, String confirmPassword, File? image, String genres) async {
+
+    String? imageUrl;
+
+    // Si el usuario sube una imagen, la guardamos en Supabase
+    if (image != null) {
+      imageUrl = await uploadProfileImage(image, userName);
+      if (imageUrl == null) {
+        return {'success': false, 'message': 'Error al subir la imagen'};
+      }
+    }
 
     // Creación del viewModel
     final registerUserViewModel = RegisterUserViewModel(
@@ -32,7 +43,7 @@ class AccountController extends BaseController{
       address: address,
       password: password,
       confirmPassword: confirmPassword,
-      image: image,
+      image: imageUrl,
       genres: genres,
       role: 'usuario',
     );
@@ -50,5 +61,9 @@ class AccountController extends BaseController{
   Future<bool> isUsernameTaken(String username) async {
     List<String> existingUsernames = ['user1', 'user2', 'user3']; 
     return existingUsernames.contains(username); 
+  }
+
+  Future<String?> uploadProfileImage(File imageFile, String userName) async {
+    return await accountService.uploadImageToSupabase(imageFile, userName);
   }
 }
