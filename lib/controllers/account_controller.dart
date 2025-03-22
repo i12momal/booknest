@@ -1,6 +1,8 @@
 import "package:booknest/entities/viewmodels/account_view_model.dart";
 import "base_controller.dart";
 import 'dart:io';
+import 'dart:convert';
+import 'package:crypto/crypto.dart';
 
 // Controlador con los métodos de las acciones de Usuarios.
 class AccountController extends BaseController{
@@ -26,6 +28,9 @@ class AccountController extends BaseController{
 
     String? imageUrl;
 
+    // Generar el hash de la contraseña
+    String passwordHash = generatePasswordHash(password);
+
     // Si el usuario sube una imagen, la guardamos en Supabase
     if (image != null) {
       imageUrl = await uploadProfileImage(image, userName);
@@ -41,8 +46,8 @@ class AccountController extends BaseController{
       email: email,
       phoneNumber: phoneNumber,
       address: address,
-      password: password,
-      confirmPassword: confirmPassword,
+      password: passwordHash,
+      confirmPassword: passwordHash,
       image: imageUrl,
       genres: genres,
       role: 'usuario',
@@ -51,6 +56,7 @@ class AccountController extends BaseController{
     // Llamada al servicio para registrar al usuario
     return await accountService.registerUser(registerUserViewModel);
   }
+
 
   /* Método asíncrono que comprueba que el nombre de usuario no existe en la base de datos.
     Parámetros:
@@ -63,7 +69,30 @@ class AccountController extends BaseController{
     return existingUsernames.contains(username); 
   }
 
+
+  /* Método para guardar una imagen en Supabase.
+     Parámetros:
+      - imageFile: archivo de la imagen.
+      - userName: nombre del usuario para crear el nombre con el que se va a almacenar la imagen.
+  */
   Future<String?> uploadProfileImage(File imageFile, String userName) async {
     return await accountService.uploadImageToSupabase(imageFile, userName);
   }
+
+
+  /* Método para generar un hash seguro de la contraseña.
+     Parámetros:
+      - password: contraseña a cifrar.
+  */
+  String generatePasswordHash(String password) {
+    // Convertir la contraseña a bytes
+    final bytes = utf8.encode(password);
+
+    // Crear un hash SHA-256
+    final digest = sha256.convert(bytes);
+
+    // Devolver el hash en formato hexadecimal
+    return digest.toString();
+  }
+
 }

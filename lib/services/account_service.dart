@@ -5,7 +5,11 @@ import 'package:booknest/services/base_service.dart';
 // Servicio con los métodos de negocio de la entidad Usuario.
 class AccountService extends BaseService {
 
-  // Subir la imagen a Supabase Storage
+  /* Método para subir una imagen a Supabase Storage.
+     Parámetros:
+      - imageFile: archivo de la imagen.
+      - userName: nombre del usuario para crear el nombre con el que se va a almacenar la imagen.
+  */
   Future<String?> uploadImageToSupabase(File imageFile, String userName) async {
     try {
       if (!await imageFile.exists()) {
@@ -18,7 +22,7 @@ class AccountService extends BaseService {
       final String fileName = 'profiles/$userName.$fileExt';
       print("Nombre del archivo: $fileName");
 
-       // Intentar subir la imagen
+      // Intentar subir la imagen
       final response = await BaseService.client.storage.from('avatars').upload(fileName, imageFile);
       print("Respuesta de la carga: $response");
 

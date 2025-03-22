@@ -57,7 +57,7 @@ class _RegisterViewState extends State<RegisterView> {
   }
 
 
-  // Método para obtener las categorías
+  // Función para obtener las categorías
   void _fetchCategories() async {
     List<String> categories = await _categoryController.getCategories();
     setState(() {
@@ -67,17 +67,16 @@ class _RegisterViewState extends State<RegisterView> {
 
   // Función para pasar a la página de selección de géneros desde la página de datos personales
   Future<void> nextPage() async {
-  if (_formKey.currentState?.validate() ?? false) {
-    // Si la validación pasa, vamos a la siguiente página
-    _pageController.nextPage(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
-    setState(() {
-      _currentPage = 1;
-    });
+    if (_formKey.currentState?.validate() ?? false) {
+      _pageController.nextPage(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+      setState(() {
+        _currentPage = 1;
+      });
+    }
   }
-}
 
   // Función para pasar a la página de datos personales desde la selección de géneros
   void prevPage() {
@@ -124,7 +123,7 @@ class _RegisterViewState extends State<RegisterView> {
     }
   }
 
-  // Método que muestra el dialogo de éxito al registrar un usuario
+  // Función que muestra el dialogo de éxito al registrar un usuario
   void _showSuccessDialog() {
     SuccessDialog.show(
       context,
@@ -132,7 +131,7 @@ class _RegisterViewState extends State<RegisterView> {
       '¡Tu cuenta ha sido creada con éxito!',
       () {
         Navigator.pop(context);
-        
+
         // Redirigir a la pantalla de inicio de sesión después de que el usuario acepte
         Navigator.pushReplacement(
           context,
@@ -236,8 +235,8 @@ class _RegisterViewState extends State<RegisterView> {
   Widget _buildPersonalInfoPage() {
   return SingleChildScrollView(
     padding: const EdgeInsets.all(16.0),
-    child: Form( // Usar el widget Form para validación
-      key: _formKey, // Asignamos la clave al formulario
+    child: Form( 
+      key: _formKey, 
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -409,11 +408,10 @@ class _RegisterViewState extends State<RegisterView> {
                   ),
                   const SizedBox(height: 15),
                   Column(
-                    crossAxisAlignment: CrossAxisAlignment.start, // Alineamos los elementos a la izquierda
+                    crossAxisAlignment: CrossAxisAlignment.start, 
                     children: [
-                      // Fila con texto "Foto" y el ícono de editar a la derecha
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween, // Esto coloca el icono a la derecha
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           const Text(
                             'Foto',
@@ -421,7 +419,7 @@ class _RegisterViewState extends State<RegisterView> {
                           ),
                           IconButton(
                             icon: const Icon(Icons.file_present_sharp, color: Colors.black),
-                            onPressed: _pickImage, // Función para seleccionar imagen
+                            onPressed: _pickImage,
                           ),
                         ],
                       ),
@@ -586,7 +584,7 @@ class _RegisterViewState extends State<RegisterView> {
     );
   }
 
-  // Método para la selección de géneros
+  // Función para la selección de géneros
   Widget _buildGenreChip(String genre) {
     final isSelected = selectedGenres.contains(genre);
 
@@ -600,7 +598,7 @@ class _RegisterViewState extends State<RegisterView> {
           }
           // Limpiar el mensaje de error si ya se seleccionó al menos un género
           if (selectedGenres.isNotEmpty) {
-            _message = ''; // Limpiar el mensaje de error
+            _message = '';
           }
         });
       },
