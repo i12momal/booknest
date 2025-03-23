@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:auto_size_text/auto_size_text.dart';
 import 'package:booknest/views/login_view.dart';
+import 'package:booknest/widgets/genre_chip.dart';
 
 class GenreSelectionWidget extends StatelessWidget {
   final List<String> genres;
@@ -64,7 +64,11 @@ class GenreSelectionWidget extends StatelessWidget {
                 child: Wrap(
                   spacing: 16.0,
                   runSpacing: 12.0,
-                  children: genres.map((genre) => _buildGenreChip(genre)).toList(),
+                  children: genres.map((genre) => GenreChip(
+                    genre: genre,
+                    isSelected: selectedGenres.contains(genre),
+                    onTap: () => onGenreSelected(genre),
+                  )).toList(),
                 ),
               ),
               const SizedBox(height: 10),
@@ -90,7 +94,7 @@ class GenreSelectionWidget extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 10), // Espacio entre los botones
+                    const SizedBox(height: 10),
                     ElevatedButton(
                       onPressed: onRegister,
                       style: ElevatedButton.styleFrom(
@@ -117,34 +121,6 @@ class GenreSelectionWidget extends StatelessWidget {
           ),
         );
       },
-    );
-  }
-
-  // Función para la selección de géneros
-  Widget _buildGenreChip(String genre) {
-    final isSelected = selectedGenres.contains(genre);
-
-    return GestureDetector(
-      onTap: () {
-        onGenreSelected(genre);
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFAD0000) : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected ? Colors.white : const Color(0xFF112363),
-            width: 2,
-          ),
-        ),
-        child: AutoSizeText(
-          genre,
-          style: TextStyle(
-            color: isSelected ? Colors.white : Colors.black,
-          ),
-        ),
-      ),
     );
   }
 }

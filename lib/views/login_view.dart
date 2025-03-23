@@ -11,7 +11,7 @@ class LoginView extends StatefulWidget {
 }
 
 class _LoginViewState extends State<LoginView> {
-  final _emailController = TextEditingController();
+  final _userNameController = TextEditingController();
   final _passwordController = TextEditingController();
 
   @override
@@ -61,7 +61,7 @@ class _LoginViewState extends State<LoginView> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Correo Electrónico',
+                      'Usuario',
                       style: TextStyle(
                         color: Colors.black,
                         fontSize: 16,
@@ -69,7 +69,7 @@ class _LoginViewState extends State<LoginView> {
                       ),
                     ),
                     SizedBox(height: screenHeight * 0.01),
-                    CustomTextField(icon: Icons.email, hint: '', controller: _emailController),
+                    CustomTextField(icon: Icons.account_circle, hint: '', controller: _userNameController),
                     SizedBox(height: screenHeight * 0.02),
                     const Text(
                       'Contraseña',

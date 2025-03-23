@@ -1,14 +1,13 @@
 import 'dart:io';
-import 'package:booknest/widgets/image_picker.dart';
 import 'package:booknest/views/login_view.dart';
 import 'package:flutter/material.dart';
 import 'package:booknest/controllers/account_controller.dart';
 import 'package:booknest/controllers/categories_controller.dart';
 import 'package:booknest/widgets/background.dart';
-import 'package:booknest/widgets/custom_text_field.dart';
 import 'package:booknest/widgets/page_navigation.dart';
 import 'package:booknest/widgets/success_dialog.dart';
 import 'package:booknest/widgets/genre_selection.dart';
+import 'package:booknest/widgets/personal_info_form.dart';
 
 // Vista para la acción de Registro de Usuario 
 class RegisterView extends StatefulWidget {
@@ -62,6 +61,12 @@ class _RegisterViewState extends State<RegisterView> {
 
   // Función para pasar a la página de selección de géneros desde la página de datos personales
   Future<void> nextPage() async {
+    // Primero cerramos el teclado
+    FocusScope.of(context).unfocus();
+
+    // Hacemos una pequeña espera para asegurarnos de que el teclado se haya cerrado antes de cambiar de página
+    await Future.delayed(const Duration(milliseconds: 500));
+
     if (_formKey.currentState?.validate() ?? false) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
@@ -110,9 +115,8 @@ class _RegisterViewState extends State<RegisterView> {
     });
 
     if (result['success']) {
-      // Mostrar ventana emergente de éxito
       setState(() {
-        _message = ''; // Limpiar el mensaje
+        _message = '';
       });
       _showSuccessDialog();
     }
@@ -138,176 +142,40 @@ class _RegisterViewState extends State<RegisterView> {
 
   @override
   Widget build(BuildContext context) {
-    return Background(
-      title: 'Registro',
-      onBack: prevPage,
-      child: PageNavigation(
-        pageController: _pageController,
-        currentPage: _currentPage,
-        firstPage: _buildPersonalInfoPage(),
-        secondPage: _buildGenreSelectionPage(),
+    return GestureDetector(
+      onTap: () {
+        // Al tocar fuera del campo de texto, se oculta el teclado
+        FocusScope.of(context).unfocus();
+      },
+      child: Background(
+        title: 'Registro',
+        onBack: prevPage,
+        child: PageNavigation(
+          pageController: _pageController,
+          currentPage: _currentPage,
+          firstPage: _buildPersonalInfoPage(),
+          secondPage: _buildGenreSelectionPage(),
+        ),
       ),
     );
   }
 
   // Página de registro: Datos Personales
   Widget _buildPersonalInfoPage() {
-  return SingleChildScrollView(
-    padding: const EdgeInsets.all(16.0),
-    child: Form( 
-      key: _formKey, 
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 8),
-          const Row(
-            children: [
-              Text(
-                'Datos Personales',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(width: 5),
-              Icon(Icons.person_outline),
-            ],
-          ),
-          const SizedBox(height: 18),
-          Container(
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF687CFF), Color(0xFF2E3C94)],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                stops: [0.29, 0.55],
-              ),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: const Color(0xFF112363),
-                width: 3,
-              ),
-              boxShadow: const [
-                BoxShadow(
-                  color: Colors.black26,
-                  blurRadius: 5,
-                  spreadRadius: 2,
-                ),
-              ],
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Nombre Completo',
-                    style: TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  CustomTextField(
-                    icon: Icons.person, 
-                    hint: '',
-                    controller: _nameController,
-                  ),
-                  const SizedBox(height: 15),
-                  const Text(
-                    'Nombre de Usuario',
-                    style: TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  CustomTextField(
-                    icon: Icons.account_circle, 
-                    hint: '',
-                    controller: _userNameController,
-                  ),
-                  const SizedBox(height: 15),
-                  const Text(
-                    'Correo Electrónico',
-                    style: TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  CustomTextField(
-                    icon: Icons.email,
-                    hint: '',
-                    controller: _emailController,
-                  ),
-                  const SizedBox(height: 15),
-                  const Text(
-                    'Número de Teléfono',
-                    style: TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  CustomTextField(
-                    icon: Icons.phone, 
-                    hint: '',
-                    controller: _phoneNumberController,
-                  ),
-                  const SizedBox(height: 15),
-                  const Text(
-                    'Dirección',
-                    style: TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  CustomTextField(
-                    icon: Icons.home, 
-                    hint: '',
-                    controller: _addressController,
-                  ),
-                  const SizedBox(height: 15),
-                  const Text(
-                    'Contraseña',
-                    style: TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  CustomTextField(
-                    icon: Icons.visibility, 
-                    hint: '',
-                    isPassword: true,
-                    controller: _passwordController,
-                  ),
-                  const SizedBox(height: 15),
-                  const Text(
-                    'Confirmar Contraseña',
-                    style: TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  CustomTextField(
-                    icon: Icons.visibility, 
-                    hint: '',
-                    isPassword: true,
-                    controller: _confirmPasswordController,
-                  ),
-                  const SizedBox(height: 15),
-                  
-                  ImagePickerWidget(
-                      initialImage: _imageFile,
-                      onImagePicked: _handleImagePicked,
-                    ),
-
-                  const SizedBox(height: 22),
-                  Align(
-                    alignment: Alignment.center,
-                    child: ElevatedButton(
-                      onPressed: nextPage,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFAD0000),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                          side: const BorderSide(color: Colors.white, width: 3),
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
-                      ),
-                      child: const Text(
-                        "Siguiente",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  )
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
-}
-
+    return PersonalInfoForm(
+      nameController: _nameController,
+      userNameController: _userNameController,
+      emailController: _emailController,
+      phoneNumberController: _phoneNumberController,
+      addressController: _addressController,
+      passwordController: _passwordController,
+      confirmPasswordController: _confirmPasswordController,
+      imageFile: _imageFile,
+      onImagePicked: _handleImagePicked,
+      onNext: nextPage,
+      formKey: _formKey,
+    );
+  }
 
   // Página de registro: Selección de Géneros
   Widget _buildGenreSelectionPage() {
@@ -330,5 +198,4 @@ class _RegisterViewState extends State<RegisterView> {
       onRegister: _registerUser,
     );
   }
-
 }
