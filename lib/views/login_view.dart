@@ -1,8 +1,13 @@
+// 1. Mostrar error si el usuario o contraseña son incorrectos.
+// 2. Que desaparezca el mensaje de Por favor ingrese todos los campos cuando ponga el foco en uno de los campos.
+
+import 'package:booknest/controllers/account_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:booknest/views/register_view.dart';
 import 'package:booknest/views/reset_password_view.dart';
 import 'package:booknest/widgets/background.dart';
 import 'package:booknest/widgets/custom_text_field.dart';
+import "package:booknest/main.dart";
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -14,6 +19,7 @@ class LoginView extends StatefulWidget {
 class _LoginViewState extends State<LoginView> {
   final _userNameController = TextEditingController();
   final _passwordController = TextEditingController();
+  final AccountController _accountController = AccountController();
 
   @override
   Widget build(BuildContext context) {
@@ -86,6 +92,23 @@ class _LoginViewState extends State<LoginView> {
                       ),
                       SizedBox(height: screenHeight * 0.01),
                       CustomTextField(icon: Icons.visibility, hint: '', isPassword: true, controller: _passwordController),
+                      ValueListenableBuilder<String>(
+                        valueListenable: _accountController.errorMessage,
+                        builder: (context, error, _) {
+                          return error.isEmpty
+                              ? Container() // Si no hay error, no mostramos nada
+                              : Padding(
+                                  padding: const EdgeInsets.only(top: 8.0),
+                                  child: Text(
+                                    error, // El mensaje de error
+                                    style: const TextStyle(
+                                      color: Colors.red,
+                                      fontSize: 14
+                                    ),
+                                  ),
+                                );
+                        },
+                      ),
                       SizedBox(height: screenHeight * 0.02),
                       Align(
                         alignment: Alignment.center,
@@ -137,7 +160,21 @@ class _LoginViewState extends State<LoginView> {
                               vertical: screenHeight * 0.02,
                             ),
                           ),
-                          onPressed: () {},
+                          onPressed: () async {
+                            await _accountController.login(
+                              _userNameController.text,
+                              _passwordController.text
+                            );
+
+                            // Verificamos si el login fue exitoso
+                            if (_accountController.errorMessage.value.isEmpty) {
+                              // Si no hay error, hacemos la navegación
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(builder: (context) => const MyApp()),
+                              );
+                            } 
+                          },
                           child: const Text(
                             'Iniciar Sesión',
                             style: TextStyle(

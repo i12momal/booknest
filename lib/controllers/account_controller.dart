@@ -1,4 +1,5 @@
 import "package:booknest/entities/viewmodels/account_view_model.dart";
+import 'package:flutter/material.dart';
 import "base_controller.dart";
 import 'dart:io';
 import 'dart:convert';
@@ -7,12 +8,51 @@ import 'package:crypto/crypto.dart';
 // Controlador con los métodos de las acciones de Usuarios.
 class AccountController extends BaseController{
 
+  final ValueNotifier<String> errorMessage = ValueNotifier<String>(''); 
+
+  /* Método asíncrono que permite el inicio de sesión de un usuario.
+    Parámetros:
+      - userName: Cadena con el nombre de usuario.
+      - password: Cadena con la contraseña del usuario.
+    Return: 
+      - success: Indica si el inicio de sesión fue exitoso (true o false).
+      - message: Proporciona un mensaje de estado.
+  */
+  Future<void> login(String userName, String password) async {
+    if (userName.isEmpty || password.isEmpty) {
+      errorMessage.value = 'Por favor ingrese todos los campos';
+      return;
+    }
+
+    errorMessage.value = ''; // Limpiar mensaje de error
+
+    print('Llamando al servicio de login con: $userName, $password');
+
+    // Creación del viewModel
+    final loginUserViewModel = LoginUserViewModel(
+      userName: userName,
+      password: password
+    );
+
+    final result = await accountService.loginUser(loginUserViewModel);
+
+    print('Resultado del login: $result');
+
+    if (result['success']) {
+      // Si el login fue exitoso, el mensaje de error se limpia
+      errorMessage.value = '';
+    } else {
+      // Si el login no fue exitoso, mostramos el mensaje de error
+      errorMessage.value = result['message']; // "Usuario o contraseña incorrectos"
+    }
+  }
+
+
   /* Método asíncrono que permite el registro de un nuevo usuario.
     Parámetros:
       - name: Cadena con el nombre completo del usuario.
       - userName: Cadena con el nombre de usuario.
-      - Age: Entero con la edad del usuario.
-      - Email: Cadena con el email del usuario.
+      - email: Cadena con el email del usuario.
       - phoneNumber: Entero con el número de teléfono del usuario.
       - address: Cadena con la dirección del usuario.
       - password: Cadena con la contraseña del usuario.
@@ -58,18 +98,6 @@ class AccountController extends BaseController{
   }
 
 
-  /* Método asíncrono que comprueba que el nombre de usuario no existe en la base de datos.
-    Parámetros:
-      - userName: Cadena con el nombre de usuario.
-    Return: 
-      Devuelve verdadero si el nombre de usuario ya está registrado.
-  */
-  Future<bool> isUsernameTaken(String username) async {
-    List<String> existingUsernames = ['user1', 'user2', 'user3']; 
-    return existingUsernames.contains(username); 
-  }
-
-
   /* Método para guardar una imagen en Supabase.
      Parámetros:
       - imageFile: archivo de la imagen.
@@ -95,4 +123,15 @@ class AccountController extends BaseController{
     return digest.toString();
   }
 
+
+  /* Método asíncrono que comprueba que el nombre de usuario no existe en la base de datos.
+    Parámetros:
+      - userName: Cadena con el nombre de usuario.
+    Return: 
+      Devuelve verdadero si el nombre de usuario ya está registrado.
+  */
+  Future<bool> isUsernameTaken(String username) async {
+    List<String> existingUsernames = ['user1', 'user2', 'user3']; 
+    return existingUsernames.contains(username); 
+  }
 }

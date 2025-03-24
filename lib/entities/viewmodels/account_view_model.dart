@@ -1,12 +1,12 @@
 // Modelo de vista del formulario de Inicio de Sesión de Usuario
 class LoginUserViewModel {
-  final String email;
+  final String userName;
   final String password;
 
 //All required fields from class User
   LoginUserViewModel(
     {
-    required this.email,
+    required this.userName,
     required this.password
     }
   );
