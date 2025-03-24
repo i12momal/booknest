@@ -21,6 +21,12 @@ class AccountController extends BaseController{
   Future<void> login(String userName, String password) async {
     if (userName.isEmpty || password.isEmpty) {
       errorMessage.value = 'Por favor ingrese todos los campos';
+
+      // Hacer que el mensaje desaparezca después de 5 segundos
+      Future.delayed(const Duration(seconds: 5), () {
+        errorMessage.value = '';
+      });
+
       return;
     }
 
@@ -44,6 +50,11 @@ class AccountController extends BaseController{
     } else {
       // Si el login no fue exitoso, mostramos el mensaje de error
       errorMessage.value = result['message']; // "Usuario o contraseña incorrectos"
+
+      // Hacer que el mensaje desaparezca después de 5 segundos
+      Future.delayed(const Duration(seconds: 5), () {
+        errorMessage.value = '';
+      });
     }
   }
 

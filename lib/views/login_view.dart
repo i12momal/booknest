@@ -1,6 +1,3 @@
-// 1. Mostrar error si el usuario o contraseña son incorrectos.
-// 2. Que desaparezca el mensaje de Por favor ingrese todos los campos cuando ponga el foco en uno de los campos.
-
 import 'package:booknest/controllers/account_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:booknest/views/register_view.dart';

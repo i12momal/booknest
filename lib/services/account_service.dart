@@ -30,7 +30,7 @@ class AccountService extends BaseService {
           .select()
           .eq('userName', loginUserViewModel.userName)
           .eq('password', generatePasswordHash(loginUserViewModel.password))
-          .single();
+          .maybeSingle();
 
       print('Respuesta de la base de datos: $response');
 
