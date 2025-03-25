@@ -5,7 +5,7 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
 
-// Controlador con los métodos de las acciones de Usuarios.
+// Controlador con los métodos de las acciones de inicio de sesión y registro del Usuario.
 class AccountController extends BaseController{
 
   final ValueNotifier<String> errorMessage = ValueNotifier<String>(''); 

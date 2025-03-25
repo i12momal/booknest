@@ -4,7 +4,7 @@ import 'package:booknest/entities/viewmodels/account_view_model.dart';
 import 'package:booknest/services/base_service.dart';
 import 'package:crypto/crypto.dart';
 
-// Servicio con los métodos de negocio de la entidad Usuario.
+// Servicio con los métodos de negocio para el inicio de sesión y registro del Usuario.
 class AccountService extends BaseService {
 
   /* Método asíncrono que permite el inicio de sesión de un usuario.

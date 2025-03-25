@@ -15,6 +15,7 @@ class PersonalInfoForm extends StatelessWidget {
   final Function(File?) onImagePicked;
   final VoidCallback onNext;
   final GlobalKey<FormState> formKey;
+  final bool isEditMode;
 
   const PersonalInfoForm({
     super.key,
@@ -28,7 +29,8 @@ class PersonalInfoForm extends StatelessWidget {
     required this.imageFile,
     required this.onImagePicked,
     required this.onNext,
-    required this.formKey,
+    required this.formKey, 
+    required this.isEditMode,
   });
 
   @override
@@ -83,8 +85,32 @@ class PersonalInfoForm extends StatelessWidget {
                     _buildTextField('Teléfono', Icons.phone, phoneNumberController),
                     _buildTextField('Correo Electrónico', Icons.email, emailController),
                     _buildTextField('Usuario', Icons.account_circle, userNameController),
-                    _buildTextField('Contraseña', Icons.visibility, passwordController, isPassword: true),
-                    _buildTextField('Confirmar Contraseña', Icons.visibility, confirmPasswordController, isPassword: true),
+                    if(isEditMode)...[
+                        const Text(
+                          "Contraseña",
+                          style: TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                        CustomTextField(
+                          icon: Icons.visibility,
+                          hint: '* Sólo si es modificada',
+                          isPassword: true,
+                          controller: passwordController,
+                        ),
+                        const SizedBox(height: 15),
+                        const Text(
+                          "Confirmar Contraseña",
+                          style: TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                        CustomTextField(
+                          icon: Icons.visibility,
+                          hint: '* Sólo si es modificada',
+                          isPassword: true,
+                          controller: confirmPasswordController,
+                        ),
+                    ]else...[
+                      _buildTextField('Contraseña', Icons.visibility, passwordController, isPassword: true),
+                      _buildTextField('Confirmar Contraseña', Icons.visibility, confirmPasswordController, isPassword: true),
+                    ],
                     const SizedBox(height: 15),
 
                     ImagePickerWidget(

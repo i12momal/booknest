@@ -8,9 +8,11 @@ class GenreSelectionWidget extends StatelessWidget {
   final String message;
   final ValueChanged<String> onGenreSelected;
   final VoidCallback onRegister;
+  final bool isEditMode;
 
   const GenreSelectionWidget({
     super.key,
+    required this.isEditMode,
     required this.genres,
     required this.selectedGenres,
     required this.message,
@@ -74,49 +76,79 @@ class GenreSelectionWidget extends StatelessWidget {
               const SizedBox(height: 10),
               Text(message, style: const TextStyle(color: Color(0xFFAD0000))),
               const Spacer(),
-              Align(
-                alignment: Alignment.center,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: TextButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => const LoginView()),
-                          );
-                        },
+              if(!isEditMode)...[
+                Align(
+                  alignment: Alignment.center,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => const LoginView()),
+                            );
+                          },
+                          child: const Text(
+                            '¿Ya tiene una cuenta? ¡Inicie sesión!',
+                            style: TextStyle(color: Colors.black),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      ElevatedButton(
+                        onPressed: onRegister,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFAD0000),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                            side: const BorderSide(color: Color.fromARGB(255, 112, 1, 1), width: 3),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                        ),
                         child: const Text(
-                          '¿Ya tiene una cuenta? ¡Inicie sesión!',
-                          style: TextStyle(color: Colors.black),
+                          "Registrarse",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 10),
-                    ElevatedButton(
-                      onPressed: onRegister,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFAD0000),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                          side: const BorderSide(color: Color.fromARGB(255, 112, 1, 1), width: 3),
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
-                      ),
-                      child: const Text(
-                        "Registrarse",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
+              ]else...[
+                Align(
+                  alignment: Alignment.center,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ElevatedButton(
+                        onPressed: onRegister,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFAD0000),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                            side: const BorderSide(color: Color.fromARGB(255, 112, 1, 1), width: 3),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                        ),
+                        child: const Text(
+                          "Guardar Cambios",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ]
             ],
           ),
         );

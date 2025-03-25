@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart'; 
 import 'services/base_service.dart';
+import 'views/edit_user_view.dart';
 import 'views/login_view.dart';
 
 void main() async {
@@ -40,37 +41,68 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
-    
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(widget.title),
       ),
       body: Center(
-        child: ElevatedButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const LoginView()),
-            );
-          },
-          style: ElevatedButton.styleFrom(
-            minimumSize: Size(screenWidth * 0.8, 50),
-            backgroundColor: const Color(0xFF61BBFF),
-            side: const BorderSide(
-              color: Colors.white,
-              width: 2,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const EditUserView(userId: '04310def-b70d-43a8-8f67-5e178e7ee1eb')),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                minimumSize: Size(screenWidth * 0.8, 50),
+                backgroundColor: const Color(0xFF61BBFF),
+                side: const BorderSide(
+                  color: Colors.white,
+                  width: 2,
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+              ),
+              child: const Text(
+                'Editar Usuario',
+                style: TextStyle(
+                  fontSize: 20,
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
-          ),
-          child: const Text(
-            'Register',
-            style: TextStyle(
-              fontSize: 20,
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
+            const SizedBox(height: 20), // Espacio entre los botones
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LoginView()),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                minimumSize: Size(screenWidth * 0.8, 50),
+                backgroundColor: const Color(0xFF61BBFF),
+                side: const BorderSide(
+                  color: Colors.white,
+                  width: 2,
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+              ),
+              child: const Text(
+                'Login',
+                style: TextStyle(
+                  fontSize: 20,
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );

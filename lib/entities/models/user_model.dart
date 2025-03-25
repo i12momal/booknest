@@ -1,6 +1,6 @@
 // Define la entidad Usuario en el modelo de datos.
 class User {
-  final int id;
+  final String id;
   final String name;
   final String userName;
   final String email;
@@ -28,4 +28,22 @@ class User {
     required this.role,
     }
   );
+
+  factory User.fromJson(Map<String, dynamic> json) {
+    return User(
+      id: json['id'],
+      name: json['name'],
+      userName: json['userName'],
+      email: json['email'],
+      phoneNumber: json['phoneNumber'],
+      address: json['address'],
+      password: json['password'],
+      confirmPassword: json['confirmPassword'],
+      image: json['image'],
+      genres: json['genres'] is String
+        ? json['genres'].split(', ')
+        : List<String>.from(json['genres'] ?? []),
+      role: json['role'],
+    );
+  }
 }

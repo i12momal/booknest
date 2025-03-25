@@ -1,7 +1,8 @@
 import 'dart:io';
+import 'package:booknest/entities/models/user_model.dart';
 import 'package:booknest/views/login_view.dart';
 import 'package:flutter/material.dart';
-import 'package:booknest/controllers/account_controller.dart';
+import 'package:booknest/controllers/user_controller.dart';
 import 'package:booknest/controllers/categories_controller.dart';
 import 'package:booknest/widgets/background.dart';
 import 'package:booknest/widgets/page_navigation.dart';
@@ -9,15 +10,16 @@ import 'package:booknest/widgets/success_dialog.dart';
 import 'package:booknest/widgets/genre_selection.dart';
 import 'package:booknest/widgets/personal_info_form.dart';
 
-// Vista para la acción de Registro de Usuario 
-class RegisterView extends StatefulWidget {
-  const RegisterView({super.key});
+// Vista para la acción de Edición de Datos de Usuario 
+class EditUserView extends StatefulWidget {
+  final String userId;
+  const EditUserView({super.key, required this.userId});
 
   @override
-  State<RegisterView> createState() => _RegisterViewState();
+  State<EditUserView> createState() => _EditUserViewState();
 }
 
-class _RegisterViewState extends State<RegisterView> {
+class _EditUserViewState extends State<EditUserView> {
   final _nameController = TextEditingController();
   final _userNameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -29,20 +31,22 @@ class _RegisterViewState extends State<RegisterView> {
   final _formKey = GlobalKey<FormState>();
 
   final PageController _pageController = PageController();
-  final AccountController _accountController = AccountController();
+  final UserController _userController = UserController();
   final CategoriesController _categoryController = CategoriesController();
+
+  final bool isEditMode = true;
 
   String _message = '';
   int _currentPage = 0;
-
-  final isEditMode = false;
   
   List<String> genres = [];
   List<String> selectedGenres = [];
+  String? currentImageUrl;
 
   @override
   void initState() {
     super.initState();
+    _fetchUserData();
     _fetchCategories();
   }
 
@@ -52,6 +56,24 @@ class _RegisterViewState extends State<RegisterView> {
       _imageFile = image;
     });
   }
+
+  // Función para cargar datos del usuario
+  Future<void> _fetchUserData() async {
+  final User? userData = await _userController.getUserById(widget.userId);
+  
+  if (userData != null) {
+    setState(() {
+      _nameController.text = userData.name;
+      _userNameController.text = userData.userName;
+      _emailController.text = userData.email;
+      _phoneNumberController.text = userData.phoneNumber.toString();
+      _addressController.text = userData.address;
+      selectedGenres = List<String>.from(userData.genres);
+      currentImageUrl = userData.image ?? '';
+    });
+  }
+}
+
 
   // Función para obtener las categorías
   void _fetchCategories() async {
@@ -89,8 +111,8 @@ class _RegisterViewState extends State<RegisterView> {
     });
   }
 
-  // Método que realiza la función de registro del usuario
-  Future<void> _registerUser() async {
+  // Método para actualizar el usuario
+  Future<void> _updateUser() async {
     if (selectedGenres.isEmpty) {
       setState(() {
         _message = "* Seleccione al menos un género favorito";
@@ -109,18 +131,15 @@ class _RegisterViewState extends State<RegisterView> {
     final password = _passwordController.text;
     final confirmPassword = _confirmPasswordController.text;
 
-    final result = await _accountController.registerUser(
+    final result = await _userController.editUser(widget.userId,
         name, userName, email, phoneNumber, address, password, confirmPassword, _imageFile, selectedGenres.join(", "));
 
-    setState(() {
-      _message = result['message'];
-    });
-
     if (result['success']) {
-      setState(() {
-        _message = '';
-      });
       _showSuccessDialog();
+    } else {
+      setState(() {
+        _message = result['message'];
+      });
     }
   }
 
@@ -128,8 +147,8 @@ class _RegisterViewState extends State<RegisterView> {
   void _showSuccessDialog() {
     SuccessDialog.show(
       context,
-      'Registro Exitoso', 
-      '¡Tu cuenta ha sido creada con éxito!',
+      'Actualización Exitosa', 
+      '¡Tus datos han sido actualizados correctamente!',
       () {
         Navigator.pop(context);
 
@@ -150,7 +169,7 @@ class _RegisterViewState extends State<RegisterView> {
         FocusScope.of(context).unfocus();
       },
       child: Background(
-        title: 'Registro',
+        title: 'Editar Usuario',
         onBack: prevPage,
         child: PageNavigation(
           pageController: _pageController,
@@ -199,7 +218,7 @@ class _RegisterViewState extends State<RegisterView> {
           }
         });
       },
-      onRegister: _registerUser,
+      onRegister: _updateUser,
     );
   }
 }
