@@ -59,20 +59,21 @@ class _EditUserViewState extends State<EditUserView> {
 
   // Función para cargar datos del usuario
   Future<void> _fetchUserData() async {
-  final User? userData = await _userController.getUserById(widget.userId);
-  
-  if (userData != null) {
-    setState(() {
-      _nameController.text = userData.name;
-      _userNameController.text = userData.userName;
-      _emailController.text = userData.email;
-      _phoneNumberController.text = userData.phoneNumber.toString();
-      _addressController.text = userData.address;
-      selectedGenres = List<String>.from(userData.genres);
-      currentImageUrl = userData.image ?? '';
-    });
+    final User? userData = await _userController.getUserById(widget.userId);
+    
+    if (userData != null) {
+      setState(() {
+        _nameController.text = userData.name;
+        _userNameController.text = userData.userName;
+        _emailController.text = userData.email;
+        _phoneNumberController.text = userData.phoneNumber.toString();
+        _addressController.text = userData.address;
+        selectedGenres = List<String>.from(userData.genres);
+        currentImageUrl = userData.image ?? '';
+      });
+      print("URL de la imagen: $currentImageUrl");
+    }
   }
-}
 
 
   // Función para obtener las categorías
@@ -196,6 +197,7 @@ class _EditUserViewState extends State<EditUserView> {
       onNext: nextPage,
       formKey: _formKey,
       isEditMode: isEditMode,
+      imageUrl: currentImageUrl,
     );
   }
 

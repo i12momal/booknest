@@ -65,6 +65,7 @@ class UserService extends BaseService{
 
       // Verificamos si la respuesta contiene datos.
       if (response != null && response.isNotEmpty) {
+        print(response);
         return {'success': true, 'message': 'Usuario obtenido correctamente', 'data': response};
       } else {
         return {'success': false, 'message': 'No se ha encontrado el usuario'};

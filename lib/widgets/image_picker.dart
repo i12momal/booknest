@@ -4,9 +4,10 @@ import 'package:image_picker/image_picker.dart';
 
 class ImagePickerWidget extends StatefulWidget {
   final File? initialImage;
+  final String? imageUrl;
   final ValueChanged<File?> onImagePicked;
 
-  const ImagePickerWidget({super.key, this.initialImage, required this.onImagePicked});
+  const ImagePickerWidget({super.key, this.initialImage, this.imageUrl, required this.onImagePicked});
 
   @override
   State<ImagePickerWidget> createState() => _ImagePickerWidgetState();
@@ -50,22 +51,15 @@ class _ImagePickerWidgetState extends State<ImagePickerWidget> {
             ),
           ],
         ),
-        const SizedBox(height: 6),
+        // Mostrar la imagen en un CircleAvatar
         Center(
-          child: ClipOval(
-            child: _imageFile != null
-                ? Image.file(
-                    _imageFile!,
-                    width: 100,
-                    height: 100,
-                    fit: BoxFit.cover,
-                  )
-                : Image.asset(
-                    'assets/images/default.png',
-                    width: 100,
-                    height: 100,
-                    fit: BoxFit.cover,
-                  ),
+          child: CircleAvatar(
+            radius: 50,
+            backgroundImage: _imageFile != null
+                ? FileImage(_imageFile!) // Imagen seleccionada
+                : (widget.imageUrl != null && widget.imageUrl!.isNotEmpty && widget.imageUrl!.startsWith('http'))
+                    ? NetworkImage(widget.imageUrl!) // Imagen de la URL si está disponible
+                    : const AssetImage('assets/images/default.png') as ImageProvider, // Imagen predeterminada
           ),
         ),
       ],

@@ -16,6 +16,7 @@ class PersonalInfoForm extends StatelessWidget {
   final VoidCallback onNext;
   final GlobalKey<FormState> formKey;
   final bool isEditMode;
+  final String? imageUrl; 
 
   const PersonalInfoForm({
     super.key,
@@ -31,6 +32,7 @@ class PersonalInfoForm extends StatelessWidget {
     required this.onNext,
     required this.formKey, 
     required this.isEditMode,
+    this.imageUrl,
   });
 
   @override
@@ -114,7 +116,8 @@ class PersonalInfoForm extends StatelessWidget {
                     const SizedBox(height: 15),
 
                     ImagePickerWidget(
-                      initialImage: imageFile,
+                      initialImage: imageFile, // Pasa la imagen inicial
+                      imageUrl: imageUrl,       // Pasa la URL si es que la hay
                       onImagePicked: onImagePicked,
                     ),
 
