@@ -35,7 +35,7 @@ class _EditUserViewState extends State<EditUserView> {
   final CategoriesController _categoryController = CategoriesController();
 
   final bool isEditMode = true;
-
+  bool _isLoading = false;
   String _message = '';
   int _currentPage = 0;
   
@@ -50,6 +50,19 @@ class _EditUserViewState extends State<EditUserView> {
     _fetchCategories();
   }
 
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _userNameController.dispose();
+    _emailController.dispose();
+    _phoneNumberController.dispose();
+    _addressController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    _pageController.dispose();
+    super.dispose();
+  }
+
   // Función que maneja la imagen seleccionada
   void _handleImagePicked(File? image) {
     setState(() {
@@ -59,37 +72,74 @@ class _EditUserViewState extends State<EditUserView> {
 
   // Función para cargar datos del usuario
   Future<void> _fetchUserData() async {
-    final User? userData = await _userController.getUserById(widget.userId);
-    
-    if (userData != null) {
+    setState(() {
+      _isLoading = true;
+      _message = '';
+    });
+
+    try {
+      final User? userData = await _userController.getUserById(widget.userId);
+      
+      if (userData != null) {
+        setState(() {
+          _nameController.text = userData.name;
+          _userNameController.text = userData.userName;
+          _emailController.text = userData.email;
+          _phoneNumberController.text = userData.phoneNumber.toString();
+          _addressController.text = userData.address;
+          selectedGenres = List<String>.from(userData.genres);
+          currentImageUrl = userData.image ?? '';
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _message = 'No se encontró la información del usuario. Por favor, intente nuevamente.';
+          _isLoading = false;
+        });
+        // Redirigir al login después de un breve delay
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const LoginView()),
+            );
+          }
+        });
+      }
+    } catch (e) {
       setState(() {
-        _nameController.text = userData.name;
-        _userNameController.text = userData.userName;
-        _emailController.text = userData.email;
-        _phoneNumberController.text = userData.phoneNumber.toString();
-        _addressController.text = userData.address;
-        selectedGenres = List<String>.from(userData.genres);
-        currentImageUrl = userData.image ?? '';
+        _message = 'Error al cargar los datos del usuario. Por favor, intente nuevamente.';
+        _isLoading = false;
       });
-      print("URL de la imagen: $currentImageUrl");
+      // Redirigir al login después de un breve delay
+      Future.delayed(const Duration(seconds: 2), () {
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const LoginView()),
+          );
+        }
+      });
     }
   }
 
-
   // Función para obtener las categorías
   void _fetchCategories() async {
-    List<String> categories = await _categoryController.getCategories();
-    setState(() {
-      genres = categories;
-    });
+    try {
+      List<String> categories = await _categoryController.getCategories();
+      setState(() {
+        genres = categories;
+      });
+    } catch (e) {
+      setState(() {
+        _message = 'Error al cargar las categorías';
+      });
+    }
   }
 
   // Función para pasar a la página de selección de géneros desde la página de datos personales
   Future<void> nextPage() async {
-    // Primero cerramos el teclado
     FocusScope.of(context).unfocus();
-
-    // Hacemos una pequeña espera para asegurarnos de que el teclado se haya cerrado antes de cambiar de página
     await Future.delayed(const Duration(milliseconds: 500));
 
     if (_formKey.currentState?.validate() ?? false) {
@@ -121,30 +171,66 @@ class _EditUserViewState extends State<EditUserView> {
       return;
     }
 
-    // Limpiar el mensaje de error si ya se seleccionaron géneros
-    setState(() { _message = '';});
+    setState(() {
+      _isLoading = true;
+      _message = '';
+    });
 
-    final name = _nameController.text;
-    final userName = _userNameController.text;
-    final email = _emailController.text;
-    final phoneNumber = int.tryParse(_phoneNumberController.text) ?? 0;
-    final address = _addressController.text;
-    final password = _passwordController.text;
-    final confirmPassword = _confirmPasswordController.text;
+    try {
+      final name = _nameController.text;
+      final userName = _userNameController.text;
+      final email = _emailController.text;
+      final phoneNumber = int.tryParse(_phoneNumberController.text) ?? 0;
+      final address = _addressController.text;
+      final password = _passwordController.text.isNotEmpty ? _passwordController.text : null;
+      final confirmPassword = _confirmPasswordController.text.isNotEmpty ? _confirmPasswordController.text : null;
 
-    final result = await _userController.editUser(widget.userId,
-        name, userName, email, phoneNumber, address, password, confirmPassword, _imageFile, selectedGenres.join(", "));
+      // Mantener la imagen actual si no se ha seleccionado una nueva
+      final imageUrl = _imageFile ?? currentImageUrl ?? '';
 
-    if (result['success']) {
-      _showSuccessDialog();
-    } else {
+      print("Datos para actualizar:");
+      print("Nombre: $name");
+      print("Nombre de usuario: $userName");
+      print("Email: $email");
+      print("Teléfono: $phoneNumber");
+      print("Dirección: $address");
+      print("Contraseña: ${password ?? '(No modificada)'}");
+      print("Confirmar contraseña: ${confirmPassword ?? '(No modificada)'}");
+      print("Géneros seleccionados: $selectedGenres");
+      print("Imagen: ${_imageFile != null ? 'Nueva imagen seleccionada' : 'Mantener imagen actual'}");
+
+      final result = await _userController.editUser(
+        widget.userId,
+        name,
+        userName,
+        email,
+        phoneNumber,
+        address,
+        password ?? '', // Asegura que siempre se pase un string
+        confirmPassword ?? '', // Asegura que siempre se pase un string
+        _imageFile, // Si no hay imagen nueva, mantendrá la actual en backend
+        selectedGenres.join(", ")
+      );
+
+      if (result['success']) {
+        _showSuccessDialog();
+      } else {
+        setState(() {
+          _message = result['message'];
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
       setState(() {
-        _message = result['message'];
+        _message = 'Error al actualizar los datos del usuario';
+        _isLoading = false;
       });
     }
   }
 
-  // Función que muestra el dialogo de éxito al registrar un usuario
+
+
+  // Función que muestra el dialogo de éxito al actualizar un usuario
   void _showSuccessDialog() {
     SuccessDialog.show(
       context,
@@ -152,8 +238,6 @@ class _EditUserViewState extends State<EditUserView> {
       '¡Tus datos han sido actualizados correctamente!',
       () {
         Navigator.pop(context);
-
-        // Redirigir a la pantalla de inicio de sesión después de que el usuario acepte
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const LoginView()),
@@ -166,18 +250,19 @@ class _EditUserViewState extends State<EditUserView> {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        // Al tocar fuera del campo de texto, se oculta el teclado
         FocusScope.of(context).unfocus();
       },
       child: Background(
         title: 'Editar Usuario',
         onBack: prevPage,
-        child: PageNavigation(
-          pageController: _pageController,
-          currentPage: _currentPage,
-          firstPage: _buildPersonalInfoPage(),
-          secondPage: _buildGenreSelectionPage(),
-        ),
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : PageNavigation(
+                pageController: _pageController,
+                currentPage: _currentPage,
+                firstPage: _buildPersonalInfoPage(),
+                secondPage: _buildGenreSelectionPage(),
+              ),
       ),
     );
   }

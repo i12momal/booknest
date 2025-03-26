@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:booknest/entities/viewmodels/account_view_model.dart';
+import 'package:booknest/entities/models/user_session.dart';
 import 'package:booknest/services/base_service.dart';
 import 'package:crypto/crypto.dart';
 
@@ -35,6 +36,12 @@ class AccountService extends BaseService {
       print('Respuesta de la base de datos: $response');
 
       if (response != null) {
+        // Almacenar el userId cuando el login es exitoso
+        String userId = response['id'];
+        await UserSession.setUserId(userId);  // Guardamos el userId en SharedPreferences
+        print("User ID desde SharedPreferences: $userId");
+        
+        print('Usuario autenticado con ID: $userId');
         return {'success': true, 'message': 'Login exitoso', 'data': response};
       } else {
         return {'success': false, 'message': 'Usuario o contraseña incorrectos'};
@@ -98,8 +105,9 @@ class AccountService extends BaseService {
      Parámetros:
       - imageFile: archivo de la imagen.
       - userName: nombre del usuario para crear el nombre con el que se va a almacenar la imagen.
+      - oldImageUrl: URL de la imagen anterior (opcional)
   */
-  Future<String?> uploadImageToSupabase(File imageFile, String userName) async {
+  Future<String?> uploadImageToSupabase(File imageFile, String userName, {String? oldImageUrl}) async {
     try {
       if (!await imageFile.exists()) {
         print("El archivo no existe en la ruta: ${imageFile.path}");
@@ -108,20 +116,44 @@ class AccountService extends BaseService {
 
       // Extraer la extensión del archivo (.jpg, .png, etc.)
       final String fileExt = imageFile.path.split('.').last;
-      final String fileName = 'profiles/$userName.$fileExt';
-      print("Nombre del archivo: $fileName");
+      String fileName;
 
-      // Intentar subir la imagen
-      final response = await BaseService.client.storage.from('avatars').upload(fileName, imageFile);
-      print("Respuesta de la carga: $response");
+      if (oldImageUrl != null && oldImageUrl.isNotEmpty) {
+        // Si hay una imagen anterior, usar su nombre
+        final oldFileName = oldImageUrl.split('/').last;
+        fileName = 'profiles/$oldFileName';
+        print("Usando nombre de archivo existente: $fileName");
 
-      // Obtener la URL pública de la imagen
-      final String imageUrl = BaseService.client.storage.from('avatars').getPublicUrl(fileName);
-      print("URL pública de la imagen: $imageUrl");
+        // Intentar eliminar la imagen anterior
+        try {
+          await BaseService.client.storage.from('avatars').remove(['profiles/$oldFileName']);
+          print("Imagen anterior eliminada correctamente");
+        } catch (e) {
+          print('Error al eliminar la imagen anterior: $e');
+        }
+      } else {
+        // Si no hay imagen anterior, crear un nuevo nombre
+        final timestamp = DateTime.now().millisecondsSinceEpoch;
+        fileName = 'profiles/${userName}_$timestamp.$fileExt';
+        print("Creando nuevo nombre de archivo: $fileName");
+      }
 
-      return imageUrl;
+      // Intentar subir la nueva imagen
+      try {
+        final response = await BaseService.client.storage.from('avatars').upload(fileName, imageFile);
+        print("Respuesta de la carga: $response");
+
+        // Obtener la URL pública de la imagen
+        final String imageUrl = BaseService.client.storage.from('avatars').getPublicUrl(fileName);
+        print("URL pública de la imagen: $imageUrl");
+
+        return imageUrl;
+      } catch (uploadError) {
+        print('Error al subir la nueva imagen: $uploadError');
+        return null;
+      }
     } catch (e, stacktrace) {
-      print('Error al subir la imagen: $e');
+      print('Error general en uploadImageToSupabase: $e');
       print('Detalles: $stacktrace');
       return null;
     }

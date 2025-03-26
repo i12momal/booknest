@@ -113,9 +113,10 @@ class AccountController extends BaseController{
      Parámetros:
       - imageFile: archivo de la imagen.
       - userName: nombre del usuario para crear el nombre con el que se va a almacenar la imagen.
+      - oldImageUrl: URL de la imagen anterior (opcional)
   */
-  Future<String?> uploadProfileImage(File imageFile, String userName) async {
-    return await accountService.uploadImageToSupabase(imageFile, userName);
+  Future<String?> uploadProfileImage(File imageFile, String userName, {String? oldImageUrl}) async {
+    return await accountService.uploadImageToSupabase(imageFile, userName, oldImageUrl: oldImageUrl);
   }
 
 
