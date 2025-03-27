@@ -4,6 +4,7 @@ import 'package:booknest/entities/viewmodels/account_view_model.dart';
 import 'package:booknest/entities/models/user_session.dart';
 import 'package:booknest/services/base_service.dart';
 import 'package:crypto/crypto.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 // Servicio con los métodos de negocio para el inicio de sesión y registro del Usuario.
 class AccountService extends BaseService {
@@ -74,8 +75,30 @@ class AccountService extends BaseService {
         return {'success': false, 'message': 'Error de conexión a la base de datos.'};
       }
 
-      // Llamada a la base de datos para insertar el usuario y devolver los datos insertados.
+      print("Iniciando registro de usuario...");
+      print("Email: ${registerUserViewModel.email}");
+      print("Nombre de usuario: ${registerUserViewModel.userName}");
+
+      // Registrar el usuario en auth.users
+      final AuthResponse authResponse = await BaseService.client.auth.signUp(
+        email: registerUserViewModel.email,
+        password: registerUserViewModel.password,
+      );
+
+      if (authResponse.user == null) {
+        print("Error: No se pudo crear el usuario en auth.users");
+        return {'success': false, 'message': 'Error al registrar el usuario en la autenticación'};
+      }
+
+      // Obtener el ID del usuario autenticado
+      final String userId = authResponse.user!.id;
+      print("ID del usuario autenticado (auth.uid): $userId");
+      print("Email verificado: ${authResponse.user!.email}");
+
+      // Crear el registro en la tabla User con el mismo ID
+      print("Creando registro en la tabla User...");
       final response = await BaseService.client.from('User').insert({
+        'id': userId, // Usar el mismo ID que auth.uid()
         'name': registerUserViewModel.name,
         'userName': registerUserViewModel.userName,
         'email': registerUserViewModel.email,
@@ -88,14 +111,20 @@ class AccountService extends BaseService {
         'role': registerUserViewModel.role,
       }).select().single();
 
-      // Verificamos si la respuesta contiene datos.
+      print("Respuesta de la inserción en User: $response");
+
       if (response != null) {
+        print("Usuario registrado exitosamente");
+        print("ID en la tabla User: ${response['id']}");
+        print("Nombre: ${response['name']}");
+        print("Email: ${response['email']}");
         return {'success': true, 'message': 'Usuario registrado exitosamente', 'data': response};
       } else {
+        print("Error: No se pudo crear el registro en la tabla User");
         return {'success': false, 'message': 'Error al registrar el usuario'};
       }
     } catch (ex) {
-      // Si ocurre alguna excepción, devolverla.
+      print("Error en registerUser: $ex");
       return {'success': false, 'message': ex.toString()};
     }
   }

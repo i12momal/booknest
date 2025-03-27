@@ -28,14 +28,40 @@ class UserService extends BaseService{
         return {'success': false, 'message': 'Error de conexión a la base de datos.'};
       }
 
+      print("Iniciando edición de usuario...");
+      print("ID del usuario a editar: ${editUserViewModel.id}");
+
+      // Obtener el ID del usuario autenticado
+      final currentUser = BaseService.client.auth.currentUser;
+      if (currentUser == null) {
+        print("Error: Usuario no autenticado");
+        return {'success': false, 'message': 'Usuario no autenticado'};
+      }
+
+      print("ID del usuario autenticado (auth.uid): ${currentUser.id}");
+      print("Email del usuario autenticado: ${currentUser.email}");
+
+      // Verificar que el usuario está intentando editar sus propios datos
+      if (currentUser.id != editUserViewModel.id) {
+        print("Error: Intento de editar datos de otro usuario");
+        print("ID del usuario autenticado: ${currentUser.id}");
+        print("ID del usuario a editar: ${editUserViewModel.id}");
+        return {'success': false, 'message': 'No tienes permiso para editar estos datos'};
+      }
+
       // Verificar que el usuario existe
+      print("Verificando existencia del usuario...");
       final existingUser = await BaseService.client.from('User').select().eq('id', editUserViewModel.id).single();
       if (existingUser == null) {
+        print("Error: Usuario no encontrado en la base de datos");
         return {'success': false, 'message': 'Usuario no encontrado'};
       }
 
-      print("Usuario extraído de la base de datos: $existingUser");
-      
+      print("Usuario encontrado en la base de datos:");
+      print("ID: ${existingUser['id']}");
+      print("Nombre: ${existingUser['name']}");
+      print("Email: ${existingUser['email']}");
+
       print("Contenido del viewModel:");
       print("ID: ${editUserViewModel.id}");
       print("Nombre: ${editUserViewModel.name}");
@@ -99,43 +125,30 @@ class UserService extends BaseService{
 
       // Si no hay cambios, retornar éxito sin actualizar
       if (updateData.isEmpty) {
+        print("No hay cambios para actualizar");
         return {'success': true, 'message': 'No hay cambios para actualizar', 'data': existingUser};
       }
 
+      // Actualizar el usuario y obtener los datos actualizados en una sola operación
+      print("Intentando actualizar usuario...");
       final response = await BaseService.client
-        .from('User')
-        .update(updateData)
-        .eq('id', editUserViewModel.id)
-        .select(); // Esto retorna los datos actualizados inmediatamente si todo va bien.
+          .from('User')
+          .update(updateData)
+          .eq('id', editUserViewModel.id)
+          .select()
+          .single();
 
-      if (response.error != null) {
-      print("Error en la actualización: ${response.error!.message}");
-      return {'success': false, 'message': 'Error al actualizar: ${response.error!.message}'};
-}
+      print("Respuesta de la actualización: $response");
 
-      print("Respuesta de actualización: $response");
-
-      if (response == null || response.isEmpty) {
-        return {'success': false, 'message': 'Error al actualizar el usuario en la base de datos.'};
-      }
-
-
-      // Luego obtenemos los datos actualizados
-      final updatedUser = await getUserById(editUserViewModel.id);
-
-      print("Nombre del usuario actualizado: ${updatedUser['data']['name']}");
-      print("Username del usuario actualizado: ${updatedUser['data']['userName']}");
-      print("Address del usuario actualizado: ${updatedUser['data']['Address']}");
-      print("Phone del usuario actualizado: ${updatedUser['data']['phoneNumber']}");
-      print("Email del usuario actualizado: ${updatedUser['data']['email']}");
-      print("Password del usuario actualizado: ${updatedUser['data']['password']}");
-      print("Confirmpassword del usuario actualizado: ${updatedUser['data']['confirmPassword']}");
-      print("Image del usuario actualizado: ${updatedUser['data']['image']}");
-      print("Genres del usuario actualizado: ${updatedUser['data']['genres']}");
-
-      if (updatedUser['success']) {
-        return {'success': true, 'message': 'Usuario actualizado exitosamente', 'data': updatedUser};
+      if (response != null) {
+        print("Usuario actualizado exitosamente");
+        print("Nuevos datos:");
+        print("ID: ${response['id']}");
+        print("Nombre: ${response['name']}");
+        print("Email: ${response['email']}");
+        return {'success': true, 'message': 'Usuario actualizado exitosamente', 'data': response};
       } else {
+        print("Error: No se pudo actualizar el usuario");
         return {'success': false, 'message': 'Error al editar la información del usuario'};
       }
     } catch (ex) {
