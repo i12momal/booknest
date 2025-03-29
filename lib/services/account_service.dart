@@ -196,7 +196,7 @@ class AccountService extends BaseService {
       - imageFile: archivo de la imagen.
       - userName: nombre del usuario para crear el nombre con el que se va a almacenar la imagen.
   */
-  Future<String?> uploadImageToSupabase(File imageFile, String userName) async {
+  Future<String?> uploadProfileImage(File imageFile, String userName) async {
     try {
       if (!await imageFile.exists()) {
         print("El archivo no existe en la ruta: ${imageFile.path}");
@@ -211,7 +211,37 @@ class AccountService extends BaseService {
       final fileName = 'profiles/${userName}_$timestamp.$fileExt';
       print("Creando nombre de archivo: $fileName");
 
-      // Subir la imagen
+      // Buscar imágenes existentes del usuario
+      try {
+        final List<FileObject> existingFiles = await BaseService.client.storage
+            .from('avatars')
+            .list(path: 'profiles/');
+        
+        // Filtrar archivos que contengan el nombre de usuario
+        final userFiles = existingFiles.where((file) => 
+          file.name.startsWith('${userName}_') && 
+          file.name.endsWith('.$fileExt')
+        ).toList();
+
+        // Eliminar las imágenes existentes del usuario
+        if (userFiles.isNotEmpty) {
+          print("Encontradas ${userFiles.length} imágenes existentes del usuario");
+          for (var file in userFiles) {
+            try {
+              await BaseService.client.storage
+                  .from('avatars')
+                  .remove(['profiles/${file.name}']);
+              print("Imagen anterior eliminada: ${file.name}");
+            } catch (deleteError) {
+              print("Error al eliminar imagen anterior: $deleteError");
+            }
+          }
+        }
+      } catch (listError) {
+        print("Error al listar archivos existentes: $listError");
+      }
+
+      // Subir la nueva imagen
       try {
         final response = await BaseService.client.storage.from('avatars').upload(
           fileName,
