@@ -22,49 +22,45 @@ class AccountService extends BaseService {
   Future<Map<String, dynamic>> loginUser(LoginUserViewModel loginUserViewModel) async {
     try {
       print('Verificando el login para: ${loginUserViewModel.userName}');
+      print('Contraseña proporcionada: ${loginUserViewModel.password}');
       
       if (BaseService.client == null) {
         return {'success': false, 'message': 'Error de conexión a la base de datos.'};
       }
 
-      // Crear el email usando el nombre de usuario
-      final String email = "${loginUserViewModel.userName}@booknest.com";
-      print('Email generado para login: $email');
-
-      // Intentar autenticar con Supabase
-      final AuthResponse authResponse = await BaseService.client.auth.signInWithPassword(
-        email: email,
-        password: loginUserViewModel.password,
-      );
-
-      if (authResponse.user == null) {
-        print('Error: No se pudo autenticar el usuario');
-        return {'success': false, 'message': 'Usuario o contraseña incorrectos'};
-      }
-
-      // Obtener el ID del usuario autenticado
-      final String userId = authResponse.user!.id;
-      print('Usuario autenticado con ID: $userId');
-
-      // Obtener los datos completos del usuario de la tabla User
-      final response = await BaseService.client
+      // Obtener el usuario completo de la tabla User
+      final userResponse = await BaseService.client
           .from('User')
           .select()
-          .eq('id', userId)
+          .eq('userName', loginUserViewModel.userName)
           .single();
 
-      print('Datos del usuario encontrados: $response');
-
-      if (response != null) {
-        // Almacenar el userId cuando el login es exitoso
-        await UserSession.setUserId(userId);
-        print("User ID guardado en SharedPreferences: $userId");
-        
-        return {'success': true, 'message': 'Login exitoso', 'data': response};
-      } else {
-        print('No se encontró el usuario en la tabla User');
-        return {'success': false, 'message': 'Error al obtener datos del usuario'};
+      if (userResponse == null) {
+        return {'success': false, 'message': 'Usuario no encontrado'};
       }
+
+      print("Datos del usuario encontrados: $userResponse");
+
+      // Generar el hash de la contraseña proporcionada
+      final String inputPasswordHash = generatePasswordHash(loginUserViewModel.password);
+      print("Hash de la contraseña proporcionada: $inputPasswordHash");
+      print("Hash almacenado: ${userResponse['password']}");
+
+      // Verificar si la contraseña coincide
+      if (userResponse['password'] != inputPasswordHash) {
+        print("Las contraseñas no coinciden");
+        return {'success': false, 'message': 'Contraseña incorrecta'};
+      }
+
+      // Si la contraseña coincide, obtener el ID del usuario
+      final String userId = userResponse['id'];
+      print('Usuario autenticado con ID: $userId');
+
+      // Almacenar el userId cuando el login es exitoso
+      await UserSession.setUserId(userId);
+      print("User ID guardado en SharedPreferences: $userId");
+      
+      return {'success': true, 'message': 'Login exitoso', 'data': userResponse};
     } catch (e) {
       print('Error en loginUser: $e');
       return {'success': false, 'message': 'Error en el login: ${e.toString()}'};
@@ -95,34 +91,27 @@ class AccountService extends BaseService {
 
       print("Iniciando registro de usuario...");
       print("Nombre de usuario: ${registerUserViewModel.userName}");
-      print("Contraseña: ${registerUserViewModel.password}");
+      print("Email: ${registerUserViewModel.email}");
+      print("Contraseña original: ${registerUserViewModel.password}");
 
-      // Generar el hash de la contraseña
-      final String passwordHash = generatePasswordHash(registerUserViewModel.password);
-      print("Hash de la contraseña: $passwordHash");
+      // Verificar si el usuario ya existe
+      final existingUsers = await BaseService.client
+          .from('User')
+          .select('id')
+          .eq('userName', registerUserViewModel.userName);
 
-      // Registrar el usuario en auth.users sin requerir confirmación
-      final AuthResponse authResponse = await BaseService.client.auth.signUp(
-        email: registerUserViewModel.email,
-        password: registerUserViewModel.password,
-        data: {
-          'userName': registerUserViewModel.userName,
-        },// Desactivamos la redirección por correo
-      );
-
-      if (authResponse.user == null) {
-        print("Error: No se pudo crear el usuario en auth.users");
-        return {'success': false, 'message': 'Error al registrar el usuario en la autenticación'};
+      if (existingUsers.isNotEmpty) {
+        print("El usuario ya existe en la tabla User");
+        return {'success': false, 'message': 'El nombre de usuario ya está en uso'};
       }
 
-      // Obtener el ID del usuario autenticado
-      final String userId = authResponse.user!.id;
-      print("ID del usuario autenticado (auth.uid): $userId");
+      // Generar el hash de la contraseña para almacenar en la tabla User
+      final String passwordHash = generatePasswordHash(registerUserViewModel.password);
+      print("Hash de la contraseña para tabla User: $passwordHash");
 
-      // Crear el registro en la tabla User con el mismo ID
+      // Crear el registro en la tabla User
       print("Creando registro en la tabla User...");
       final Map<String, dynamic> userData = {
-        'id': userId,
         'name': registerUserViewModel.name,
         'userName': registerUserViewModel.userName,
         'email': registerUserViewModel.email,
@@ -149,8 +138,8 @@ class AccountService extends BaseService {
         print("Contraseña hash: ${response['password']}");
         
         // Iniciar sesión automáticamente después del registro
-        await UserSession.setUserId(userId);
-        print("User ID guardado en SharedPreferences: $userId");
+        await UserSession.setUserId(response['id']);
+        print("User ID guardado en SharedPreferences: ${response['id']}");
 
         return {
           'success': true,
@@ -218,8 +207,13 @@ class AccountService extends BaseService {
 
   /* Método para generar el hash de la contraseña */
   String generatePasswordHash(String password) {
+    print("Generando hash para contraseña: $password");
     final bytes = utf8.encode(password);
+    print("Bytes generados: ${bytes.toString()}");
     final digest = sha256.convert(bytes);
-    return digest.toString();
+    print("Digest generado: ${digest.toString()}");
+    final String hash = digest.toString();
+    print("Hash final: $hash");
+    return hash;
   }
 }

@@ -79,9 +79,6 @@ class AccountController extends BaseController{
 
     String? imageUrl;
 
-    // Generar el hash de la contraseña
-    String passwordHash = generatePasswordHash(password);
-
     // Si el usuario sube una imagen, la guardamos en Supabase
     if (image != null) {
       imageUrl = await uploadProfileImage(image, userName);
@@ -97,8 +94,8 @@ class AccountController extends BaseController{
       email: email,
       phoneNumber: phoneNumber,
       address: address,
-      password: passwordHash,
-      confirmPassword: passwordHash,
+      password: password,  // Enviamos la contraseña sin hashear
+      confirmPassword: confirmPassword,  // Enviamos la confirmación sin hashear
       image: imageUrl,
       genres: genres,
       role: 'usuario',
