@@ -21,33 +21,52 @@ class AccountService extends BaseService {
   */
   Future<Map<String, dynamic>> loginUser(LoginUserViewModel loginUserViewModel) async {
     try {
-      print('Verificando el login para: $loginUserViewModel.userName');
+      print('Verificando el login para: ${loginUserViewModel.userName}');
       
       if (BaseService.client == null) {
         return {'success': false, 'message': 'Error de conexión a la base de datos.'};
       }
 
+      // Crear el email usando el nombre de usuario
+      final String email = "${loginUserViewModel.userName}@booknest.com";
+      print('Email generado para login: $email');
+
+      // Intentar autenticar con Supabase
+      final AuthResponse authResponse = await BaseService.client.auth.signInWithPassword(
+        email: email,
+        password: loginUserViewModel.password,
+      );
+
+      if (authResponse.user == null) {
+        print('Error: No se pudo autenticar el usuario');
+        return {'success': false, 'message': 'Usuario o contraseña incorrectos'};
+      }
+
+      // Obtener el ID del usuario autenticado
+      final String userId = authResponse.user!.id;
+      print('Usuario autenticado con ID: $userId');
+
+      // Obtener los datos completos del usuario de la tabla User
       final response = await BaseService.client
           .from('User')
           .select()
-          .eq('userName', loginUserViewModel.userName)
-          .eq('password', generatePasswordHash(loginUserViewModel.password))
-          .maybeSingle();
+          .eq('id', userId)
+          .single();
 
-      print('Respuesta de la base de datos: $response');
+      print('Datos del usuario encontrados: $response');
 
       if (response != null) {
         // Almacenar el userId cuando el login es exitoso
-        String userId = response['id'];
-        await UserSession.setUserId(userId);  // Guardamos el userId en SharedPreferences
-        print("User ID desde SharedPreferences: $userId");
+        await UserSession.setUserId(userId);
+        print("User ID guardado en SharedPreferences: $userId");
         
-        print('Usuario autenticado con ID: $userId');
         return {'success': true, 'message': 'Login exitoso', 'data': response};
       } else {
-        return {'success': false, 'message': 'Usuario o contraseña incorrectos'};
+        print('No se encontró el usuario en la tabla User');
+        return {'success': false, 'message': 'Error al obtener datos del usuario'};
       }
     } catch (e) {
+      print('Error en loginUser: $e');
       return {'success': false, 'message': 'Error en el login: ${e.toString()}'};
     }
   }
@@ -70,19 +89,25 @@ class AccountService extends BaseService {
   */
   Future<Map<String, dynamic>> registerUser(RegisterUserViewModel registerUserViewModel) async {
     try {
-      // Comprobamos si la conexión a Supabase está activa.
       if (BaseService.client == null) {
         return {'success': false, 'message': 'Error de conexión a la base de datos.'};
       }
 
       print("Iniciando registro de usuario...");
-      print("Email: ${registerUserViewModel.email}");
       print("Nombre de usuario: ${registerUserViewModel.userName}");
+      print("Contraseña: ${registerUserViewModel.password}");
 
-      // Registrar el usuario en auth.users
+      // Generar el hash de la contraseña
+      final String passwordHash = generatePasswordHash(registerUserViewModel.password);
+      print("Hash de la contraseña: $passwordHash");
+
+      // Registrar el usuario en auth.users sin requerir confirmación
       final AuthResponse authResponse = await BaseService.client.auth.signUp(
         email: registerUserViewModel.email,
         password: registerUserViewModel.password,
+        data: {
+          'userName': registerUserViewModel.userName,
+        },// Desactivamos la redirección por correo
       );
 
       if (authResponse.user == null) {
@@ -93,23 +118,25 @@ class AccountService extends BaseService {
       // Obtener el ID del usuario autenticado
       final String userId = authResponse.user!.id;
       print("ID del usuario autenticado (auth.uid): $userId");
-      print("Email verificado: ${authResponse.user!.email}");
 
       // Crear el registro en la tabla User con el mismo ID
       print("Creando registro en la tabla User...");
-      final response = await BaseService.client.from('User').insert({
-        'id': userId, // Usar el mismo ID que auth.uid()
+      final Map<String, dynamic> userData = {
+        'id': userId,
         'name': registerUserViewModel.name,
         'userName': registerUserViewModel.userName,
         'email': registerUserViewModel.email,
         'phoneNumber': registerUserViewModel.phoneNumber,
         'address': registerUserViewModel.address,
-        'password': registerUserViewModel.password,
-        'confirmPassword': registerUserViewModel.confirmPassword,
+        'password': passwordHash,
+        'confirmPassword': passwordHash,
         'image': registerUserViewModel.image,
         'genres': registerUserViewModel.genres,
         'role': registerUserViewModel.role,
-      }).select().single();
+      };
+      print("Datos a insertar: $userData");
+
+      final response = await BaseService.client.from('User').insert(userData).select().single();
 
       print("Respuesta de la inserción en User: $response");
 
@@ -117,8 +144,19 @@ class AccountService extends BaseService {
         print("Usuario registrado exitosamente");
         print("ID en la tabla User: ${response['id']}");
         print("Nombre: ${response['name']}");
+        print("Nombre de usuario: ${response['userName']}");
         print("Email: ${response['email']}");
-        return {'success': true, 'message': 'Usuario registrado exitosamente', 'data': response};
+        print("Contraseña hash: ${response['password']}");
+        
+        // Iniciar sesión automáticamente después del registro
+        await UserSession.setUserId(userId);
+        print("User ID guardado en SharedPreferences: $userId");
+
+        return {
+          'success': true,
+          'message': 'Usuario registrado exitosamente. Ya puedes iniciar sesión.',
+          'data': response
+        };
       } else {
         print("Error: No se pudo crear el registro en la tabla User");
         return {'success': false, 'message': 'Error al registrar el usuario'};
@@ -134,9 +172,8 @@ class AccountService extends BaseService {
      Parámetros:
       - imageFile: archivo de la imagen.
       - userName: nombre del usuario para crear el nombre con el que se va a almacenar la imagen.
-      - oldImageUrl: URL de la imagen anterior (opcional)
   */
-  Future<String?> uploadImageToSupabase(File imageFile, String userName, {String? oldImageUrl}) async {
+  Future<String?> uploadImageToSupabase(File imageFile, String userName) async {
     try {
       if (!await imageFile.exists()) {
         print("El archivo no existe en la ruta: ${imageFile.path}");
@@ -145,31 +182,22 @@ class AccountService extends BaseService {
 
       // Extraer la extensión del archivo (.jpg, .png, etc.)
       final String fileExt = imageFile.path.split('.').last;
-      String fileName;
+      
+      // Crear un nombre único para la imagen
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final fileName = 'profiles/${userName}_$timestamp.$fileExt';
+      print("Creando nombre de archivo: $fileName");
 
-      if (oldImageUrl != null && oldImageUrl.isNotEmpty) {
-        // Si hay una imagen anterior, usar su nombre
-        final oldFileName = oldImageUrl.split('/').last;
-        fileName = 'profiles/$oldFileName';
-        print("Usando nombre de archivo existente: $fileName");
-
-        // Intentar eliminar la imagen anterior
-        try {
-          await BaseService.client.storage.from('avatars').remove(['profiles/$oldFileName']);
-          print("Imagen anterior eliminada correctamente");
-        } catch (e) {
-          print('Error al eliminar la imagen anterior: $e');
-        }
-      } else {
-        // Si no hay imagen anterior, crear un nuevo nombre
-        final timestamp = DateTime.now().millisecondsSinceEpoch;
-        fileName = 'profiles/${userName}_$timestamp.$fileExt';
-        print("Creando nuevo nombre de archivo: $fileName");
-      }
-
-      // Intentar subir la nueva imagen
+      // Subir la imagen
       try {
-        final response = await BaseService.client.storage.from('avatars').upload(fileName, imageFile);
+        final response = await BaseService.client.storage.from('avatars').upload(
+          fileName,
+          imageFile,
+          fileOptions: const FileOptions(
+            cacheControl: '3600',
+            upsert: true,
+          ),
+        );
         print("Respuesta de la carga: $response");
 
         // Obtener la URL pública de la imagen

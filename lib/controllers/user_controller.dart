@@ -57,7 +57,7 @@ class UserController extends BaseController{
     // Si el usuario sube una imagen, la subimos a Supabase
     if (image != null) {
       try {
-        imageUrl = await AccountController().uploadProfileImage(image, userName, oldImageUrl: currentImageUrl);
+        imageUrl = await AccountController().uploadProfileImage(image, userName);
         if (imageUrl == null) {
           return {'success': false, 'message': 'Error al subir la imagen. Por favor, intente nuevamente.'};
         }
