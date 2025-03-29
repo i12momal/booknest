@@ -177,13 +177,13 @@ class _EditUserViewState extends State<EditUserView> {
     });
 
     try {
-      final name = _nameController.text;
-      final userName = _userNameController.text;
-      final email = _emailController.text;
-      final phoneNumber = int.tryParse(_phoneNumberController.text) ?? 0;
-      final address = _addressController.text;
-      final password = _passwordController.text.isNotEmpty ? _passwordController.text : null;
-      final confirmPassword = _confirmPasswordController.text.isNotEmpty ? _confirmPasswordController.text : null;
+      final name = _nameController.text.trim();
+      final userName = _userNameController.text.trim();
+      final email = _emailController.text.trim();
+      final phoneNumber = int.tryParse(_phoneNumberController.text.trim()) ?? 0;
+      final address = _addressController.text.trim();
+      final password = _passwordController.text.isNotEmpty ? _passwordController.text.trim() : null;
+      final confirmPassword = _confirmPasswordController.text.isNotEmpty ? _confirmPasswordController.text.trim() : null;
 
       // Mantener la imagen actual si no se ha seleccionado una nueva
       final imageUrl = _imageFile ?? currentImageUrl ?? '';
@@ -227,8 +227,6 @@ class _EditUserViewState extends State<EditUserView> {
       });
     }
   }
-
-
 
   // Función que muestra el dialogo de éxito al actualizar un usuario
   void _showSuccessDialog() {

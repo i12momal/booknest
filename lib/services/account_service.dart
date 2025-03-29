@@ -41,10 +41,12 @@ class AccountService extends BaseService {
 
       print("Datos del usuario encontrados: $userResponse");
 
+
       // Generar el hash de la contraseña proporcionada
       final String inputPasswordHash = generatePasswordHash(loginUserViewModel.password);
       print("Hash de la contraseña proporcionada: $inputPasswordHash");
       print("Hash almacenado: ${userResponse['password']}");
+
 
       // Verificar si la contraseña coincide
       if (userResponse['password'] != inputPasswordHash) {
@@ -55,6 +57,19 @@ class AccountService extends BaseService {
       // Si la contraseña coincide, obtener el ID del usuario
       final String userId = userResponse['id'];
       print('Usuario autenticado con ID: $userId');
+
+      // Iniciar sesión en Supabase Auth
+      try {
+        final AuthResponse res = await BaseService.client.auth.signInWithPassword(
+          email: userResponse['email'],
+          password: userResponse['password'],
+        );
+        print("Sesión iniciada en Supabase Auth: ${res.user?.id}");
+      } catch (authError) {
+        print("Error al iniciar sesión en Supabase Auth: $authError");
+        // Si falla la autenticación en Supabase, aún permitimos el login
+        // ya que la contraseña es correcta en nuestra base de datos
+      }
 
       // Almacenar el userId cuando el login es exitoso
       await UserSession.setUserId(userId);
@@ -109,9 +124,28 @@ class AccountService extends BaseService {
       final String passwordHash = generatePasswordHash(registerUserViewModel.password);
       print("Hash de la contraseña para tabla User: $passwordHash");
 
-      // Crear el registro en la tabla User
+      // Crear usuario en Supabase Auth
+      String? authUserId;
+      try {
+        final AuthResponse authResponse = await BaseService.client.auth.signUp(
+          email: registerUserViewModel.email,
+          password: passwordHash,
+        );
+        authUserId = authResponse.user?.id;
+        print("Usuario creado en Supabase Auth: $authUserId");
+      } catch (authError) {
+        print("Error al crear usuario en Supabase Auth: $authError");
+        return {'success': false, 'message': 'Error al crear el usuario en el sistema de autenticación'};
+      }
+
+      if (authUserId == null) {
+        return {'success': false, 'message': 'Error al obtener el ID del usuario autenticado'};
+      }
+
+      // Crear el registro en la tabla User usando el ID de Supabase Auth
       print("Creando registro en la tabla User...");
       final Map<String, dynamic> userData = {
+        'id': authUserId, // Usar el ID de Supabase Auth
         'name': registerUserViewModel.name,
         'userName': registerUserViewModel.userName,
         'email': registerUserViewModel.email,

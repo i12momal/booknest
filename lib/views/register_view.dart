@@ -101,13 +101,13 @@ class _RegisterViewState extends State<RegisterView> {
     // Limpiar el mensaje de error si ya se seleccionaron géneros
     setState(() { _message = '';});
 
-    final name = _nameController.text;
-    final userName = _userNameController.text;
-    final email = _emailController.text;
-    final phoneNumber = int.tryParse(_phoneNumberController.text) ?? 0;
-    final address = _addressController.text;
-    final password = _passwordController.text;
-    final confirmPassword = _confirmPasswordController.text;
+    final name = _nameController.text.trim();
+    final userName = _userNameController.text.trim();
+    final email = _emailController.text.trim();
+    final phoneNumber = int.tryParse(_phoneNumberController.text.trim()) ?? 0;
+    final address = _addressController.text.trim();
+    final password = _passwordController.text.trim();
+    final confirmPassword = _confirmPasswordController.text.trim();
 
     final result = await _accountController.registerUser(
         name, userName, email, phoneNumber, address, password, confirmPassword, _imageFile, selectedGenres.join(", "));

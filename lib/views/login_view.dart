@@ -4,7 +4,8 @@ import 'package:booknest/views/register_view.dart';
 import 'package:booknest/views/reset_password_view.dart';
 import 'package:booknest/widgets/background.dart';
 import 'package:booknest/widgets/custom_text_field.dart';
-import "package:booknest/main.dart";
+import "package:booknest/views/edit_user_view.dart";
+import 'package:booknest/main.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -159,17 +160,21 @@ class _LoginViewState extends State<LoginView> {
                           ),
                           onPressed: () async {
                             await _accountController.login(
-                              _userNameController.text,
-                              _passwordController.text
+                              _userNameController.text.trim(),
+                              _passwordController.text.trim()
                             );
 
-                            // Verificamos si el login fue exitoso
-                            if (_accountController.errorMessage.value.isEmpty) {
-                              // Si no hay error, hacemos la navegación
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(builder: (context) => const MyApp()),
-                              );
+                            if (_accountController.errorMessage.value.isEmpty && context.mounted) {
+                              final userId = await _accountController.getCurrentUserId();
+                              print("Id del usuario que acaba de iniciar sesión: $userId");
+                              if (userId != null && context.mounted) {
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => EditUserView(userId: userId),
+                                  ),
+                                );
+                              }
                             } 
                           },
                           child: const Text(
