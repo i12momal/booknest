@@ -280,4 +280,24 @@ class AccountService extends BaseService {
     print("Hash final: $hash");
     return hash;
   }
+
+  /* Método asíncrono que obtiene el ID del usuario actualmente autenticado.
+    Return: 
+      String con el ID del usuario autenticado o null si no hay usuario autenticado.
+  */
+  Future<String?> getCurrentUserId() async {
+    if (BaseService.client == null) {
+      return null;
+    }
+
+    // Obtener el ID del usuario desde SharedPreferences
+    final userId = await UserSession.getUserId();
+    if (userId != null) {
+      return userId;
+    }
+
+    // Si no hay ID en SharedPreferences, intentar obtenerlo de la autenticación
+    final currentUser = BaseService.client.auth.currentUser;
+    return currentUser?.id;
+  }
 }

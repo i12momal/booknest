@@ -1,36 +1,36 @@
 import 'dart:io';
-import 'package:booknest/views/login_view.dart';
-import 'package:flutter/material.dart';
-import 'package:booknest/controllers/account_controller.dart';
 import 'package:booknest/controllers/categories_controller.dart';
+import 'package:booknest/controllers/book_controller.dart';
+import 'package:booknest/views/login_view.dart';
 import 'package:booknest/widgets/background.dart';
 import 'package:booknest/widgets/page_navigation.dart';
+import 'package:booknest/widgets/book_info_form.dart';
 import 'package:booknest/widgets/success_dialog.dart';
-import 'package:booknest/widgets/genre_selection_register.dart';
-import 'package:booknest/widgets/personal_info_form.dart';
+import 'package:flutter/material.dart';
+import 'package:booknest/widgets/genre_and_summary_selection.dart';
 
-// Vista para la acción de Registro de Usuario 
-class RegisterView extends StatefulWidget {
-  const RegisterView({super.key});
+// Vista para la acción de Añadir un nuevo libro
+class AddBookView extends StatefulWidget{
+  const AddBookView ({super.key});
 
   @override
-  State<RegisterView> createState() => _RegisterViewState();
+  State<AddBookView> createState() => _AddBookViewState();
 }
 
-class _RegisterViewState extends State<RegisterView> {
-  final _nameController = TextEditingController();
-  final _userNameController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _phoneNumberController = TextEditingController();
-  final _addressController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
-  File? _imageFile;
+class _AddBookViewState extends State<AddBookView>{
+  final _titleController = TextEditingController();
+  final _authorController = TextEditingController();
+  final _isbnController = TextEditingController();
+  final _pagesNumberController = TextEditingController();
+  final _languageController = TextEditingController();
+  final _formatController = TextEditingController();
+  File? _fullFile;
+  final _summaryController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
   final PageController _pageController = PageController();
-  final AccountController _accountController = AccountController();
   final CategoriesController _categoryController = CategoriesController();
+  final BookController _bookController = BookController();
 
   String _message = '';
   int _currentPage = 0;
@@ -46,10 +46,10 @@ class _RegisterViewState extends State<RegisterView> {
     _fetchCategories();
   }
 
-  // Función que maneja la imagen seleccionada
-  void _handleImagePicked(File? image) {
+  // Función que maneja el archivo seleccionado
+  void _handleFilePicked(File? file) {
     setState(() {
-      _imageFile = image;
+      _fullFile = file;
     });
   }
 
@@ -61,12 +61,11 @@ class _RegisterViewState extends State<RegisterView> {
     });
   }
 
-  // Función para pasar a la página de selección de géneros desde la página de datos personales
+  // Función para pasar a la página de selección de géneros y resumen
   Future<void> nextPage() async {
-    // Primero cerramos el teclado
-    FocusScope.of(context).unfocus();
+    FocusScope.of(context).unfocus(); // Cerrar teclado
 
-    // Hacemos una pequeña espera para asegurarnos de que el teclado se haya cerrado antes de cambiar de página
+    // Esperar un poco antes de navegar
     await Future.delayed(const Duration(milliseconds: 500));
 
     if (_formKey.currentState?.validate() ?? false) {
@@ -80,6 +79,7 @@ class _RegisterViewState extends State<RegisterView> {
     }
   }
 
+
   // Función para pasar a la página de datos personales desde la selección de géneros
   void prevPage() {
     _pageController.previousPage(
@@ -89,11 +89,11 @@ class _RegisterViewState extends State<RegisterView> {
     });
   }
 
-  // Método que realiza la función de registro del usuario
-  Future<void> _registerUser() async {
+  // Método que realiza la función de añadir un nuevo libro
+  Future<void> _addBook() async {
     if (selectedGenres.isEmpty) {
       setState(() {
-        _message = "* Seleccione al menos un género favorito";
+        _message = "* Seleccione al menos un género asociado";
       });
       return;
     }
@@ -101,16 +101,16 @@ class _RegisterViewState extends State<RegisterView> {
     // Limpiar el mensaje de error si ya se seleccionaron géneros
     setState(() { _message = '';});
 
-    final name = _nameController.text.trim();
-    final userName = _userNameController.text.trim();
-    final email = _emailController.text.trim();
-    final phoneNumber = int.tryParse(_phoneNumberController.text.trim()) ?? 0;
-    final address = _addressController.text.trim();
-    final password = _passwordController.text.trim();
-    final confirmPassword = _confirmPasswordController.text.trim();
+    final title = _titleController.text.trim();
+    final author = _authorController.text.trim();
+    final isbn = _isbnController.text.trim();
+    final pagesNumber = int.tryParse(_pagesNumberController.text.trim()) ?? 0;
+    final language = _languageController.text.trim();
+    final format = _formatController.text.trim();
+    final summary = _summaryController.text.trim();
 
-    final result = await _accountController.registerUser(
-        name, userName, email, phoneNumber, address, password, confirmPassword, _imageFile, selectedGenres.join(", "));
+    final result = await _bookController.addBook(
+        title, author, isbn, pagesNumber, language, format, _fullFile, summary, selectedGenres.join(", "));
 
     setState(() {
       _message = result['message'];
@@ -124,12 +124,12 @@ class _RegisterViewState extends State<RegisterView> {
     }
   }
 
-  // Función que muestra el dialogo de éxito al registrar un usuario
+  // Función que muestra el dialogo de éxito al añadir un nuevo libro
   void _showSuccessDialog() {
     SuccessDialog.show(
       context,
-      'Registro Exitoso', 
-      '¡Tu cuenta ha sido creada con éxito!',
+      'Creación Exitosa', 
+      '¡Tu libro ha sido creado con éxito!',
       () {
         Navigator.pop(context);
 
@@ -150,39 +150,37 @@ class _RegisterViewState extends State<RegisterView> {
         FocusScope.of(context).unfocus();
       },
       child: Background(
-        title: 'Registro',
+        title: 'Añadir libro',
         onBack: prevPage,
         child: PageNavigation(
           pageController: _pageController,
           currentPage: _currentPage,
-          firstPage: _buildPersonalInfoPage(),
-          secondPage: _buildGenreSelectionPage(),
+          firstPage: _buildBookInfoPage(),
+          secondPage: _buildGenreAndSummarySelectionPage(),
         ),
       ),
     );
   }
 
   // Página de registro: Datos Personales
-  Widget _buildPersonalInfoPage() {
-    return PersonalInfoForm(
-      nameController: _nameController,
-      userNameController: _userNameController,
-      emailController: _emailController,
-      phoneNumberController: _phoneNumberController,
-      addressController: _addressController,
-      passwordController: _passwordController,
-      confirmPasswordController: _confirmPasswordController,
-      imageFile: _imageFile,
-      onImagePicked: _handleImagePicked,
+  Widget _buildBookInfoPage() {
+    return BookInfoForm(
+      titleController: _titleController,
+      authorController: _authorController,
+      isbnController: _isbnController,
+      pagesNumberController: _pagesNumberController,
+      languageController: _languageController,
+      formatController: _formatController,
+      fullFile: _fullFile,
+      onFilePicked: _handleFilePicked,
       onNext: nextPage,
-      formKey: _formKey,
-      isEditMode: isEditMode,
+      formKey: _formKey
     );
   }
 
-  // Página de registro: Selección de Géneros
-  Widget _buildGenreSelectionPage() {
-    return GenreSelectionRegisterWidget(
+  // Página de registro: Selección de Géneros y Resumen
+  Widget _buildGenreAndSummarySelectionPage() {
+    return GenreAndSummarySelectionWidget(
       isEditMode: isEditMode,
       genres: genres,
       selectedGenres: selectedGenres,
@@ -195,11 +193,16 @@ class _RegisterViewState extends State<RegisterView> {
             selectedGenres.add(genre);
           }
           if (selectedGenres.isNotEmpty) {
-            _message = '';
+            _message = '';  // Limpiar mensaje si ya hay géneros seleccionados
           }
         });
       },
-      onRegister: _registerUser,
+      onRegister: _addBook,
+      summaryController: _summaryController,
     );
   }
+
+
+
 }
+
