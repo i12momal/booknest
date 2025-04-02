@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class CustomTextField extends StatefulWidget {
-  final IconData icon;
+  final IconData? icon;
   final String hint;
   final bool isPassword;
   final TextEditingController controller; 
@@ -13,7 +13,7 @@ class CustomTextField extends StatefulWidget {
 
   const CustomTextField({
     super.key,
-    required this.icon,
+    this.icon,
     required this.hint,
     this.isPassword = false,
     required this.controller, 

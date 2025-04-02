@@ -7,7 +7,7 @@ import 'package:booknest/controllers/categories_controller.dart';
 import 'package:booknest/widgets/background.dart';
 import 'package:booknest/widgets/page_navigation.dart';
 import 'package:booknest/widgets/success_dialog.dart';
-import 'package:booknest/widgets/genre_selection.dart';
+import 'package:booknest/widgets/genre_selection_register.dart';
 import 'package:booknest/widgets/personal_info_form.dart';
 
 // Vista para la acción de Edición de Datos de Usuario 
@@ -286,7 +286,7 @@ class _EditUserViewState extends State<EditUserView> {
 
   // Página de registro: Selección de Géneros
   Widget _buildGenreSelectionPage() {
-    return GenreSelectionWidget(
+    return GenreSelectionRegisterWidget(
       isEditMode: isEditMode,
       genres: genres,
       selectedGenres: selectedGenres,

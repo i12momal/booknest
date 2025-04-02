@@ -4,8 +4,6 @@ import "base_controller.dart";
 import 'dart:io';
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
-import 'package:booknest/services/base_service.dart';
-import 'package:booknest/entities/models/user_session.dart';
 
 // Controlador con los métodos de las acciones de inicio de sesión y registro del Usuario.
 class AccountController extends BaseController{
@@ -150,18 +148,8 @@ class AccountController extends BaseController{
       String con el ID del usuario autenticado o null si no hay usuario autenticado.
   */
   Future<String?> getCurrentUserId() async {
-    if (BaseService.client == null) {
-      return null;
-    }
 
-    // Obtener el ID del usuario desde SharedPreferences
-    final userId = await UserSession.getUserId();
-    if (userId != null) {
-      return userId;
-    }
-
-    // Si no hay ID en SharedPreferences, intentar obtenerlo de la autenticación
-    final currentUser = BaseService.client.auth.currentUser;
-    return currentUser?.id;
+    final result = await accountService.getCurrentUserId();
+    return result;
   }
 }
