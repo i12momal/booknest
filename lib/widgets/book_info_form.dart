@@ -1,8 +1,9 @@
 import 'dart:io';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:booknest/widgets/custom_text_field.dart';
-import 'package:booknest/widgets/image_picker.dart';
 import 'package:booknest/widgets/language_dropdown.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class BookInfoForm extends StatefulWidget {
   final TextEditingController titleController;
@@ -43,6 +44,33 @@ class _BookInfoFormState extends State<BookInfoForm> {
   // Variables de estado para los checkboxes
   bool isPhysicalSelected = false;
   bool isDigitalSelected = false;
+
+  final supabaseStorage = Supabase.instance.client;
+  List<FileObject> allFiles = [];
+  bool isLoading = false;
+  bool isUploading = false;
+
+  // Función para subir archivos a Supabase
+  Future<void> _uploadFiles() async{
+    FilePickerResult? filePickerResult = await FilePicker.platform.pickFiles(allowMultiple: false);
+    if(filePickerResult == null) return;
+    File file = File(filePickerResult.files.single.path!);
+    String name = filePickerResult.files.single.name;
+    String fileName = "${DateTime.now().millisecondsSinceEpoch}_$name";
+    setState(() {
+      isUploading = true;
+    });
+
+    try{
+      await supabaseStorage.storage.from("books").upload(fileName, file);
+      print("Archivo subido correctamente");
+    }catch(e){
+      print("Error al subir el archivo: $e");
+    }
+    setState(() {
+      isUploading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -195,8 +223,11 @@ class _BookInfoFormState extends State<BookInfoForm> {
                       SizedBox(
                         width: double.infinity,
                         height: 60,
-                        child: OutlinedButton(
-                          onPressed: () {},
+                        child: isUploading
+                        ? const Center (child: CircularProgressIndicator())
+                        : OutlinedButton(
+                          onPressed: _uploadFiles,
+                          
                           style: OutlinedButton.styleFrom(
                             backgroundColor: Colors.white,
                             side: const BorderSide(color: Colors.black, width: 2),
