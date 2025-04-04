@@ -1,5 +1,5 @@
 import 'package:booknest/entities/models/user_session.dart';
-import 'package:booknest/services/account_service.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:booknest/widgets/custom_text_field.dart';
 import 'package:booknest/widgets/language_dropdown.dart';
@@ -211,7 +211,7 @@ class _BookInfoFormState extends State<BookInfoForm> {
                         child: BookController().isUploading
                         ? const Center (child: CircularProgressIndicator())
                         : OutlinedButton(
-                          onPressed: _pickAndUploadFile,
+                          onPressed: _pickFile,
                           
                           style: OutlinedButton.styleFrom(
                             backgroundColor: Colors.white,
@@ -329,25 +329,30 @@ class _BookInfoFormState extends State<BookInfoForm> {
     });
   }
 
-  void _pickAndUploadFile() async {
+  void _pickFile() async {
     setState(() {
       isUploading = true;
     });
 
-    // Obtener el título del libro y el UID del usuario
-    String bookTitle = widget.titleController.text.trim();
-    final userId = await UserSession.getUserId();
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.any,
+    );
 
-    // Llamar a la función y pasar los parámetros
-    String? fileName = await bookController.pickAndUploadFile(bookTitle, userId);
+    if (result != null && result.files.single.path != null) {
+      final String filePath = result.files.single.path!;
+      final String fileName = result.files.single.name;
 
-    setState(() {
-      uploadedFileName = fileName ?? "Error al subir archivo";
-      isUploading = false;
-      widget.onFileAndFormatChanged(uploadedFileName, isPhysicalSelected, isDigitalSelected);
-    });
+      setState(() {
+        uploadedFileName = fileName;
+        isUploading = false;
+        widget.onFileAndFormatChanged(filePath, isPhysicalSelected, isDigitalSelected);
+      });
+    } else {
+      setState(() {
+        uploadedFileName = null;
+        isUploading = false;
+      });
+    }
   }
-
-
 
 }

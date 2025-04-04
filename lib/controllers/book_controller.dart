@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:booknest/controllers/base_controller.dart';
 import 'package:booknest/entities/viewmodels/book_view_model.dart';
-import 'package:file_picker/file_picker.dart';
 
 // Controlador con los métodos de las acciones de Libros.
 class BookController extends BaseController{
@@ -28,20 +27,20 @@ class BookController extends BaseController{
   Future<Map<String, dynamic>> addBook(String title, String author, String isbn, int pagesNumber,
     String language, String format, File? file, String summary, String categories) async {
 
-    String fileUrl = '';
-
-    // Si el usuario sube un archivo, la guardamos en Supabase
-    if (file != null) {
-      //fileUrl = await uploadBookFile(file, title);
-      if (fileUrl == null) {
-        return {'success': false, 'message': 'Error al subir el archivo'};
-      }
-    }
+    String? fileUrl = '';
 
     // Obtener el ID del usuario
     final userId = await accountService.getCurrentUserId();
     if (userId == null) {
       return {'success': false, 'message': 'Usuario no autenticado'};
+    }
+
+    // Si el usuario sube un archivo, la guardamos en Supabase
+    if (file != null) {
+      fileUrl = await bookService.uploadFile(file, title, userId);
+      if (fileUrl == null) {
+        return {'success': false, 'message': 'Error al subir el archivo'};
+      }
     }
 
     // Creación del viewModel
@@ -63,33 +62,4 @@ class BookController extends BaseController{
     // Llamada al servicio para registrar al usuario
     return await bookService.addBook(addBookViewModel);
   }
-
-  /* Método para guardar un archivo en Supabase.
-     Parámetros:
-      - file: archivo del libro.
-      - title: título del libro para crear el nombre con el que se va a almacenar el archivo.
-  */
-  Future<String?> pickAndUploadFile(String bookTitle, String? userId) async {
-    FilePickerResult? filePickerResult = await FilePicker.platform.pickFiles(allowMultiple: false);
-    if (filePickerResult == null) return null;
-
-    File file = File(filePickerResult.files.single.path!);
-    isUploading = true;
-
-    // Llamar a `uploadFile` con los parámetros adecuados
-    String? fileName = await bookService.uploadFile(file, bookTitle, userId);
-
-    isUploading = false;
-
-    if (fileName != null) {
-      print("Archivo subido correctamente: $fileName");
-      return fileName; // Devuelve el nombre del archivo
-    } else {
-      print("Error al subir el archivo.");
-      return null;
-    }
-}
-
-
-
 }

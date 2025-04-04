@@ -75,48 +75,47 @@ class BookService extends BaseService{
   */
   Future<String?> uploadFile(File file, String bookTitle, String? userId) async {
     try {
-      // Normalizar el título del libro para evitar caracteres problemáticos en el nombre del archivo
+      // Normalizar el título del libro
       String sanitizedTitle = bookTitle.replaceAll(' ', '_');
-      
-      // Definir la extensión del archivo
       String fileExt = file.path.split('.').last;
-
-      // Crear el nombre de archivo con el título, UID y timestamp
       String fileName = "${sanitizedTitle}_$userId.$fileExt";
 
-      // Buscar archivos existentes del mismo libro y usuario
+      // Eliminar archivos anteriores si existen
       try {
         final List<FileObject> existingFiles = await Supabase.instance.client.storage
             .from('books')
             .list(path: 'books/');
 
-        // Filtrar archivos que coincidan con el libro y usuario
-        final userFiles = existingFiles.where((file) => 
+        final userFiles = existingFiles.where((file) =>
           file.name.startsWith('${sanitizedTitle}_$userId')
         ).toList();
 
-        // Eliminar el archivo anterior si existe
-        if (userFiles.isNotEmpty) {
-          for (var file in userFiles) {
-            try {
-              await Supabase.instance.client.storage
-                  .from('books')
-                  .remove(['books/${file.name}']);
-              print("Archivo anterior eliminado: ${file.name}");
-            } catch (deleteError) {
-              print("Error al eliminar archivo anterior: $deleteError");
-            }
+        for (var file in userFiles) {
+          try {
+            await Supabase.instance.client.storage
+                .from('books')
+                .remove(['books/${file.name}']);
+            print("Archivo anterior eliminado: ${file.name}");
+          } catch (deleteError) {
+            print("Error al eliminar archivo anterior: $deleteError");
           }
         }
       } catch (listError) {
         print("Error al listar archivos existentes: $listError");
       }
 
-      // Subir el nuevo archivo
-      await Supabase.instance.client.storage.from("books").upload(fileName, file);
+      // Subir archivo
+      await Supabase.instance.client.storage
+          .from("books")
+          .upload("books/$fileName", file);
+
+      // Obtener URL pública
+      final String publicUrl = Supabase.instance.client.storage
+          .from("books")
+          .getPublicUrl("books/$fileName");
 
       print("Archivo subido correctamente: $fileName");
-      return fileName;
+      return publicUrl;
     } catch (e) {
       print("Error al subir el archivo: $e");
       return null;
