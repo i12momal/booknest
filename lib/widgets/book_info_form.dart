@@ -1,9 +1,7 @@
-import 'dart:io';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:booknest/widgets/custom_text_field.dart';
 import 'package:booknest/widgets/language_dropdown.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:booknest/controllers/book_controller.dart';
 
 class BookInfoForm extends StatefulWidget {
   final TextEditingController titleController;
@@ -12,11 +10,8 @@ class BookInfoForm extends StatefulWidget {
   final TextEditingController pagesNumberController;
   final TextEditingController languageController;
   final TextEditingController formatController;
-  final File? fullFile;
-  final Function(File?) onFilePicked;
   final VoidCallback onNext;
   final GlobalKey<FormState> formKey;
-  final String? imageUrl;
 
   const BookInfoForm({
     super.key,
@@ -26,11 +21,8 @@ class BookInfoForm extends StatefulWidget {
     required this.pagesNumberController,
     required this.languageController,
     required this.formatController,
-    required this.fullFile,
-    required this.onFilePicked,
     required this.onNext,
     required this.formKey,
-    this.imageUrl,
   });
 
   @override
@@ -45,35 +37,21 @@ class _BookInfoFormState extends State<BookInfoForm> {
   bool isPhysicalSelected = false;
   bool isDigitalSelected = false;
 
-  final supabaseStorage = Supabase.instance.client;
-  List<FileObject> allFiles = [];
-  bool isLoading = false;
+  String? uploadedFileName;
   bool isUploading = false;
 
-  // Función para subir archivos a Supabase
-  Future<void> _uploadFiles() async{
-    FilePickerResult? filePickerResult = await FilePicker.platform.pickFiles(allowMultiple: false);
-    if(filePickerResult == null) return;
-    File file = File(filePickerResult.files.single.path!);
-    String name = filePickerResult.files.single.name;
-    String fileName = "${DateTime.now().millisecondsSinceEpoch}_$name";
-    setState(() {
-      isUploading = true;
-    });
+  late final BookController bookController;
 
-    try{
-      await supabaseStorage.storage.from("books").upload(fileName, file);
-      print("Archivo subido correctamente");
-    }catch(e){
-      print("Error al subir el archivo: $e");
-    }
-    setState(() {
-      isUploading = false;
-    });
+  @override
+  void initState() {
+    super.initState();
+    bookController = BookController();
   }
+
 
   @override
   Widget build(BuildContext context) {
+    
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Form(
@@ -223,10 +201,10 @@ class _BookInfoFormState extends State<BookInfoForm> {
                       SizedBox(
                         width: double.infinity,
                         height: 60,
-                        child: isUploading
+                        child: BookController().isUploading
                         ? const Center (child: CircularProgressIndicator())
                         : OutlinedButton(
-                          onPressed: _uploadFiles,
+                          onPressed: _pickAndUploadFile,
                           
                           style: OutlinedButton.styleFrom(
                             backgroundColor: Colors.white,
@@ -236,17 +214,33 @@ class _BookInfoFormState extends State<BookInfoForm> {
                               borderRadius: BorderRadius.circular(10),
                             ),
                           ),
-                          child: const Row(
+                          child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                'Seleccione un archivo...',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  color: Color.fromRGBO(124, 123, 123, 1),
+                              if (isUploading)...{
+                                const Expanded(
+                                  child: Center(
+                                    child: SizedBox(
+                                      width: 20, // Ajusta el tamaño del loader
+                                      height: 20,
+                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                    ),
+                                  ),
+                                )
+                              }else...{
+                                Expanded(
+                                  child: Text(
+                                    uploadedFileName ?? 'Seleccione un archivo...',
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      color: Color.fromRGBO(124, 123, 123, 1),
+                                    ),
+                                  ),
                                 ),
-                              ),
-                              Icon(Icons.attach_file, color: Colors.grey),
+                              },
+                              const Icon(Icons.attach_file, color: Colors.grey),
                             ],
                           ),
                         ),
@@ -327,4 +321,19 @@ class _BookInfoFormState extends State<BookInfoForm> {
       }
     });
   }
+
+  void _pickAndUploadFile() async {
+    setState(() {
+      isUploading = true;
+    });
+
+    String? fileName = await bookController.pickAndUploadFile();
+
+    setState(() {
+      uploadedFileName = fileName ?? "Error al subir archivo";
+      isUploading = false;
+    });
+  }
+
+
 }

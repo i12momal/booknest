@@ -73,76 +73,14 @@ class BookService extends BaseService{
       - file: archivo del libro.
       - title: título del libro para crear el nombre con el que se va a almacenar el archivo.
   */
-  Future<String> uploadBookFile(File file, String title) async {
+  Future<String?> uploadFile(File file) async {
     try {
-      if (!await file.exists()) {
-        print("El archivo no existe en la ruta: ${file.path}");
-        return "";
-      }
-
-      // Extraer la extensión del archivo (.jpg, .png, etc.)
-      final String fileExt = file.path.split('.').last;
-      
-      // Crear un nombre único para la imagen
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final fileName = 'files/${title}_$timestamp.$fileExt';
-      print("Creando nombre de archivo: $fileName");
-
-      // Buscar imágenes existentes del usuario
-      try {
-        final List<FileObject> existingFiles = await BaseService.client.storage
-            .from('books')
-            .list(path: 'files/');
-        
-        // Filtrar archivos que contengan el nombre de usuario
-        final bookFiles = existingFiles.where((file) => 
-          file.name.startsWith('${title}_') && 
-          file.name.endsWith('.$fileExt')
-        ).toList();
-
-        // Eliminar los archivos existentes del libro
-        if (bookFiles.isNotEmpty) {
-          print("Encontrados ${bookFiles.length} archivos existentes del libro");
-          for (var file in bookFiles) {
-            try {
-              await BaseService.client.storage
-                  .from('books')
-                  .remove(['files/${file.name}']);
-              print("Archivo anterior eliminado: ${file.name}");
-            } catch (deleteError) {
-              print("Error al eliminar el archivo anterior: $deleteError");
-            }
-          }
-        }
-      } catch (listError) {
-        print("Error al listar archivos existentes: $listError");
-      }
-
-      // Subir el nuevo archivo
-      try {
-        final response = await BaseService.client.storage.from('books').upload(
-          fileName,
-          file,
-          fileOptions: const FileOptions(
-            cacheControl: '3600',
-            upsert: true,
-          ),
-        );
-        print("Respuesta de la carga: $response");
-
-        // Obtener la URL pública del archivo
-        final String fileUrl = BaseService.client.storage.from('books').getPublicUrl(fileName);
-        print("URL pública del archivo: $fileUrl");
-
-        return fileUrl;
-      } catch (uploadError) {
-        print('Error al subir el nuevo archivo: $uploadError');
-        return "";
-      }
-    } catch (e, stacktrace) {
-      print('Error general en uploadBookFile: $e');
-      print('Detalles: $stacktrace');
-      return "";
+      String fileName = "${DateTime.now().millisecondsSinceEpoch}_${file.path.split('/').last}";
+      await Supabase.instance.client.storage.from("books").upload(fileName, file);
+      return fileName;
+    } catch (e) {
+      print("Error al subir el archivo: $e");
+      return null;
     }
   }
 

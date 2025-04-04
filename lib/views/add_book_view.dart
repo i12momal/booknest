@@ -171,8 +171,6 @@ class _AddBookViewState extends State<AddBookView>{
       pagesNumberController: _pagesNumberController,
       languageController: _languageController,
       formatController: _formatController,
-      fullFile: _fullFile,
-      onFilePicked: _handleFilePicked,
       onNext: nextPage,
       formKey: _formKey
     );
