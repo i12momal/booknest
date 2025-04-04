@@ -1,10 +1,12 @@
 import 'dart:io';
-
 import 'package:booknest/controllers/base_controller.dart';
 import 'package:booknest/entities/viewmodels/book_view_model.dart';
+import 'package:file_picker/file_picker.dart';
 
 // Controlador con los métodos de las acciones de Libros.
 class BookController extends BaseController{
+  bool isUploading = false;
+  String? uploadedFileName;
 
   /* Método asíncrono que permite añadir un nuevo libro.
     Parámetros:
@@ -30,7 +32,7 @@ class BookController extends BaseController{
 
     // Si el usuario sube un archivo, la guardamos en Supabase
     if (file != null) {
-      fileUrl = await uploadBookFile(file, title);
+      //fileUrl = await uploadBookFile(file, title);
       if (fileUrl == null) {
         return {'success': false, 'message': 'Error al subir el archivo'};
       }
@@ -67,8 +69,27 @@ class BookController extends BaseController{
       - file: archivo del libro.
       - title: título del libro para crear el nombre con el que se va a almacenar el archivo.
   */
-  Future<String> uploadBookFile(File file, String title) async {
-    return await bookService.uploadBookFile(file, title);
-  }
+  Future<String?> pickAndUploadFile(String bookTitle, String? userId) async {
+    FilePickerResult? filePickerResult = await FilePicker.platform.pickFiles(allowMultiple: false);
+    if (filePickerResult == null) return null;
+
+    File file = File(filePickerResult.files.single.path!);
+    isUploading = true;
+
+    // Llamar a `uploadFile` con los parámetros adecuados
+    String? fileName = await bookService.uploadFile(file, bookTitle, userId);
+
+    isUploading = false;
+
+    if (fileName != null) {
+      print("Archivo subido correctamente: $fileName");
+      return fileName; // Devuelve el nombre del archivo
+    } else {
+      print("Error al subir el archivo.");
+      return null;
+    }
+}
+
+
 
 }

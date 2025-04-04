@@ -1,4 +1,5 @@
 import 'package:booknest/controllers/account_controller.dart';
+import 'package:booknest/views/add_book_view.dart';
 import 'package:flutter/material.dart';
 import 'package:booknest/views/register_view.dart';
 import 'package:booknest/views/reset_password_view.dart';
@@ -171,7 +172,8 @@ class _LoginViewState extends State<LoginView> {
                                 Navigator.pushReplacement(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => EditUserView(userId: userId),
+                                    //builder: (context) => EditUserView(userId: userId),
+                                    builder: (context) => const AddBookView(),
                                   ),
                                 );
                               }

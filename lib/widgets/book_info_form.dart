@@ -1,8 +1,9 @@
-import 'dart:io';
+import 'package:booknest/entities/models/user_session.dart';
+import 'package:booknest/services/account_service.dart';
 import 'package:flutter/material.dart';
 import 'package:booknest/widgets/custom_text_field.dart';
-import 'package:booknest/widgets/image_picker.dart';
 import 'package:booknest/widgets/language_dropdown.dart';
+import 'package:booknest/controllers/book_controller.dart';
 
 class BookInfoForm extends StatefulWidget {
   final TextEditingController titleController;
@@ -11,11 +12,8 @@ class BookInfoForm extends StatefulWidget {
   final TextEditingController pagesNumberController;
   final TextEditingController languageController;
   final TextEditingController formatController;
-  final File? fullFile;
-  final Function(File?) onFilePicked;
   final VoidCallback onNext;
   final GlobalKey<FormState> formKey;
-  final String? imageUrl;
 
   const BookInfoForm({
     super.key,
@@ -25,11 +23,8 @@ class BookInfoForm extends StatefulWidget {
     required this.pagesNumberController,
     required this.languageController,
     required this.formatController,
-    required this.fullFile,
-    required this.onFilePicked,
     required this.onNext,
     required this.formKey,
-    this.imageUrl,
   });
 
   @override
@@ -44,8 +39,21 @@ class _BookInfoFormState extends State<BookInfoForm> {
   bool isPhysicalSelected = false;
   bool isDigitalSelected = false;
 
+  String? uploadedFileName;
+  bool isUploading = false;
+
+  late final BookController bookController;
+
+  @override
+  void initState() {
+    super.initState();
+    bookController = BookController();
+  }
+
+
   @override
   Widget build(BuildContext context) {
+    
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Form(
@@ -195,8 +203,11 @@ class _BookInfoFormState extends State<BookInfoForm> {
                       SizedBox(
                         width: double.infinity,
                         height: 60,
-                        child: OutlinedButton(
-                          onPressed: () {},
+                        child: BookController().isUploading
+                        ? const Center (child: CircularProgressIndicator())
+                        : OutlinedButton(
+                          onPressed: _pickAndUploadFile,
+                          
                           style: OutlinedButton.styleFrom(
                             backgroundColor: Colors.white,
                             side: const BorderSide(color: Colors.black, width: 2),
@@ -205,17 +216,33 @@ class _BookInfoFormState extends State<BookInfoForm> {
                               borderRadius: BorderRadius.circular(10),
                             ),
                           ),
-                          child: const Row(
+                          child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                'Seleccione un archivo...',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  color: Color.fromRGBO(124, 123, 123, 1),
+                              if (isUploading)...{
+                                const Expanded(
+                                  child: Center(
+                                    child: SizedBox(
+                                      width: 20, // Ajusta el tamaño del loader
+                                      height: 20,
+                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                    ),
+                                  ),
+                                )
+                              }else...{
+                                Expanded(
+                                  child: Text(
+                                    uploadedFileName ?? 'Seleccione un archivo...',
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      color: Color.fromRGBO(124, 123, 123, 1),
+                                    ),
+                                  ),
                                 ),
-                              ),
-                              Icon(Icons.attach_file, color: Colors.grey),
+                              },
+                              const Icon(Icons.attach_file, color: Colors.grey),
                             ],
                           ),
                         ),
@@ -296,4 +323,25 @@ class _BookInfoFormState extends State<BookInfoForm> {
       }
     });
   }
+
+  void _pickAndUploadFile() async {
+    setState(() {
+      isUploading = true;
+    });
+
+    // Obtener el título del libro y el UID del usuario
+    String bookTitle = widget.titleController.text.trim();
+    final userId = await UserSession.getUserId();
+
+    // Llamar a la función y pasar los parámetros
+    String? fileName = await bookController.pickAndUploadFile(bookTitle, userId);
+
+    setState(() {
+      uploadedFileName = fileName ?? "Error al subir archivo";
+      isUploading = false;
+    });
+  }
+
+
+
 }

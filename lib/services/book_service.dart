@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:booknest/entities/viewmodels/book_view_model.dart';
 import 'package:booknest/services/base_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -74,44 +73,38 @@ class BookService extends BaseService{
       - file: archivo del libro.
       - title: título del libro para crear el nombre con el que se va a almacenar el archivo.
   */
-  Future<String> uploadBookFile(File file, String title) async {
+  Future<String?> uploadFile(File file, String bookTitle, String? userId) async {
     try {
-      if (!await file.exists()) {
-        print("El archivo no existe en la ruta: ${file.path}");
-        return "";
-      }
-
-      // Extraer la extensión del archivo (.jpg, .png, etc.)
-      final String fileExt = file.path.split('.').last;
+      // Normalizar el título del libro para evitar caracteres problemáticos en el nombre del archivo
+      String sanitizedTitle = bookTitle.replaceAll(' ', '_');
       
-      // Crear un nombre único para la imagen
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final fileName = 'files/${title}_$timestamp.$fileExt';
-      print("Creando nombre de archivo: $fileName");
+      // Definir la extensión del archivo
+      String fileExt = file.path.split('.').last;
 
-      // Buscar imágenes existentes del usuario
+      // Crear el nombre de archivo con el título, UID y timestamp
+      String fileName = "${sanitizedTitle}_$userId.$fileExt";
+
+      // Buscar archivos existentes del mismo libro y usuario
       try {
-        final List<FileObject> existingFiles = await BaseService.client.storage
+        final List<FileObject> existingFiles = await Supabase.instance.client.storage
             .from('books')
-            .list(path: 'files/');
-        
-        // Filtrar archivos que contengan el nombre de usuario
-        final bookFiles = existingFiles.where((file) => 
-          file.name.startsWith('${title}_') && 
-          file.name.endsWith('.$fileExt')
+            .list(path: 'books/');
+
+        // Filtrar archivos que coincidan con el libro y usuario
+        final userFiles = existingFiles.where((file) => 
+          file.name.startsWith('${sanitizedTitle}_$userId')
         ).toList();
 
-        // Eliminar los archivos existentes del libro
-        if (bookFiles.isNotEmpty) {
-          print("Encontrados ${bookFiles.length} archivos existentes del libro");
-          for (var file in bookFiles) {
+        // Eliminar el archivo anterior si existe
+        if (userFiles.isNotEmpty) {
+          for (var file in userFiles) {
             try {
-              await BaseService.client.storage
+              await Supabase.instance.client.storage
                   .from('books')
-                  .remove(['files/${file.name}']);
+                  .remove(['books/${file.name}']);
               print("Archivo anterior eliminado: ${file.name}");
             } catch (deleteError) {
-              print("Error al eliminar el archivo anterior: $deleteError");
+              print("Error al eliminar archivo anterior: $deleteError");
             }
           }
         }
@@ -120,30 +113,13 @@ class BookService extends BaseService{
       }
 
       // Subir el nuevo archivo
-      try {
-        final response = await BaseService.client.storage.from('books').upload(
-          fileName,
-          file,
-          fileOptions: const FileOptions(
-            cacheControl: '3600',
-            upsert: true,
-          ),
-        );
-        print("Respuesta de la carga: $response");
+      await Supabase.instance.client.storage.from("books").upload(fileName, file);
 
-        // Obtener la URL pública del archivo
-        final String fileUrl = BaseService.client.storage.from('books').getPublicUrl(fileName);
-        print("URL pública del archivo: $fileUrl");
-
-        return fileUrl;
-      } catch (uploadError) {
-        print('Error al subir el nuevo archivo: $uploadError');
-        return "";
-      }
-    } catch (e, stacktrace) {
-      print('Error general en uploadBookFile: $e');
-      print('Detalles: $stacktrace');
-      return "";
+      print("Archivo subido correctamente: $fileName");
+      return fileName;
+    } catch (e) {
+      print("Error al subir el archivo: $e");
+      return null;
     }
   }
 
