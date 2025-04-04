@@ -15,6 +15,8 @@ class BookInfoForm extends StatefulWidget {
   final VoidCallback onNext;
   final GlobalKey<FormState> formKey;
 
+  final Function(String? file, bool isPhysical, bool isDigital) onFileAndFormatChanged;
+
   const BookInfoForm({
     super.key,
     required this.titleController,
@@ -25,6 +27,7 @@ class BookInfoForm extends StatefulWidget {
     required this.formatController,
     required this.onNext,
     required this.formKey,
+    required this.onFileAndFormatChanged,
   });
 
   @override
@@ -160,6 +163,7 @@ class _BookInfoFormState extends State<BookInfoForm> {
                             setState(() {
                               isPhysicalSelected = value ?? false;
                               _checkFormatSelection();
+                              widget.onFileAndFormatChanged(uploadedFileName, isPhysicalSelected, isDigitalSelected);
                             });
                           }, 
                           side: const BorderSide(color: Colors.black, width: 2),
@@ -172,6 +176,7 @@ class _BookInfoFormState extends State<BookInfoForm> {
                             setState(() {
                               isDigitalSelected = value ?? false;
                               _checkFormatSelection();
+                              widget.onFileAndFormatChanged(uploadedFileName, isPhysicalSelected, isDigitalSelected);
                             });
                           }, 
                           side: const BorderSide(color: Colors.black, width: 2),
@@ -339,6 +344,7 @@ class _BookInfoFormState extends State<BookInfoForm> {
     setState(() {
       uploadedFileName = fileName ?? "Error al subir archivo";
       isUploading = false;
+      widget.onFileAndFormatChanged(uploadedFileName, isPhysicalSelected, isDigitalSelected);
     });
   }
 

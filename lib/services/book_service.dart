@@ -41,7 +41,7 @@ class BookService extends BaseService{
         'summary': createBookViewModel.summary,
         'categories': createBookViewModel.categories,
         'state': createBookViewModel.state,
-        'ownerId': createBookViewModel.ownerId,
+        'owner_id': createBookViewModel.ownerId,
         'currentHolderId': createBookViewModel.currentHolderId,
       };
       print("Datos a insertar: $bookData");
