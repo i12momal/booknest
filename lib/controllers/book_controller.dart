@@ -69,14 +69,15 @@ class BookController extends BaseController{
       - file: archivo del libro.
       - title: título del libro para crear el nombre con el que se va a almacenar el archivo.
   */
-  Future<String?> pickAndUploadFile() async {
+  Future<String?> pickAndUploadFile(String bookTitle, String? userId) async {
     FilePickerResult? filePickerResult = await FilePicker.platform.pickFiles(allowMultiple: false);
     if (filePickerResult == null) return null;
 
     File file = File(filePickerResult.files.single.path!);
     isUploading = true;
 
-    String? fileName = await bookService.uploadFile(file);
+    // Llamar a `uploadFile` con los parámetros adecuados
+    String? fileName = await bookService.uploadFile(file, bookTitle, userId);
 
     isUploading = false;
 
@@ -87,7 +88,8 @@ class BookController extends BaseController{
       print("Error al subir el archivo.");
       return null;
     }
-  }
+}
+
 
 
 }

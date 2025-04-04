@@ -73,10 +73,49 @@ class BookService extends BaseService{
       - file: archivo del libro.
       - title: título del libro para crear el nombre con el que se va a almacenar el archivo.
   */
-  Future<String?> uploadFile(File file) async {
+  Future<String?> uploadFile(File file, String bookTitle, String? userId) async {
     try {
-      String fileName = "${DateTime.now().millisecondsSinceEpoch}_${file.path.split('/').last}";
+      // Normalizar el título del libro para evitar caracteres problemáticos en el nombre del archivo
+      String sanitizedTitle = bookTitle.replaceAll(' ', '_');
+      
+      // Definir la extensión del archivo
+      String fileExt = file.path.split('.').last;
+
+      // Crear el nombre de archivo con el título, UID y timestamp
+      String fileName = "${sanitizedTitle}_$userId.$fileExt";
+
+      // Buscar archivos existentes del mismo libro y usuario
+      try {
+        final List<FileObject> existingFiles = await Supabase.instance.client.storage
+            .from('books')
+            .list(path: 'books/');
+
+        // Filtrar archivos que coincidan con el libro y usuario
+        final userFiles = existingFiles.where((file) => 
+          file.name.startsWith('${sanitizedTitle}_$userId')
+        ).toList();
+
+        // Eliminar el archivo anterior si existe
+        if (userFiles.isNotEmpty) {
+          for (var file in userFiles) {
+            try {
+              await Supabase.instance.client.storage
+                  .from('books')
+                  .remove(['books/${file.name}']);
+              print("Archivo anterior eliminado: ${file.name}");
+            } catch (deleteError) {
+              print("Error al eliminar archivo anterior: $deleteError");
+            }
+          }
+        }
+      } catch (listError) {
+        print("Error al listar archivos existentes: $listError");
+      }
+
+      // Subir el nuevo archivo
       await Supabase.instance.client.storage.from("books").upload(fileName, file);
+
+      print("Archivo subido correctamente: $fileName");
       return fileName;
     } catch (e) {
       print("Error al subir el archivo: $e");
