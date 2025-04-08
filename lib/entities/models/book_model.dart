@@ -29,4 +29,23 @@ class Book{
     required this.ownerId,
     required this.currentHolderId,
   });
+
+    factory Book.fromJson(Map<String, dynamic> json) {
+      // Directamente asignamos los valores de 'format' y 'categories' como String
+      return Book(
+        id: json['id'],
+        title: json['title'] ?? '',
+        author: json['author'] ?? '',
+        isbn: json['isbn'] ?? '',
+        pagesNumber: json['pagesNumber'] ?? 0,
+        language: json['language'] ?? '',
+        format: json['format'] ?? '',  // Aseguramos que sea un String
+        file: json['file'] ?? '',
+        summary: json['summary'] ?? '',
+        categories: json['categories'] ?? '',  // Aseguramos que sea un String
+        state: json['state'] ?? '',
+        ownerId: json['owner_id'] ?? '',
+        currentHolderId: json['currentHolderId'] ?? '',
+      );
+    }
 }

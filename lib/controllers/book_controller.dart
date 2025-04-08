@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:booknest/controllers/base_controller.dart';
+import 'package:booknest/entities/models/book_model.dart';
 import 'package:booknest/entities/viewmodels/book_view_model.dart';
 
 // Controlador con los métodos de las acciones de Libros.
@@ -62,4 +63,85 @@ class BookController extends BaseController{
     // Llamada al servicio para registrar al usuario
     return await bookService.addBook(addBookViewModel);
   }
+
+  Future<Map<String, dynamic>> editBook(
+    int id,
+    String title,
+    String author,
+    String isbn,
+    int pagesNumber,
+    String language,
+    String format,
+    File? file,
+    String summary,
+    String genres,
+    String state,
+    String ownerId,
+    String currentHolderId
+  ) async {
+    String? imageUrl;
+
+    // Obtener la URL del archivo actual del libro
+    final currentBook = await bookService.getBookById(id);
+    String? currentImageUrl;
+    if (currentBook['success'] && currentBook['data'] != null) {
+      currentImageUrl = currentBook['data']['file'];
+      print("URL del archivo actual: $currentImageUrl");
+    }
+
+    final currentUser = await userService.getUserById(ownerId);
+
+    // Si el usuario sube un archivo, lo subimos a Supabase
+    if (file != null) {
+      try {
+        imageUrl = await bookService.uploadFile(file, title, currentUser as String?);
+        if (imageUrl == null) {
+          return {'success': false, 'message': 'Error al subir el archivo. Por favor, intente nuevamente.'};
+        }
+        print("Nueva URL del archivo: $imageUrl");
+      } catch (e) {
+        print("Error al procesar el archivo: $e");
+        return {'success': false, 'message': 'Error al procesar el archivo. Por favor, intente nuevamente.'};
+      }
+    } else {
+      // Mantener el archivo actual si no se sube uno nuevo
+      imageUrl = currentImageUrl;
+    }
+
+    // Creación del viewModel
+    final editBookViewModel = EditBookViewModel(
+      id: id,
+      title: title,
+      author: author,
+      isbn: isbn,
+      pagesNumber: pagesNumber,
+      language: language,
+      format: format,
+      categories: genres,
+      file: imageUrl,
+      summary: summary,
+      state: state,
+      ownerId: ownerId,
+      currentHolderId: currentHolderId
+    );
+    // Llamada al servicio para actualizar el usuario
+    return await bookService.editBook(editBookViewModel);
+  }
+
+  /* Método asíncrono que devuelve los datos de un libro. */
+  Future<Book?> getBookById(int bookId) async {
+    var response = await bookService.getBookById(bookId);
+
+    if (response['success'] && response['data'] != null) {
+      print("Datos del libro obtenidos: ${response['data']}");  // Diagnóstico
+      // Convertir la respuesta en un objeto Book
+      var book = Book.fromJson(response['data']);
+      print("Libro convertido: ${book.title}, ${book.categories}, ${book.format}");
+      return book;
+    } else {
+      print("Error al obtener el libro: ${response['message']}");  // Diagnóstico
+      return null;
+    }
+  }
+
 }

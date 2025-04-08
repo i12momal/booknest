@@ -172,6 +172,7 @@ class _AddBookViewState extends State<AddBookView>{
   // Página de registro: Datos Personales
   Widget _buildBookInfoPage() {
     return BookInfoForm(
+      isEditMode: isEditMode,
       titleController: _titleController,
       authorController: _authorController,
       isbnController: _isbnController,

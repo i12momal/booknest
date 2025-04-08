@@ -122,4 +122,122 @@ class BookService extends BaseService{
     }
   }
 
+  // Método asíncrono que obtiene los datos de un libro.
+  Future<Map<String, dynamic>> getBookById(int bookId) async {
+    try {
+      // Comprobamos si la conexión a Supabase está activa.
+      if (BaseService.client == null) {
+        return {'success': false, 'message': 'Error de conexión a la base de datos.'};
+      }
+
+      // Llamada a la base de datos para obtener los datos del libro.
+      final response = await BaseService.client
+          .from('Book')
+          .select()
+          .eq('id', bookId)
+          .maybeSingle();
+
+      print("Respuesta de Supabase: $response");
+
+      // Verificamos si la respuesta contiene datos.
+      if (response != null && response.isNotEmpty) {
+        return {'success': true, 'message': 'Libro obtenido correctamente', 'data': response};
+      } else {
+        return {'success': false, 'message': 'No se ha encontrado el libro'};
+      }
+    } catch (ex) {
+      // Si ocurre alguna excepción, devolverla.
+      return {'success': false, 'message': ex.toString()};
+    }
+  }
+
+  Future<Map<String, dynamic>> editBook(EditBookViewModel editBookViewModel) async {
+    try {
+      // Comprobamos si la conexión a Supabase está activa.
+      if (BaseService.client == null) {
+        return {'success': false, 'message': 'Error de conexión a la base de datos.'};
+      }
+
+      print("Iniciando edición del libro...");
+      print("ID del libro a editar: ${editBookViewModel.id}");
+
+      // Obtener el ID del usuario autenticado
+      final currentUser = BaseService.client.auth.currentUser;
+      if (currentUser == null) {
+        print("Error: Usuario no autenticado");
+        return {'success': false, 'message': 'Usuario no autenticado'};
+      }
+
+      print("ID del usuario autenticado (auth.uid): ${currentUser.id}");
+      print("Email del usuario autenticado: ${currentUser.email}");
+
+      // Verificar que el libro existe
+      print("Verificando existencia del libro...");
+      final existingBook = await BaseService.client.from('Book').select().eq('id', editBookViewModel.id).single();
+      if (existingBook == null) {
+        print("Error: Usuario no encontrado en la base de datos");
+        return {'success': false, 'message': 'Libro no encontrado'};
+      }
+
+      print("Preparando los datos de actualización...");
+
+      // Preparar los datos para actualización
+      final Map<String, dynamic> updateData = {};
+
+      // Solo agregar campos que han cambiado
+      if (existingBook['title'] != editBookViewModel.title) {
+        updateData['title'] = editBookViewModel.title;
+      }
+      if (existingBook['author'] != editBookViewModel.author) {
+        updateData['author'] = editBookViewModel.author;
+      }
+      if (existingBook['isbn'] != editBookViewModel.isbn) {
+        updateData['isbn'] = editBookViewModel.isbn;
+      }
+      if (existingBook['pagesNumber'] != editBookViewModel.pagesNumber) {
+        updateData['pagesNumber'] = editBookViewModel.pagesNumber;
+      }
+      if (existingBook['language'] != editBookViewModel.language) {
+        updateData['language'] = editBookViewModel.language;
+      }
+      if (existingBook['format'] != editBookViewModel.format) {
+        updateData['format'] = editBookViewModel.format;
+      }
+      if (existingBook['summary'] != editBookViewModel.summary) {
+        updateData['summary'] = editBookViewModel.summary;
+      }
+      if (existingBook['categories'] != editBookViewModel.categories) {
+        updateData['categories'] = editBookViewModel.categories;
+      }
+
+      print("Datos a actualizar: $updateData");
+
+      // Si no hay cambios, retornar éxito sin actualizar
+      if (updateData.isEmpty) {
+        print("No hay cambios para actualizar");
+        return {'success': true, 'message': 'No hay cambios para actualizar', 'data': existingBook};
+      }
+
+      // Actualizar el usuario y obtener los datos actualizados en una sola operación
+      print("Intentando actualizar libro...");
+      final response = await BaseService.client
+          .from('Book')
+          .update(updateData)
+          .eq('id', editBookViewModel.id)
+          .select()
+          .single();
+
+      print("Respuesta de la actualización: $response");
+
+      if (response != null) {
+        return {'success': true, 'message': 'Libro actualizado exitosamente', 'data': response};
+      } else {
+        print("Error: No se pudo actualizar el libro");
+        return {'success': false, 'message': 'Error al editar la información del libro'};
+      }
+    } catch (ex) {
+      print("Error en editBook: $ex");
+      return {'success': false, 'message': ex.toString()};
+    }
+  }
 }

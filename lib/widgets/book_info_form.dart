@@ -1,4 +1,4 @@
-import 'package:booknest/entities/models/user_session.dart';
+import 'package:booknest/entities/models/book_model.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:booknest/widgets/custom_text_field.dart';
@@ -11,11 +11,14 @@ class BookInfoForm extends StatefulWidget {
   final TextEditingController isbnController;
   final TextEditingController pagesNumberController;
   final TextEditingController languageController;
-  final TextEditingController formatController;
+  final TextEditingController? formatController;
   final VoidCallback onNext;
   final GlobalKey<FormState> formKey;
-
   final Function(String? file, bool isPhysical, bool isDigital) onFileAndFormatChanged;
+  final List<String>? selectedFormats;
+
+  // Nuevo parámetro para saber si estamos en modo de edición
+  final bool isEditMode;
 
   const BookInfoForm({
     super.key,
@@ -24,10 +27,12 @@ class BookInfoForm extends StatefulWidget {
     required this.isbnController,
     required this.pagesNumberController,
     required this.languageController,
-    required this.formatController,
+    this.formatController,
     required this.onNext,
     required this.formKey,
     required this.onFileAndFormatChanged,
+    required this.isEditMode,
+    this.selectedFormats,
   });
 
   @override
@@ -51,12 +56,51 @@ class _BookInfoFormState extends State<BookInfoForm> {
   void initState() {
     super.initState();
     bookController = BookController();
+
+    // Si estamos en modo edición, cargamos los datos del libro.
+    if (widget.isEditMode) {
+      // Simula una carga asincrónica
+      Future.delayed(Duration.zero, () async {
+        final bookData = await BookController().getBookById(11); 
+        if (bookData != null) {
+          loadBookData(bookData);
+        }
+      });
+    }
+  }
+
+  void loadBookData(Book book) {
+    final formatoList = book.format.toLowerCase().split(',').map((e) => e.trim()).toList();
+
+    final fileUrl = book.file;
+    String? fileName;
+
+    if (fileUrl != null) {
+      final rawName = Uri.decodeFull(fileUrl.split('/').last);
+
+      // Encuentra la última posición de '_' para separar título y ID
+      final lastUnderscore = rawName.lastIndexOf('_');
+      final dotIndex = rawName.lastIndexOf('.');
+
+      if (lastUnderscore != -1 && dotIndex > lastUnderscore) {
+        // Extrae desde el inicio hasta el último '_', y agrega la extensión
+        fileName = rawName.substring(0, lastUnderscore) + rawName.substring(dotIndex);
+      } else {
+        fileName = rawName;
+      }
+    }
+
+    setState(() {
+      isPhysicalSelected = formatoList.contains('físico');
+      isDigitalSelected = formatoList.contains('digital');
+      uploadedFileName = fileName;
+      _checkFormatSelection();
+    });
   }
 
 
   @override
   Widget build(BuildContext context) {
-    
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Form(
@@ -128,21 +172,21 @@ class _BookInfoFormState extends State<BookInfoForm> {
                       onChanged: (String? newValue) {
                         if (newValue != null && newValue.isNotEmpty) {
                           setState(() {
-                          languageErrorMessage = null;
-                        });
-                        widget.languageController.text = newValue;
-                        widget.formKey.currentState?.validate();
+                            languageErrorMessage = null;
+                          });
+                          widget.languageController.text = newValue;
+                          widget.formKey.currentState?.validate();
                         }
                       },
                     ),
                     if (languageErrorMessage != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
-                      child: Text(
-                        languageErrorMessage!,
-                        style: const TextStyle(color: Colors.red),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: Text(
+                          languageErrorMessage!,
+                          style: const TextStyle(color: Colors.red),
+                        ),
                       ),
-                    ),
                     
                     const SizedBox(height: 15),
                     const Text(
@@ -184,6 +228,7 @@ class _BookInfoFormState extends State<BookInfoForm> {
                         const Text('Digital', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
                       ],
                     ),
+
 
                     // Mostrar el mensaje de error debajo del campo de formato si ningún formato ha sido seleccionado
                     if (formatErrorMessage != null && formatErrorMessage!.isNotEmpty) 
@@ -252,7 +297,7 @@ class _BookInfoFormState extends State<BookInfoForm> {
                           ),
                         ),
                       ),
-                    }else...[],
+                    }else...[], 
 
                     const SizedBox(height: 22),
                     Align(
@@ -354,5 +399,4 @@ class _BookInfoFormState extends State<BookInfoForm> {
       });
     }
   }
-
 }

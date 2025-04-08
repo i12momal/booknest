@@ -71,7 +71,7 @@ class EditBookViewModel{
   final int pagesNumber;
   final String language;
   final String format;
-  final String file;
+  final String? file;
   final String summary;
   final String categories;
   final String state;
