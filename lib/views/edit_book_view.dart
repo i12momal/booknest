@@ -110,14 +110,12 @@ class _EditBookViewState extends State<EditBookView> {
           _languageController.text = bookData.language;
           _summaryController.text = bookData.summary;
           _stateController.text = bookData.state;
-          /*if (bookData.categories is List) {
-            selectedGenres = List<String>.from(bookData.categories as List); // Convertimos la lista a String
-          } else if (bookData.categories is String) {
-            // Si categories es un String, lo dividimos en una lista
-            selectedGenres = bookData.categories.split(',').map((genre) => genre.trim()).toList();
-          } else {
-            selectedGenres = [];
-          }*/
+          
+          // Cargar géneros seleccionados
+        if (bookData.categories != null && bookData.categories.isNotEmpty) {
+          selectedGenres = bookData.categories.split(',').map((genre) => genre.trim()).toList();
+        }
+
           currentImageUrl = bookData.file;
           
           // Inicializamos los formatos seleccionados
