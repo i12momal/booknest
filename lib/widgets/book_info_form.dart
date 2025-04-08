@@ -3,6 +3,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:booknest/widgets/custom_text_field.dart';
 import 'package:booknest/widgets/language_dropdown.dart';
+import 'package:booknest/widgets/bookstate_dropdown.dart';
 import 'package:booknest/controllers/book_controller.dart';
 
 class BookInfoForm extends StatefulWidget {
@@ -11,6 +12,7 @@ class BookInfoForm extends StatefulWidget {
   final TextEditingController isbnController;
   final TextEditingController pagesNumberController;
   final TextEditingController languageController;
+  final TextEditingController bookStateController;
   final TextEditingController? formatController;
   final VoidCallback onNext;
   final GlobalKey<FormState> formKey;
@@ -27,6 +29,7 @@ class BookInfoForm extends StatefulWidget {
     required this.isbnController,
     required this.pagesNumberController,
     required this.languageController,
+    required this.bookStateController,
     this.formatController,
     required this.onNext,
     required this.formKey,
@@ -41,6 +44,7 @@ class BookInfoForm extends StatefulWidget {
 
 class _BookInfoFormState extends State<BookInfoForm> {
   String? languageErrorMessage;
+  String? bookStateErrorMessage;
   String? formatErrorMessage;
 
   // Variables de estado para los checkboxes
@@ -189,6 +193,44 @@ class _BookInfoFormState extends State<BookInfoForm> {
                       ),
                     
                     const SizedBox(height: 15),
+
+                    if(widget.isEditMode == true )...[
+                      const Text(
+                        'Estado',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      BookStateDropdown(
+                        controller: widget.bookStateController,
+                        onChanged: (String? newValue) {
+                          if (newValue != null && newValue.isNotEmpty) {
+                            setState(() {
+                              bookStateErrorMessage = null;
+                            });
+                            widget.bookStateController.text = newValue;
+                            widget.formKey.currentState?.validate();
+                          }
+                        },
+                      ),
+                      if (bookStateErrorMessage != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Text(
+                            bookStateErrorMessage!,
+                            style: const TextStyle(color: Colors.red),
+                          ),
+                        ),
+                      
+                      const SizedBox(height: 15),
+                    ]else...[],
+
+
+
+
                     const Text(
                       'Formato',
                       style: TextStyle(

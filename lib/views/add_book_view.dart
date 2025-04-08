@@ -24,6 +24,7 @@ class _AddBookViewState extends State<AddBookView>{
   final _pagesNumberController = TextEditingController();
   final _languageController = TextEditingController();
   final _formatController = TextEditingController();
+  final _bookStateController = TextEditingController();
   final _summaryController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
@@ -179,6 +180,7 @@ class _AddBookViewState extends State<AddBookView>{
       pagesNumberController: _pagesNumberController,
       languageController: _languageController,
       formatController: _formatController,
+      bookStateController: isEditMode ? _bookStateController : TextEditingController(),
       onNext: nextPage,
       formKey: _formKey,
       onFileAndFormatChanged: (file, isPhysical, isDigital) {

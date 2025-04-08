@@ -26,6 +26,7 @@ class _EditBookViewState extends State<EditBookView> {
   final _isbnController = TextEditingController();
   final _pagesNumberController = TextEditingController();
   final _languageController = TextEditingController();
+  final _bookStateController = TextEditingController();
   final _summaryController = TextEditingController();
   final _stateController = TextEditingController();
   File? _imageFile;
@@ -70,13 +71,6 @@ class _EditBookViewState extends State<EditBookView> {
     super.dispose();
   }
 
-  // Función que maneja la imagen seleccionada
-  void _handleImagePicked(File? image) {
-    setState(() {
-      _imageFile = image;
-    });
-  }
-
   // Función para cargar datos del libro
   Future<void> _fetchBookData() async {
     setState(() {
@@ -108,6 +102,7 @@ class _EditBookViewState extends State<EditBookView> {
           _isbnController.text = bookData.isbn;
           _pagesNumberController.text = bookData.pagesNumber.toString();
           _languageController.text = bookData.language;
+          _bookStateController.text = bookData.state;
           _summaryController.text = bookData.summary;
           _stateController.text = bookData.state;
           
@@ -288,6 +283,7 @@ class _EditBookViewState extends State<EditBookView> {
       isbnController: _isbnController,
       pagesNumberController: _pagesNumberController,
       languageController: _languageController,
+      bookStateController: _bookStateController,
       selectedFormats: selectedFormat,
       onNext: nextPage,
       formKey: _formKey,
