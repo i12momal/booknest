@@ -5,8 +5,7 @@ import 'package:booknest/views/register_view.dart';
 import 'package:booknest/views/reset_password_view.dart';
 import 'package:booknest/widgets/background.dart';
 import 'package:booknest/widgets/custom_text_field.dart';
-import "package:booknest/views/edit_user_view.dart";
-import 'package:booknest/main.dart';
+import "package:booknest/views/edit_book_view.dart";
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -173,7 +172,8 @@ class _LoginViewState extends State<LoginView> {
                                   context,
                                   MaterialPageRoute(
                                     //builder: (context) => EditUserView(userId: userId),
-                                    builder: (context) => const AddBookView(),
+                                    //builder: (context) => const AddBookView(),
+                                    builder: (context) => const EditBookView(bookId: 1),
                                   ),
                                 );
                               }

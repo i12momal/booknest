@@ -4,7 +4,7 @@ import 'package:booknest/controllers/book_controller.dart';
 import 'package:booknest/views/login_view.dart';
 import 'package:booknest/widgets/background.dart';
 import 'package:booknest/widgets/page_navigation.dart';
-import 'package:booknest/widgets/book_info_form.dart';
+import 'package:booknest/widgets/book_info_form_add.dart';
 import 'package:booknest/widgets/success_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:booknest/widgets/genre_and_summary_selection.dart';
@@ -24,7 +24,7 @@ class _AddBookViewState extends State<AddBookView>{
   final _pagesNumberController = TextEditingController();
   final _languageController = TextEditingController();
   final _formatController = TextEditingController();
-  File? _fullFile;
+  final _bookStateController = TextEditingController();
   final _summaryController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
@@ -36,21 +36,20 @@ class _AddBookViewState extends State<AddBookView>{
   int _currentPage = 0;
 
   final isEditMode = false;
+
+  bool _isLoading = false;
   
   List<String> genres = [];
   List<String> selectedGenres = [];
+
+  String? uploadedFileName;
+  bool isPhysicalSelected = false;
+  bool isDigitalSelected = false;
 
   @override
   void initState() {
     super.initState();
     _fetchCategories();
-  }
-
-  // Función que maneja el archivo seleccionado
-  void _handleFilePicked(File? file) {
-    setState(() {
-      _fullFile = file;
-    });
   }
 
   // Función para obtener las categorías
@@ -106,11 +105,26 @@ class _AddBookViewState extends State<AddBookView>{
     final isbn = _isbnController.text.trim();
     final pagesNumber = int.tryParse(_pagesNumberController.text.trim()) ?? 0;
     final language = _languageController.text.trim();
-    final format = _formatController.text.trim();
     final summary = _summaryController.text.trim();
 
+    // Verificar los formatos seleccionados
+    final List<String> formats = [];
+    if (isPhysicalSelected) formats.add('Físico');
+    if (isDigitalSelected) formats.add('Digital');
+
+     // Verificar si el archivo digital está presente
+    File? file;
+    if (isDigitalSelected && uploadedFileName != null && uploadedFileName!.isNotEmpty) {
+      file = File(uploadedFileName!);  // Si seleccionaron digital, pasamos el archivo
+    }
+
+
     final result = await _bookController.addBook(
-        title, author, isbn, pagesNumber, language, format, _fullFile, summary, selectedGenres.join(", "));
+        title, author, isbn, pagesNumber, language, formats.join(", "), file, summary, selectedGenres.join(", "));
+
+    setState(() {
+        _isLoading = false;
+      });
 
     setState(() {
       _message = result['message'];
@@ -172,7 +186,14 @@ class _AddBookViewState extends State<AddBookView>{
       languageController: _languageController,
       formatController: _formatController,
       onNext: nextPage,
-      formKey: _formKey
+      formKey: _formKey,
+      onFileAndFormatChanged: (file, isPhysical, isDigital) {
+      setState(() {
+        uploadedFileName = file;
+        isPhysicalSelected = isPhysical;
+        isDigitalSelected = isDigital;
+      });
+    },
     );
   }
 
@@ -197,10 +218,7 @@ class _AddBookViewState extends State<AddBookView>{
       },
       onRegister: _addBook,
       summaryController: _summaryController,
+      isLoading: _isLoading,
     );
   }
-
-
-
 }
-

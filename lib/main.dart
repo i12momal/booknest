@@ -3,6 +3,7 @@ import 'services/base_service.dart';
 import 'views/edit_user_view.dart';
 import 'views/login_view.dart';
 import 'views/add_book_view.dart';
+import 'views/edit_book_view.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -122,6 +123,32 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
               child: const Text(
                 'Añadir libro',
+                style: TextStyle(
+                  fontSize: 20,
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const SizedBox(height: 20), // Espacio entre los botones
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const EditBookView(bookId: 12)),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                minimumSize: Size(screenWidth * 0.8, 50),
+                backgroundColor: const Color(0xFF61BBFF),
+                side: const BorderSide(
+                  color: Colors.white,
+                  width: 2,
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+              ),
+              child: const Text(
+                'Editar libro',
                 style: TextStyle(
                   fontSize: 20,
                   color: Colors.white,

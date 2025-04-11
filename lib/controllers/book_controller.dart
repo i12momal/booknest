@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:booknest/controllers/base_controller.dart';
+import 'package:booknest/entities/models/book_model.dart';
 import 'package:booknest/entities/viewmodels/book_view_model.dart';
-import 'package:file_picker/file_picker.dart';
 
 // Controlador con los métodos de las acciones de Libros.
 class BookController extends BaseController{
@@ -28,20 +28,20 @@ class BookController extends BaseController{
   Future<Map<String, dynamic>> addBook(String title, String author, String isbn, int pagesNumber,
     String language, String format, File? file, String summary, String categories) async {
 
-    String fileUrl = '';
-
-    // Si el usuario sube un archivo, la guardamos en Supabase
-    if (file != null) {
-      //fileUrl = await uploadBookFile(file, title);
-      if (fileUrl == null) {
-        return {'success': false, 'message': 'Error al subir el archivo'};
-      }
-    }
+    String? fileUrl = '';
 
     // Obtener el ID del usuario
     final userId = await accountService.getCurrentUserId();
     if (userId == null) {
       return {'success': false, 'message': 'Usuario no autenticado'};
+    }
+
+    // Si el usuario sube un archivo, la guardamos en Supabase
+    if (file != null) {
+      fileUrl = await bookService.uploadFile(file, title, userId);
+      if (fileUrl == null) {
+        return {'success': false, 'message': 'Error al subir el archivo'};
+      }
     }
 
     // Creación del viewModel
@@ -64,32 +64,112 @@ class BookController extends BaseController{
     return await bookService.addBook(addBookViewModel);
   }
 
-  /* Método para guardar un archivo en Supabase.
-     Parámetros:
-      - file: archivo del libro.
-      - title: título del libro para crear el nombre con el que se va a almacenar el archivo.
-  */
-  Future<String?> pickAndUploadFile(String bookTitle, String? userId) async {
-    FilePickerResult? filePickerResult = await FilePicker.platform.pickFiles(allowMultiple: false);
-    if (filePickerResult == null) return null;
+  Future<Map<String, dynamic>> editBook(int id, String title, String author, String isbn, int pagesNumber, String language, String format,
+    File? file, String summary, String genres, String state, String ownerId, String currentHolderId) async {
+    String? imageUrl;
 
-    File file = File(filePickerResult.files.single.path!);
-    isUploading = true;
-
-    // Llamar a `uploadFile` con los parámetros adecuados
-    String? fileName = await bookService.uploadFile(file, bookTitle, userId);
-
-    isUploading = false;
-
-    if (fileName != null) {
-      print("Archivo subido correctamente: $fileName");
-      return fileName; // Devuelve el nombre del archivo
+    // Obtener la URL del archivo actual del libro
+    final currentBook = await bookService.getBookById(id);
+    String? currentImageUrl;
+    if (currentBook['success'] && currentBook['data'] != null) {
+      currentImageUrl = currentBook['data']['file'];
+      print("URL del archivo actual: $currentImageUrl");
     } else {
-      print("Error al subir el archivo.");
-      return null;
+      print("Error al obtener el libro o archivo actual.");
     }
-}
 
+    // Validar si el archivo es nuevo y local antes de subirlo
+    if (file != null && file.path.startsWith('/')) {
+      try {
+        // Eliminar archivo anterior si existe
+        if (currentImageUrl != null) {
+          print("Eliminando archivo anterior...");
+          await bookService.deleteFile(currentImageUrl);
+        }
+
+        // Subir nuevo archivo y obtener URL
+        imageUrl = await bookService.uploadFile(file, title, ownerId);
+
+        if (imageUrl == null) {
+          print("Error al subir el archivo. La URL es nula.");
+          return {
+            'success': false,
+            'message': 'Error al subir el archivo. Por favor, intente nuevamente.'
+          };
+        }
+        print("Nueva URL del archivo: $imageUrl");
+      } catch (e) {
+        print("Error al procesar el archivo: $e");
+        return {
+          'success': false,
+          'message': 'Error al procesar el archivo. Por favor, intente nuevamente.'
+        };
+      }
+    } else {
+      // No se subió un nuevo archivo, mantener el actual
+      imageUrl = currentImageUrl ?? '';
+    }
+
+    // Crear viewModel con los datos editados
+    final editBookViewModel = EditBookViewModel(
+      id: id,
+      title: title,
+      author: author,
+      isbn: isbn,
+      pagesNumber: pagesNumber,
+      language: language,
+      format: format,
+      categories: genres,
+      file: imageUrl,
+      summary: summary,
+      state: state,
+      ownerId: ownerId,
+      currentHolderId: currentHolderId
+    );
+
+    // Llamar al servicio para actualizar el libro
+    try {
+      print("Llamando al servicio para editar el libro...");
+      return await bookService.editBook(editBookViewModel);
+    } catch (e) {
+      print("Error al editar el libro: $e");
+      return {
+        'success': false,
+        'message': 'Error al actualizar los datos del libro. Por favor, intente nuevamente.'
+      };
+    }
+  }
+
+
+
+
+
+  /* Método asíncrono que devuelve los datos de un libro. */
+  Future<Book?> getBookById(int bookId) async {
+    var response = await bookService.getBookById(bookId);
+
+    // Depuración para ver qué contiene 'response'
+    print("Respuesta de Supabase: $response");
+
+    // Comprobar si 'response' tiene la estructura esperada
+    if (response.containsKey('success') && response['success'] == true) {
+      print("Éxito: Datos del libro obtenidos");
+
+      if (response['data'] != null) {
+        print("Datos del libro: ${response['data']}");  // Diagnóstico
+
+        // Convertir la respuesta en un objeto Book
+        var book = Book.fromJson(response['data']);
+        print("Libro convertido: ${book.title}, ${book.categories}, ${book.format}");
+        return book;
+      } else {
+        print("Datos del libro son null");  // Diagnóstico
+      }
+    } else {
+      print("Error al obtener el libro: ${response['message']}");  // Diagnóstico
+    }
+    return null;
+  }
 
 
 }

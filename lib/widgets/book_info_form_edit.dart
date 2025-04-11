@@ -1,38 +1,53 @@
-import 'package:booknest/entities/models/user_session.dart';
-import 'package:booknest/services/account_service.dart';
+import 'dart:io';
+import 'package:booknest/entities/models/book_model.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:booknest/widgets/custom_text_field.dart';
 import 'package:booknest/widgets/language_dropdown.dart';
+import 'package:booknest/widgets/bookstate_dropdown.dart';
 import 'package:booknest/controllers/book_controller.dart';
 
-class BookInfoForm extends StatefulWidget {
+class BookInfoFormEdit extends StatefulWidget {
   final TextEditingController titleController;
   final TextEditingController authorController;
   final TextEditingController isbnController;
   final TextEditingController pagesNumberController;
   final TextEditingController languageController;
-  final TextEditingController formatController;
+  final TextEditingController bookStateController;
+  final TextEditingController? formatController;
   final VoidCallback onNext;
   final GlobalKey<FormState> formKey;
+  final void Function(bool isPhysical, bool isDigital) onFormatChanged;
+  final void Function(File?) onFilePicked;
+  final List<String> selectedFormats;
 
-  const BookInfoForm({
+  // Nuevo parámetro para saber si estamos en modo de edición
+  final bool isEditMode;
+
+  const BookInfoFormEdit({
     super.key,
     required this.titleController,
     required this.authorController,
     required this.isbnController,
     required this.pagesNumberController,
     required this.languageController,
-    required this.formatController,
+    required this.bookStateController,
+    this.formatController,
     required this.onNext,
     required this.formKey,
+    required this.onFormatChanged,
+    required this.onFilePicked,
+    required this.isEditMode,
+    this.selectedFormats = const [],
   });
 
   @override
-  State<BookInfoForm> createState() => _BookInfoFormState();
+  State<BookInfoFormEdit> createState() => _BookInfoFormEditState();
 }
 
-class _BookInfoFormState extends State<BookInfoForm> {
+class _BookInfoFormEditState extends State<BookInfoFormEdit> {
   String? languageErrorMessage;
+  String? bookStateErrorMessage;
   String? formatErrorMessage;
 
   // Variables de estado para los checkboxes
@@ -48,12 +63,58 @@ class _BookInfoFormState extends State<BookInfoForm> {
   void initState() {
     super.initState();
     bookController = BookController();
+
+    // Si estamos en modo edición, cargamos los datos del libro.
+    if (widget.isEditMode) {
+      // Simula una carga asincrónica
+      Future.delayed(Duration.zero, () async {
+        final bookData = await BookController().getBookById(1); 
+        if (bookData != null) {
+          loadBookData(bookData);
+        }
+      });
+    }
   }
+
+  void loadBookData(Book book) {
+    final formatoList = book.format.toLowerCase().split(',').map((e) => e.trim()).toList();
+    final fileUrl = book.file;
+
+    String? fileName;
+
+    if (fileUrl != null) {
+      final rawName = Uri.decodeFull(fileUrl.split('/').last); // Extrae el nombre del archivo
+      print("Raw name extracted: $rawName");
+
+      // Verifica si el nombre contiene un guion bajo (usualmente se usa para separar el nombre y el ID)
+      final lastUnderscore = rawName.lastIndexOf('_');
+      final dotIndex = rawName.lastIndexOf('.');
+
+      if (lastUnderscore != -1 && dotIndex > lastUnderscore) {
+        // Extrae desde el inicio hasta el último '_', y agrega la extensión
+        fileName = rawName.substring(0, lastUnderscore) + rawName.substring(dotIndex);
+      } else {
+        fileName = rawName;
+      }
+
+      print("File name extracted: $fileName"); // Verificar que el nombre se extrae correctamente
+    }
+
+    setState(() {
+      isPhysicalSelected = formatoList.contains('físico');
+      isDigitalSelected = formatoList.contains('digital');
+      if (fileUrl != null) {
+        widget.onFilePicked(File(fileUrl));
+        uploadedFileName = fileName;  // Asigna el nombre del archivo
+        print("Uploaded file name set: $uploadedFileName"); // Verificar que el nombre se asigna correctamente
+      }
+    });
+  }
+
 
 
   @override
   Widget build(BuildContext context) {
-    
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Form(
@@ -125,23 +186,61 @@ class _BookInfoFormState extends State<BookInfoForm> {
                       onChanged: (String? newValue) {
                         if (newValue != null && newValue.isNotEmpty) {
                           setState(() {
-                          languageErrorMessage = null;
-                        });
-                        widget.languageController.text = newValue;
-                        widget.formKey.currentState?.validate();
+                            languageErrorMessage = null;
+                          });
+                          widget.languageController.text = newValue;
+                          widget.formKey.currentState?.validate();
                         }
                       },
                     ),
                     if (languageErrorMessage != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
-                      child: Text(
-                        languageErrorMessage!,
-                        style: const TextStyle(color: Colors.red),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: Text(
+                          languageErrorMessage!,
+                          style: const TextStyle(color: Colors.red),
+                        ),
                       ),
-                    ),
                     
                     const SizedBox(height: 15),
+
+                    if(widget.isEditMode == true )...[
+                      const Text(
+                        'Estado',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      BookStateDropdown(
+                        controller: widget.bookStateController,
+                        onChanged: (String? newValue) {
+                          if (newValue != null && newValue.isNotEmpty) {
+                            setState(() {
+                              bookStateErrorMessage = null;
+                            });
+                            widget.bookStateController.text = newValue;
+                            widget.formKey.currentState?.validate();
+                          }
+                        },
+                      ),
+                      if (bookStateErrorMessage != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Text(
+                            bookStateErrorMessage!,
+                            style: const TextStyle(color: Colors.red),
+                          ),
+                        ),
+                      
+                      const SizedBox(height: 15),
+                    ]else...[],
+
+
+
+
                     const Text(
                       'Formato',
                       style: TextStyle(
@@ -155,30 +254,47 @@ class _BookInfoFormState extends State<BookInfoForm> {
                       children: [
                         const SizedBox(width: 25),
                         Checkbox(
-                          value: isPhysicalSelected, 
+                          value: widget.selectedFormats.contains('Físico'),
                           onChanged: (bool? value) {
                             setState(() {
-                              isPhysicalSelected = value ?? false;
-                              _checkFormatSelection();
+                              if (value ?? false) {
+                                widget.selectedFormats.add('Físico');
+                              } else {
+                                widget.selectedFormats.remove('Físico');
+                              }
                             });
-                          }, 
+                            widget.onFormatChanged(
+                              widget.selectedFormats.contains('Físico'),
+                              widget.selectedFormats.contains('Digital'),
+                            );
+                              _checkFormatSelection();
+                          },
                           side: const BorderSide(color: Colors.black, width: 2),
                         ),
                         const Text('Físico', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
                         const SizedBox(width: 35),
                         Checkbox(
-                          value: isDigitalSelected, 
+                          value: widget.selectedFormats.contains('Digital'),
                           onChanged: (bool? value) {
                             setState(() {
-                              isDigitalSelected = value ?? false;
-                              _checkFormatSelection();
+                              if (value ?? false) {
+                                widget.selectedFormats.add('Digital');
+                              } else {
+                                widget.selectedFormats.remove('Digital');
+                              }
                             });
-                          }, 
+                            widget.onFormatChanged(
+                              widget.selectedFormats.contains('Físico'),
+                              widget.selectedFormats.contains('Digital'),
+                            );
+                              _checkFormatSelection();
+                          },
                           side: const BorderSide(color: Colors.black, width: 2),
                         ),
                         const Text('Digital', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
                       ],
                     ),
+
 
                     // Mostrar el mensaje de error debajo del campo de formato si ningún formato ha sido seleccionado
                     if (formatErrorMessage != null && formatErrorMessage!.isNotEmpty) 
@@ -190,7 +306,7 @@ class _BookInfoFormState extends State<BookInfoForm> {
                         ),
                       ),
 
-                    if(isDigitalSelected)...{
+                    if(widget.selectedFormats.contains('Digital'))...{
                       const Text(
                         'Archivo',
                         style: TextStyle(
@@ -206,7 +322,7 @@ class _BookInfoFormState extends State<BookInfoForm> {
                         child: BookController().isUploading
                         ? const Center (child: CircularProgressIndicator())
                         : OutlinedButton(
-                          onPressed: _pickAndUploadFile,
+                          onPressed: _pickFile,
                           
                           style: OutlinedButton.styleFrom(
                             backgroundColor: Colors.white,
@@ -247,22 +363,22 @@ class _BookInfoFormState extends State<BookInfoForm> {
                           ),
                         ),
                       ),
-                    }else...[],
+                    }else...[], 
 
                     const SizedBox(height: 22),
                     Align(
                       alignment: Alignment.center,
                       child: ElevatedButton(
                         onPressed: () {
-                          // Verificamos si al menos uno de los formatos está seleccionado
-                          if (!isPhysicalSelected && !isDigitalSelected) {
+                          // Verificar que al menos un formato esté seleccionado
+                          if (widget.selectedFormats.isEmpty) {
                             setState(() {
-                              _checkFormatSelection();
+                              formatErrorMessage = 'Seleccione al menos un formato'; // Mostrar mensaje de error
                             });
-                            return;
+                            return; // Evita que se ejecute cualquier otra cosa si no se seleccionó ningún formato
                           } else {
                             setState(() {
-                              formatErrorMessage = null;
+                              formatErrorMessage = null; // Limpiar mensaje de error si hay formatos seleccionados
                             });
                           }
                           widget.onNext();
@@ -315,33 +431,43 @@ class _BookInfoFormState extends State<BookInfoForm> {
 
   // Función que verifica si al menos un formato ha sido seleccionado
   void _checkFormatSelection() {
-    setState(() {
-      if (!isPhysicalSelected && !isDigitalSelected) {
+    if (widget.selectedFormats.isEmpty) {
+      setState(() {
         formatErrorMessage = 'Seleccione al menos un formato';
-      } else {
+      });
+    } else {
+      setState(() {
         formatErrorMessage = null;
-      }
-    });
+      });
+    }
   }
 
-  void _pickAndUploadFile() async {
+  void _pickFile() async {
     setState(() {
       isUploading = true;
     });
 
-    // Obtener el título del libro y el UID del usuario
-    String bookTitle = widget.titleController.text.trim();
-    final userId = await UserSession.getUserId();
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.any,
+    );
 
-    // Llamar a la función y pasar los parámetros
-    String? fileName = await bookController.pickAndUploadFile(bookTitle, userId);
+    if (result != null && result.files.single.path != null) {
+      final filePath = result.files.single.path!;
+      final fileName = result.files.single.name;
 
-    setState(() {
-      uploadedFileName = fileName ?? "Error al subir archivo";
-      isUploading = false;
-    });
+      setState(() {
+        uploadedFileName = fileName;
+        isUploading = false;
+      });
+
+      widget.onFilePicked(File(filePath));
+    } else {
+      setState(() {
+        isUploading = false;
+      });
+
+      widget.onFilePicked(null);
+    }
   }
-
-
 
 }
