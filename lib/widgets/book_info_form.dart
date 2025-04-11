@@ -1,4 +1,3 @@
-import 'package:booknest/entities/models/user_session.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:booknest/widgets/custom_text_field.dart';
