@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:booknest/controllers/account_controller.dart';
 import 'package:booknest/entities/models/book_model.dart';
 import 'package:booknest/views/login_view.dart';
-import 'package:booknest/widgets/book_info_form.dart';
+import 'package:booknest/widgets/book_info_form_edit.dart';
 import 'package:booknest/widgets/genre_and_summary_selection.dart';
 import 'package:flutter/material.dart';
 import 'package:booknest/controllers/book_controller.dart';
@@ -29,7 +29,6 @@ class _EditBookViewState extends State<EditBookView> {
   final _bookStateController = TextEditingController();
   final _summaryController = TextEditingController();
   final _stateController = TextEditingController();
-  File? _imageFile;
   final _formKey = GlobalKey<FormState>();
 
   final PageController _pageController = PageController();
@@ -50,6 +49,8 @@ class _EditBookViewState extends State<EditBookView> {
   String? uploadedFileName;
   bool isPhysicalSelected = false;
   bool isDigitalSelected = false;
+
+  File? fileToSend;
 
   @override
   void initState() {
@@ -81,6 +82,7 @@ class _EditBookViewState extends State<EditBookView> {
     // Verifica si el usuario está autenticado
     final userId = await AccountController().getCurrentUserId();
     if (userId == null) {
+      if (!mounted) return;
       setState(() {
         _message = 'No se ha iniciado sesión';
         _isLoading = false;
@@ -111,16 +113,27 @@ class _EditBookViewState extends State<EditBookView> {
           selectedGenres = bookData.categories.split(',').map((genre) => genre.trim()).toList();
         }
 
-          currentImageUrl = bookData.file;
+        // Si el libro tiene un formato Digital, cargar el archivo
+        if (bookData.format.contains('Digital')) {
+          currentImageUrl = bookData.file;  // Aquí obtienes el URL del archivo
+        }
+
+        // Si hay archivo asociado, cargalo en la variable que gestionará el archivo
+        if (currentImageUrl != null && currentImageUrl!.isNotEmpty) {
+          fileToSend = File(currentImageUrl!);  // Cargar el archivo en fileToSend
+        }
           
-          // Inicializamos los formatos seleccionados
-          selectedFormat.clear();
-          if (bookData.format.contains('Físico')) {
-            selectedFormat.add('Físico');
-          }
-          if (bookData.format.contains('Digital')) {
-            selectedFormat.add('Digital');
-          }
+          setState(() {
+            selectedFormat.clear();
+            if (bookData.format.contains('Físico')) {
+              selectedFormat.add('Físico');
+            }
+            if (bookData.format.contains('Digital')) {
+              selectedFormat.add('Digital');
+            }
+            print("selectedFormat: $selectedFormat");  // Depuración
+          });
+
 
           _isLoading = false;
         });
@@ -198,13 +211,28 @@ class _EditBookViewState extends State<EditBookView> {
       final isbn = _isbnController.text.trim();
       final pagesNumber = int.tryParse(_pagesNumberController.text.trim()) ?? 0;
       final language = _languageController.text.trim();
-      final summary = _summaryController.text.trim();
       final state = _stateController.text.trim();
+      final summary = _summaryController.text.trim();
 
       // Mantener la imagen actual si no se ha seleccionado una nueva
-      final imageUrl = _imageFile ?? currentImageUrl ?? '';
+     final isDigital = selectedFormat.contains("Digital");
+     File? fileToSend = isDigital ? this.fileToSend : null;
 
-      final userId = AccountController().getCurrentUserId();
+      final userId = await AccountController().getCurrentUserId();
+
+      // Imprimir los valores antes de la llamada
+      print("Book ID: ${widget.bookId}");
+      print("Title: $title");
+      print("Author: $author");
+      print("ISBN: $isbn");
+      print("Pages Number: $pagesNumber");
+      print("Language: $language");
+      print("Selected Formats: ${selectedFormat.join(", ")}");
+      print("Image URL: $fileToSend");  // Aquí la URL será null si no es digital
+      print("Summary: $summary");
+      print("Selected Genres: ${selectedGenres.join(", ")}");
+      print("State: $state");
+      print("User ID: $userId");
 
       final result = await _bookController.editBook(
         widget.bookId,
@@ -214,13 +242,18 @@ class _EditBookViewState extends State<EditBookView> {
         pagesNumber,
         language,
         selectedFormat.join(", "),
-        _imageFile,
+        fileToSend,  
         summary,
         selectedGenres.join(", "),
         state,
-        userId as String,
-        userId as String
+        userId ?? '',
+        userId ?? ''
       );
+
+      // Ocultar el spinner y mostrar el mensaje de éxito
+      setState(() {
+        _isLoading = false;
+      });
 
       if (result['success']) {
         _showSuccessDialog();
@@ -237,6 +270,7 @@ class _EditBookViewState extends State<EditBookView> {
       });
     }
   }
+
 
   // Función que muestra el dialogo de éxito al actualizar un usuario
   void _showSuccessDialog() {
@@ -276,7 +310,7 @@ class _EditBookViewState extends State<EditBookView> {
 
   // Página de registro: Datos Personales
   Widget _buildBookInfoPage() {
-    return BookInfoForm(
+    return BookInfoFormEdit(
       isEditMode: isEditMode,
       titleController: _titleController,
       authorController: _authorController,
@@ -287,12 +321,12 @@ class _EditBookViewState extends State<EditBookView> {
       selectedFormats: selectedFormat,
       onNext: nextPage,
       formKey: _formKey,
-      onFileAndFormatChanged: (file, isPhysical, isDigital) {
+      onFormatChanged: (isPhysical, isDigital) {
         setState(() {
-          uploadedFileName = file;
           isPhysicalSelected = isPhysical;
           isDigitalSelected = isDigital;
         });
+
         // Limpiar la lista de formatos seleccionados
         selectedFormat.clear();
 
@@ -303,6 +337,11 @@ class _EditBookViewState extends State<EditBookView> {
         if (isDigital) {
           selectedFormat.add('Digital');
         }
+      },
+      onFilePicked: (file){
+        setState((){
+          fileToSend = file;
+        });
       },
     );
   }
@@ -328,6 +367,7 @@ class _EditBookViewState extends State<EditBookView> {
       },
       onRegister: _updateBook,
       summaryController: _summaryController,
+      isLoading: _isLoading
     );
   }
 }

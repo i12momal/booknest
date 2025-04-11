@@ -64,21 +64,8 @@ class BookController extends BaseController{
     return await bookService.addBook(addBookViewModel);
   }
 
-  Future<Map<String, dynamic>> editBook(
-    int id,
-    String title,
-    String author,
-    String isbn,
-    int pagesNumber,
-    String language,
-    String format,
-    File? file,
-    String summary,
-    String genres,
-    String state,
-    String ownerId,
-    String currentHolderId
-  ) async {
+  Future<Map<String, dynamic>> editBook(int id, String title, String author, String isbn, int pagesNumber, String language, String format,
+    File? file, String summary, String genres, String state, String ownerId, String currentHolderId) async {
     String? imageUrl;
 
     // Obtener la URL del archivo actual del libro
@@ -87,28 +74,43 @@ class BookController extends BaseController{
     if (currentBook['success'] && currentBook['data'] != null) {
       currentImageUrl = currentBook['data']['file'];
       print("URL del archivo actual: $currentImageUrl");
+    } else {
+      print("Error al obtener el libro o archivo actual.");
     }
 
-    final currentUser = await userService.getUserById(ownerId);
-
-    // Si el usuario sube un archivo, lo subimos a Supabase
-    if (file != null) {
+    // Validar si el archivo es nuevo y local antes de subirlo
+    if (file != null && file.path.startsWith('/')) {
       try {
-        imageUrl = await bookService.uploadFile(file, title, currentUser as String?);
+        // Eliminar archivo anterior si existe
+        if (currentImageUrl != null) {
+          print("Eliminando archivo anterior...");
+          await bookService.deleteFile(currentImageUrl);
+        }
+
+        // Subir nuevo archivo y obtener URL
+        imageUrl = await bookService.uploadFile(file, title, ownerId);
+
         if (imageUrl == null) {
-          return {'success': false, 'message': 'Error al subir el archivo. Por favor, intente nuevamente.'};
+          print("Error al subir el archivo. La URL es nula.");
+          return {
+            'success': false,
+            'message': 'Error al subir el archivo. Por favor, intente nuevamente.'
+          };
         }
         print("Nueva URL del archivo: $imageUrl");
       } catch (e) {
         print("Error al procesar el archivo: $e");
-        return {'success': false, 'message': 'Error al procesar el archivo. Por favor, intente nuevamente.'};
+        return {
+          'success': false,
+          'message': 'Error al procesar el archivo. Por favor, intente nuevamente.'
+        };
       }
     } else {
-      // Mantener el archivo actual si no se sube uno nuevo
-      imageUrl = currentImageUrl;
+      // No se subió un nuevo archivo, mantener el actual
+      imageUrl = currentImageUrl ?? '';
     }
 
-    // Creación del viewModel
+    // Crear viewModel con los datos editados
     final editBookViewModel = EditBookViewModel(
       id: id,
       title: title,
@@ -124,24 +126,50 @@ class BookController extends BaseController{
       ownerId: ownerId,
       currentHolderId: currentHolderId
     );
-    // Llamada al servicio para actualizar el usuario
-    return await bookService.editBook(editBookViewModel);
+
+    // Llamar al servicio para actualizar el libro
+    try {
+      print("Llamando al servicio para editar el libro...");
+      return await bookService.editBook(editBookViewModel);
+    } catch (e) {
+      print("Error al editar el libro: $e");
+      return {
+        'success': false,
+        'message': 'Error al actualizar los datos del libro. Por favor, intente nuevamente.'
+      };
+    }
   }
+
+
+
+
 
   /* Método asíncrono que devuelve los datos de un libro. */
   Future<Book?> getBookById(int bookId) async {
     var response = await bookService.getBookById(bookId);
 
-    if (response['success'] && response['data'] != null) {
-      print("Datos del libro obtenidos: ${response['data']}");  // Diagnóstico
-      // Convertir la respuesta en un objeto Book
-      var book = Book.fromJson(response['data']);
-      print("Libro convertido: ${book.title}, ${book.categories}, ${book.format}");
-      return book;
+    // Depuración para ver qué contiene 'response'
+    print("Respuesta de Supabase: $response");
+
+    // Comprobar si 'response' tiene la estructura esperada
+    if (response.containsKey('success') && response['success'] == true) {
+      print("Éxito: Datos del libro obtenidos");
+
+      if (response['data'] != null) {
+        print("Datos del libro: ${response['data']}");  // Diagnóstico
+
+        // Convertir la respuesta en un objeto Book
+        var book = Book.fromJson(response['data']);
+        print("Libro convertido: ${book.title}, ${book.categories}, ${book.format}");
+        return book;
+      } else {
+        print("Datos del libro son null");  // Diagnóstico
+      }
     } else {
       print("Error al obtener el libro: ${response['message']}");  // Diagnóstico
-      return null;
     }
+    return null;
   }
+
 
 }

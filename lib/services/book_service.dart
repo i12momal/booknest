@@ -75,41 +75,39 @@ class BookService extends BaseService{
   */
   Future<String?> uploadFile(File file, String bookTitle, String? userId) async {
     try {
-      // Normalizar el título del libro
+      // Normalizamos el título para crear un nombre de archivo único
       String sanitizedTitle = bookTitle.replaceAll(' ', '_');
       String fileExt = file.path.split('.').last;
-      String fileName = "${sanitizedTitle}_$userId.$fileExt";
+      int timestamp = DateTime.now().millisecondsSinceEpoch;
 
-      // Eliminar archivos anteriores si existen
-      try {
-        final List<FileObject> existingFiles = await Supabase.instance.client.storage
-            .from('books')
-            .list(path: 'books/');
+      // Nuevo nombre con timestamp para evitar caché
+      String fileName = "${sanitizedTitle}_${userId}_$timestamp.$fileExt";
 
-        final userFiles = existingFiles.where((file) =>
-          file.name.startsWith('${sanitizedTitle}_$userId')
-        ).toList();
+      // Obtener lista de archivos actuales
+      final List<FileObject> existingFiles = await Supabase.instance.client.storage
+          .from('books')
+          .list(path: 'books/');
 
-        for (var file in userFiles) {
-          try {
-            await Supabase.instance.client.storage
-                .from('books')
-                .remove(['books/${file.name}']);
-            print("Archivo anterior eliminado: ${file.name}");
-          } catch (deleteError) {
-            print("Error al eliminar archivo anterior: $deleteError");
-          }
+      // Eliminar archivos anteriores del mismo usuario/libro
+      final userFiles = existingFiles.where((file) =>
+          file.name.startsWith('${sanitizedTitle}_$userId')).toList();
+
+      for (var file in userFiles) {
+        try {
+          await Supabase.instance.client.storage
+              .from('books')
+              .remove(['books/${file.name}']);
+          print("Archivo anterior eliminado: ${file.name}");
+        } catch (deleteError) {
+          print("Error al eliminar archivo anterior: $deleteError");
         }
-      } catch (listError) {
-        print("Error al listar archivos existentes: $listError");
       }
 
-      // Subir archivo
-      await Supabase.instance.client.storage
+      // Subir nuevo archivo con timestamp
+      final response = await Supabase.instance.client.storage
           .from("books")
           .upload("books/$fileName", file);
 
-      // Obtener URL pública
       final String publicUrl = Supabase.instance.client.storage
           .from("books")
           .getPublicUrl("books/$fileName");
@@ -117,10 +115,14 @@ class BookService extends BaseService{
       print("Archivo subido correctamente: $fileName");
       return publicUrl;
     } catch (e) {
-      print("Error al subir el archivo: $e");
+      print("Error al procesar el archivo: $e");
       return null;
     }
   }
+
+
+
+
 
   // Método asíncrono que obtiene los datos de un libro.
   Future<Map<String, dynamic>> getBookById(int bookId) async {
@@ -209,6 +211,10 @@ class BookService extends BaseService{
       if (existingBook['categories'] != editBookViewModel.categories) {
         updateData['categories'] = editBookViewModel.categories;
       }
+      // Aquí es donde se asegura de actualizar el archivo con la nueva URL.
+      if (editBookViewModel.file != existingBook['file']) {
+        updateData['file'] = editBookViewModel.file;
+      }
 
       print("Datos a actualizar: $updateData");
 
@@ -240,4 +246,18 @@ class BookService extends BaseService{
       return {'success': false, 'message': ex.toString()};
     }
   }
+
+  Future<void> deleteFile(String fileUrl) async {
+    try {
+      // Eliminar el archivo anterior utilizando la URL del archivo
+      final fileName = fileUrl.split('/').last;
+      await Supabase.instance.client.storage
+          .from('books')
+          .remove(['books/$fileName']);
+      print("Archivo anterior eliminado: $fileName");
+    } catch (e) {
+      print("Error al eliminar el archivo anterior: $e");
+    }
+  }
+
 }

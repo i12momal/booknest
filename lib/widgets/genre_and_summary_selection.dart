@@ -10,6 +10,7 @@ class GenreAndSummarySelectionWidget extends StatefulWidget {
   final VoidCallback onRegister;
   final TextEditingController summaryController;
   final bool isEditMode;
+  final bool isLoading;
 
   const GenreAndSummarySelectionWidget({
     super.key,
@@ -20,6 +21,7 @@ class GenreAndSummarySelectionWidget extends StatefulWidget {
     required this.onGenreSelected,
     required this.onRegister,
     required this.summaryController,
+    required this.isLoading,
   });
 
   @override
@@ -49,6 +51,7 @@ class _GenreAndSummarySelectionWidgetState
               message: widget.message,
               onGenreSelected: widget.onGenreSelected,
               onRegister: widget.onRegister,
+              isLoading: widget.isLoading,
             ),
           ],
         ),

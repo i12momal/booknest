@@ -8,6 +8,7 @@ class GenreSelectionBookWidget extends StatelessWidget {
   final ValueChanged<String> onGenreSelected;
   final VoidCallback onRegister;
   final bool isEditMode;
+  final bool isLoading;
 
   const GenreSelectionBookWidget({
     super.key,
@@ -17,6 +18,7 @@ class GenreSelectionBookWidget extends StatelessWidget {
     required this.message,
     required this.onGenreSelected,
     required this.onRegister,
+    required this.isLoading,
   });
 
   @override
@@ -91,31 +93,36 @@ class GenreSelectionBookWidget extends StatelessWidget {
         ),
         const SizedBox(height: 2),
 
-        Align(
-          alignment: Alignment.center,
-          child: ElevatedButton(
-            onPressed: onRegister,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFAD0000),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
-                side: const BorderSide(
-                  color: Color.fromARGB(255, 112, 1, 1),
-                  width: 3,
+        // Mostrar el spinner si está cargando
+        if (isLoading) 
+          const Center(child: CircularProgressIndicator()),
+        if (!isLoading)... [
+          Align(
+            alignment: Alignment.center,
+            child: ElevatedButton(
+              onPressed: onRegister,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFAD0000),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                  side: const BorderSide(
+                    color: Color.fromARGB(255, 112, 1, 1),
+                    width: 3,
+                  ),
                 ),
+                padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
-            ),
-            child: const Text(
-              "Guardar",
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
+              child: const Text(
+                "Guardar",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ),
-        ),
+        ]
       ],
     );
   }

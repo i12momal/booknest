@@ -4,7 +4,7 @@ import 'package:booknest/controllers/book_controller.dart';
 import 'package:booknest/views/login_view.dart';
 import 'package:booknest/widgets/background.dart';
 import 'package:booknest/widgets/page_navigation.dart';
-import 'package:booknest/widgets/book_info_form.dart';
+import 'package:booknest/widgets/book_info_form_add.dart';
 import 'package:booknest/widgets/success_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:booknest/widgets/genre_and_summary_selection.dart';
@@ -36,6 +36,8 @@ class _AddBookViewState extends State<AddBookView>{
   int _currentPage = 0;
 
   final isEditMode = false;
+
+  bool _isLoading = false;
   
   List<String> genres = [];
   List<String> selectedGenres = [];
@@ -121,6 +123,10 @@ class _AddBookViewState extends State<AddBookView>{
         title, author, isbn, pagesNumber, language, formats.join(", "), file, summary, selectedGenres.join(", "));
 
     setState(() {
+        _isLoading = false;
+      });
+
+    setState(() {
       _message = result['message'];
     });
 
@@ -173,14 +179,12 @@ class _AddBookViewState extends State<AddBookView>{
   // Página de registro: Datos Personales
   Widget _buildBookInfoPage() {
     return BookInfoForm(
-      isEditMode: isEditMode,
       titleController: _titleController,
       authorController: _authorController,
       isbnController: _isbnController,
       pagesNumberController: _pagesNumberController,
       languageController: _languageController,
       formatController: _formatController,
-      bookStateController: isEditMode ? _bookStateController : TextEditingController(),
       onNext: nextPage,
       formKey: _formKey,
       onFileAndFormatChanged: (file, isPhysical, isDigital) {
@@ -214,10 +218,7 @@ class _AddBookViewState extends State<AddBookView>{
       },
       onRegister: _addBook,
       summaryController: _summaryController,
+      isLoading: _isLoading,
     );
   }
-
-
-
 }
-

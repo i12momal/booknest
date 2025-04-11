@@ -146,7 +146,7 @@ class GenreSelectionRegisterWidget extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
                     ),
                     child: const Text(
-                      "Guardar Cambios",
+                      "Guardar",
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 14,
