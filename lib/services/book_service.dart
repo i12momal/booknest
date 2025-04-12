@@ -121,9 +121,6 @@ class BookService extends BaseService{
   }
 
 
-
-
-
   // Método asíncrono que obtiene los datos de un libro.
   Future<Map<String, dynamic>> getBookById(int bookId) async {
     try {
@@ -258,6 +255,20 @@ class BookService extends BaseService{
     } catch (e) {
       print("Error al eliminar el archivo anterior: $e");
     }
+  }
+
+  // Método asíncrono que obtiene los libros relacionados con una categoría.
+  Future<List<Map<String, dynamic>>> getBooksByCategories(List<String> categories) async {
+    // Creamos el filtro compuesto
+    final filters = categories.map((cat) => "categories.ilike.%$cat%").join(',');
+
+    final List<dynamic> response = await Supabase.instance.client
+        .from('Book')
+        .select()
+        .or(filters);
+
+    return response.map((e) => Map<String, dynamic>.from(e)).toList();
+
   }
 
 }

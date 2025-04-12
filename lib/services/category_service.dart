@@ -25,4 +25,30 @@ class CategoryService extends BaseService {
       return {'success': false, 'message': ex.toString()};
     }
   }
+
+  // Método asíncrono que obtiene las categorías seleccionadas por el usuario.
+  Future<Map<String, dynamic>> getUserCategories() async {
+    try {
+      if (BaseService.client == null) {
+        return {'success': false, 'message': 'Error de conexión a la base de datos.'};
+      }
+
+      // Llamada a la base de datos para obtener las categorías, incluyendo imagen
+      final response = await BaseService.client
+          .from('Categories')
+          .select('name, image')
+          .order('name', ascending: true);
+
+      // Verificamos si la respuesta contiene datos.
+      if (response != null && response.isNotEmpty) {
+        return {'success': true, 'message': 'Categorías obtenidas correctamente', 'data': response};
+      } else {
+        return {'success': false, 'message': 'No se encontraron categorías'};
+      }
+    } catch (ex) {
+      return {'success': false, 'message': ex.toString()};
+    }
+  }
+
+
 }

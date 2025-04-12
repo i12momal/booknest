@@ -1,3 +1,4 @@
+import 'package:booknest/views/home_view.dart';
 import 'package:flutter/material.dart'; 
 import 'services/base_service.dart';
 import 'views/edit_user_view.dart';
@@ -109,7 +110,7 @@ class _MyHomePageState extends State<MyHomePage> {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const AddBookView()),
+                  MaterialPageRoute(builder: (context) => const HomeView()),
                 );
               },
               style: ElevatedButton.styleFrom(
@@ -122,7 +123,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
               ),
               child: const Text(
-                'Añadir libro',
+                'Home View',
                 style: TextStyle(
                   fontSize: 20,
                   color: Colors.white,
