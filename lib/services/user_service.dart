@@ -184,8 +184,35 @@ class UserService extends BaseService{
     }
   }
 
-}
+  /* Método que obtiene los géneros seleccionados por el usuario.
+    Parámetros:
+      - userId: Cadena con el identificador del usuario.
+    Return:
+      - Lista con las categorías seleccionadas por el usuario.
+  */
+  Future<List<String>> getUserGenres(String userId) async {
+    try {
+      final response = await BaseService.client
+          .from('User')
+          .select('genres')
+          .eq('id', userId)
+          .single();
 
-extension on PostgrestList {
-  get error => null;
+      if (response == null || response['genres'] == null) {
+        return [];
+      }
+
+      final genres = response['genres'];
+      if (genres is String) {
+        return genres.split(',').map((e) => e.trim()).toList();
+      } else if (genres is List) {
+        return List<String>.from(genres);
+      } else {
+        return [];
+      }
+    } catch (e) {
+      print('Error obteniendo géneros: $e');
+      return [];
+    }
+  }
 }

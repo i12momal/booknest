@@ -11,4 +11,5 @@ class CategoriesController extends BaseController {
     }
     return [];
   }
+
 }
