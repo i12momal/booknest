@@ -12,7 +12,7 @@ class HomeView extends StatefulWidget {
 
 class _HomeViewState extends State<HomeView> {
   final HomeController _controller = HomeController();
-  List<String> categories = [];
+  List<Map<String, dynamic>> categories = [];
   String? selectedCategory;
 
   // Lista de libros (simulados con categoría incluida)
@@ -37,10 +37,16 @@ class _HomeViewState extends State<HomeView> {
   Future<void> _loadCategoriesAndBooks() async {
     final userId = Supabase.instance.client.auth.currentUser?.id;
     if (userId != null) {
-      final userGenres = await _controller.loadUserGenres(userId);
+      final userCategories = await _controller.loadUserGenres(userId);
+
+      final categoryNames = userCategories.map((c) => c['name'].toString()).toList();
+
+      final books = await _controller.loadBooksByUserCategories(categoryNames);
+
       setState(() {
-        categories = userGenres;
-        filteredBooks = allBooks.where((book) => categories.contains(book['genre'])).toList();
+        categories = userCategories;
+        filteredBooks = books;
+        currentPage = 1;
       });
     }
   }
@@ -109,10 +115,10 @@ class _HomeViewState extends State<HomeView> {
               itemCount: categories.length,
               itemBuilder: (context, index) {
                 final category = categories[index];
-                final isSelected = selectedCategory == category;
+                final isSelected = selectedCategory == category['name'];
 
                 return GestureDetector(
-                  onTap: () => _toggleCategory(category),
+                  onTap: () => _toggleCategory(category['name']),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     margin: const EdgeInsets.symmetric(horizontal: 8),
@@ -134,15 +140,27 @@ class _HomeViewState extends State<HomeView> {
                       children: [
                         Transform.scale(
                           scale: isSelected ? 1.1 : 1.0,
-                          child: const CircleAvatar(
-                            backgroundImage: AssetImage('assets/book_shelf_icon.jpg'),
-                            radius: 25,
-                            backgroundColor: Colors.white,
+                          child: Container(
+                            width: 50,
+                            height: 50,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: isSelected ? Colors.grey : const Color(0xFF112363),
+                                width: 2,
+                              ),
+                            ),
+                            child: ClipOval(
+                              child: Image.network(
+                                category['image'],
+                                fit: BoxFit.cover,
+                              ),
+                            ),
                           ),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          category,
+                           category['name'],
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
