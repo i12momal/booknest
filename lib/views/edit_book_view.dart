@@ -51,6 +51,7 @@ class _EditBookViewState extends State<EditBookView> {
   bool isDigitalSelected = false;
 
   File? fileToSend;
+  File? coverImage;
 
   @override
   void initState() {
@@ -111,6 +112,12 @@ class _EditBookViewState extends State<EditBookView> {
           // Cargar géneros seleccionados
         if (bookData.categories != null && bookData.categories.isNotEmpty) {
           selectedGenres = bookData.categories.split(',').map((genre) => genre.trim()).toList();
+        }
+
+        if (bookData.cover != null && bookData.cover.isNotEmpty) {
+          setState(() {
+            currentImageUrl = bookData.cover;  // Aquí obtienes la URL de la portada
+          });
         }
 
         // Si el libro tiene un formato Digital, cargar el archivo
@@ -215,8 +222,21 @@ class _EditBookViewState extends State<EditBookView> {
       final summary = _summaryController.text.trim();
 
       // Mantener la imagen actual si no se ha seleccionado una nueva
-     final isDigital = selectedFormat.contains("Digital");
-     File? fileToSend = isDigital ? this.fileToSend : null;
+      final isDigital = selectedFormat.contains("Digital");
+      File? fileToSend = isDigital ? this.fileToSend : null;
+
+      File? coverToSend;
+
+      // Si se ha seleccionado una nueva portada, usamos la portada actual
+      if (coverImage != null) {
+        coverToSend = coverImage;  // Usamos el archivo directamente si está presente
+      } else if (currentImageUrl?.isNotEmpty ?? false) {
+        // Si no se ha seleccionado una nueva portada pero hay una URL de portada existente
+        coverToSend = null;  // Aquí puedes dejarlo como null, ya que la URL se pasará como String
+      } else {
+        coverToSend = null;  // Si no hay ni archivo ni URL, dejamos en null
+      }
+
 
       final userId = await AccountController().getCurrentUserId();
 
@@ -228,7 +248,8 @@ class _EditBookViewState extends State<EditBookView> {
       print("Pages Number: $pagesNumber");
       print("Language: $language");
       print("Selected Formats: ${selectedFormat.join(", ")}");
-      print("Image URL: $fileToSend");  // Aquí la URL será null si no es digital
+      print("Image URL: $fileToSend");
+      print("Cover Image: $coverToSend");
       print("Summary: $summary");
       print("Selected Genres: ${selectedGenres.join(", ")}");
       print("State: $state");
@@ -247,7 +268,8 @@ class _EditBookViewState extends State<EditBookView> {
         selectedGenres.join(", "),
         state,
         userId ?? '',
-        userId ?? ''
+        userId ?? '',
+        coverToSend, // Ahora pasas el archivo si está presente, o null si no
       );
 
       // Ocultar el spinner y mostrar el mensaje de éxito
@@ -341,6 +363,11 @@ class _EditBookViewState extends State<EditBookView> {
       onFilePicked: (file){
         setState((){
           fileToSend = file;
+        });
+      },
+      onCoverPicked: (imageFile) {
+        setState(() {
+          coverImage = imageFile; // Actualiza la portada seleccionada
         });
       },
     );

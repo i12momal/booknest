@@ -6,6 +6,7 @@ import 'package:booknest/widgets/custom_text_field.dart';
 import 'package:booknest/widgets/language_dropdown.dart';
 import 'package:booknest/widgets/bookstate_dropdown.dart';
 import 'package:booknest/controllers/book_controller.dart';
+import 'package:image_picker/image_picker.dart';
 
 class BookInfoFormEdit extends StatefulWidget {
   final TextEditingController titleController;
@@ -19,6 +20,7 @@ class BookInfoFormEdit extends StatefulWidget {
   final GlobalKey<FormState> formKey;
   final void Function(bool isPhysical, bool isDigital) onFormatChanged;
   final void Function(File?) onFilePicked;
+  final void Function(File?) onCoverPicked; 
   final List<String> selectedFormats;
 
   // Nuevo parámetro para saber si estamos en modo de edición
@@ -37,6 +39,7 @@ class BookInfoFormEdit extends StatefulWidget {
     required this.formKey,
     required this.onFormatChanged,
     required this.onFilePicked,
+    required this.onCoverPicked,
     required this.isEditMode,
     this.selectedFormats = const [],
   });
@@ -56,6 +59,7 @@ class _BookInfoFormEditState extends State<BookInfoFormEdit> {
 
   String? uploadedFileName;
   bool isUploading = false;
+  File? coverImage;
 
   late final BookController bookController;
 
@@ -237,6 +241,48 @@ class _BookInfoFormEditState extends State<BookInfoFormEdit> {
                       
                       const SizedBox(height: 15),
                     ]else...[],
+
+                    const SizedBox(height: 15),
+                    const Text(
+                      'Portada',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    OutlinedButton(
+                      onPressed: _pickCoverImage, // Acción para seleccionar la portada
+                      style: OutlinedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        side: const BorderSide(color: Colors.black, width: 2),
+                        padding: const EdgeInsets.all(16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          if (coverImage != null) ...[
+                            Image.file(
+                              coverImage!, 
+                              width: 40, 
+                              height: 40, 
+                              fit: BoxFit.cover,
+                            ),
+                          ] else ...[
+                            const Text(
+                              'Seleccionar portada...',
+                              style: TextStyle(fontSize: 15, color: Colors.grey),
+                            ),
+                          ],
+                          const Icon(Icons.image, color: Colors.grey),
+                        ],
+                      ),
+                    ),
+
 
 
 
@@ -441,6 +487,17 @@ class _BookInfoFormEditState extends State<BookInfoFormEdit> {
       });
     }
   }
+
+  Future<void> _pickCoverImage() async {
+    final imagePicker = ImagePicker();
+    final pickedImage = await imagePicker.pickImage(source: ImageSource.gallery);
+
+    if (pickedImage != null) {
+      // Aquí se pasa el archivo de imagen a la función onCoverPicked para actualizar el estado
+      widget.onCoverPicked(File(pickedImage.path));
+    }
+  }
+
 
   void _pickFile() async {
     setState(() {

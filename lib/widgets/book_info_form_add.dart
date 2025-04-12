@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:booknest/widgets/book_cover_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:booknest/widgets/custom_text_field.dart';
@@ -13,8 +15,11 @@ class BookInfoForm extends StatefulWidget {
   final TextEditingController formatController;
   final VoidCallback onNext;
   final GlobalKey<FormState> formKey;
+  final File? coverImage;
 
   final Function(String? file, bool isPhysical, bool isDigital) onFileAndFormatChanged;
+  final Function(File?) onCoverImageChanged; // Nuevo parámetro
+
 
   const BookInfoForm({
     super.key,
@@ -27,6 +32,8 @@ class BookInfoForm extends StatefulWidget {
     required this.onNext,
     required this.formKey,
     required this.onFileAndFormatChanged,
+    required this.coverImage,
+    required this.onCoverImageChanged,
   });
 
   @override
@@ -45,11 +52,13 @@ class _BookInfoFormState extends State<BookInfoForm> {
   bool isUploading = false;
 
   late final BookController bookController;
+  File? coverImageFile;
 
   @override
   void initState() {
     super.initState();
     bookController = BookController();
+    coverImageFile = widget.coverImage;
   }
 
 
@@ -141,6 +150,16 @@ class _BookInfoFormState extends State<BookInfoForm> {
                         languageErrorMessage!,
                         style: const TextStyle(color: Colors.red),
                       ),
+                    ),
+
+                    BookCoverPickerWidget(
+                      initialCoverImage: coverImageFile,  // La imagen seleccionada localmente
+                      onCoverImagePicked: (File? newImage) {
+                        setState(() {
+                          coverImageFile = newImage; // Actualiza el estado con la nueva imagen seleccionada
+                        });
+                        widget.onCoverImageChanged(newImage);
+                      },
                     ),
                     
                     const SizedBox(height: 15),
@@ -353,5 +372,4 @@ class _BookInfoFormState extends State<BookInfoForm> {
       });
     }
   }
-
 }

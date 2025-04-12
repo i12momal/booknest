@@ -24,7 +24,6 @@ class _AddBookViewState extends State<AddBookView>{
   final _pagesNumberController = TextEditingController();
   final _languageController = TextEditingController();
   final _formatController = TextEditingController();
-  final _bookStateController = TextEditingController();
   final _summaryController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
@@ -46,10 +45,19 @@ class _AddBookViewState extends State<AddBookView>{
   bool isPhysicalSelected = false;
   bool isDigitalSelected = false;
 
+  File? coverImage;
+
   @override
   void initState() {
     super.initState();
     _fetchCategories();
+  }
+
+  // Función que maneja la imagen seleccionada
+  void _handleCoverPicked(File? image) {
+    setState(() {
+      coverImage = image;
+    });
   }
 
   // Función para obtener las categorías
@@ -120,7 +128,7 @@ class _AddBookViewState extends State<AddBookView>{
 
 
     final result = await _bookController.addBook(
-        title, author, isbn, pagesNumber, language, formats.join(", "), file, summary, selectedGenres.join(", "));
+        title, author, isbn, pagesNumber, language, formats.join(", "), file, summary, selectedGenres.join(", "), coverImage);
 
     setState(() {
         _isLoading = false;
@@ -186,14 +194,20 @@ class _AddBookViewState extends State<AddBookView>{
       languageController: _languageController,
       formatController: _formatController,
       onNext: nextPage,
+      coverImage: coverImage,
       formKey: _formKey,
       onFileAndFormatChanged: (file, isPhysical, isDigital) {
-      setState(() {
-        uploadedFileName = file;
-        isPhysicalSelected = isPhysical;
-        isDigitalSelected = isDigital;
+        setState(() {
+          uploadedFileName = file;
+          isPhysicalSelected = isPhysical;
+          isDigitalSelected = isDigital;
       });
-    },
+      },
+      onCoverImageChanged: (image) {
+        setState(() {
+          coverImage = image; 
+        });
+      },
     );
   }
 

@@ -38,6 +38,7 @@ class BookService extends BaseService{
         'language': createBookViewModel.language,
         'format': createBookViewModel.format,
         'file': createBookViewModel.file,
+        'cover': createBookViewModel.cover,
         'summary': createBookViewModel.summary,
         'categories': createBookViewModel.categories,
         'state': createBookViewModel.state,
@@ -119,6 +120,53 @@ class BookService extends BaseService{
       return null;
     }
   }
+
+  Future<String?> uploadCover(File file, String bookTitle, String? userId) async {
+    try {
+      // Normalizamos el título para crear un nombre de archivo único
+      String sanitizedTitle = bookTitle.replaceAll(' ', '_');
+      String fileExt = file.path.split('.').last;
+      int timestamp = DateTime.now().millisecondsSinceEpoch;
+
+      // Nuevo nombre con timestamp para evitar caché
+      String fileName = "${sanitizedTitle}_${userId}_$timestamp.$fileExt";
+
+      // Obtener lista de archivos actuales
+      final List<FileObject> existingFiles = await Supabase.instance.client.storage
+          .from('books')
+          .list(path: 'covers/');
+
+      // Eliminar archivos anteriores del mismo usuario/libro (optimizando la eliminación)
+      final userFiles = existingFiles.where((file) =>
+          file.name.startsWith('${sanitizedTitle}_$userId')).toList();
+
+      if (userFiles.isNotEmpty) {
+        // Realizamos la eliminación en bloque para evitar múltiples llamadas
+        final fileNamesToDelete = userFiles.map((file) => 'covers/${file.name}').toList();
+        await Supabase.instance.client.storage
+            .from('books')
+            .remove(fileNamesToDelete);
+        print("Portadas anteriores eliminadas: $fileNamesToDelete");
+      }
+
+      // Subir nuevo archivo con timestamp
+      final response = await Supabase.instance.client.storage
+          .from("books")
+          .upload("covers/$fileName", file);
+
+      // Obtener URL pública del archivo subido
+      final String publicUrl = Supabase.instance.client.storage
+          .from("books")
+          .getPublicUrl("covers/$fileName");
+
+      print("Portada subida correctamente: $fileName");
+      return publicUrl;
+    } catch (e) {
+      print("Error al procesar la portada: $e");
+      return null;
+    }
+  }
+
 
 
   // Método asíncrono que obtiene los datos de un libro.
@@ -211,6 +259,9 @@ class BookService extends BaseService{
       // Aquí es donde se asegura de actualizar el archivo con la nueva URL.
       if (editBookViewModel.file != existingBook['file']) {
         updateData['file'] = editBookViewModel.file;
+      }
+      if (editBookViewModel.cover != existingBook['cover']) {
+        updateData['cover'] = editBookViewModel.cover;
       }
 
       print("Datos a actualizar: $updateData");

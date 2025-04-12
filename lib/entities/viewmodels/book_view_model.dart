@@ -7,6 +7,7 @@ class IndexBookViewModel{
   final String language;
   final String format;
   final String file;
+  final String cover;
   final String summary;
   final String categories;
   final String state;
@@ -21,6 +22,7 @@ class IndexBookViewModel{
     required this.language,
     required this.format,
     required this.file,
+    required this.cover,
     required this.summary,
     required this.categories,
     required this.state,
@@ -39,6 +41,7 @@ class CreateBookViewModel{
   final String language;
   final String format;
   final String file;
+  final String? cover;
   final String summary;
   final String categories;
   final String state;
@@ -53,6 +56,7 @@ class CreateBookViewModel{
     required this.language,
     required this.format,
     required this.file,
+    required this.cover,
     required this.summary,
     required this.categories,
     required this.state,
@@ -72,6 +76,7 @@ class EditBookViewModel{
   final String language;
   final String format;
   final String? file;
+  final String? cover;
   final String summary;
   final String categories;
   final String state;
@@ -87,6 +92,7 @@ class EditBookViewModel{
     required this.language,
     required this.format,
     required this.file,
+    required this.cover,
     required this.summary,
     required this.categories,
     required this.state,
