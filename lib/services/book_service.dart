@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:booknest/entities/viewmodels/book_view_model.dart';
 import 'package:booknest/services/base_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:diacritic/diacritic.dart';
 
 class BookService extends BaseService{
 
@@ -76,12 +77,9 @@ class BookService extends BaseService{
   */
   Future<String?> uploadFile(File file, String bookTitle, String? userId) async {
     try {
-      // Normalizamos el título para crear un nombre de archivo único
-      String sanitizedTitle = bookTitle.replaceAll(' ', '_');
+      String sanitizedTitle = removeDiacritics(bookTitle).replaceAll(' ', '_');
       String fileExt = file.path.split('.').last;
       int timestamp = DateTime.now().millisecondsSinceEpoch;
-
-      // Nuevo nombre con timestamp para evitar caché
       String fileName = "${sanitizedTitle}_${userId}_$timestamp.$fileExt";
 
       // Obtener lista de archivos actuales
@@ -124,11 +122,9 @@ class BookService extends BaseService{
   Future<String?> uploadCover(File file, String bookTitle, String? userId) async {
     try {
       // Normalizamos el título para crear un nombre de archivo único
-      String sanitizedTitle = bookTitle.replaceAll(' ', '_');
+      String sanitizedTitle = removeDiacritics(bookTitle).replaceAll(' ', '_');
       String fileExt = file.path.split('.').last;
       int timestamp = DateTime.now().millisecondsSinceEpoch;
-
-      // Nuevo nombre con timestamp para evitar caché
       String fileName = "${sanitizedTitle}_${userId}_$timestamp.$fileExt";
 
       // Obtener lista de archivos actuales

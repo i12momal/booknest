@@ -57,58 +57,6 @@ class _MyHomePageState extends State<MyHomePage> {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const EditUserView(userId: '0c7488ce-d5ff-442d-8888-433c6a8016c9')),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                minimumSize: Size(screenWidth * 0.8, 50),
-                backgroundColor: const Color(0xFF61BBFF),
-                side: const BorderSide(
-                  color: Colors.white,
-                  width: 2,
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
-              ),
-              child: const Text(
-                'Editar Usuario',
-                style: TextStyle(
-                  fontSize: 20,
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            const SizedBox(height: 20), // Espacio entre los botones
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const LoginView()),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                minimumSize: Size(screenWidth * 0.8, 50),
-                backgroundColor: const Color(0xFF61BBFF),
-                side: const BorderSide(
-                  color: Colors.white,
-                  width: 2,
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
-              ),
-              child: const Text(
-                'Login',
-                style: TextStyle(
-                  fontSize: 20,
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            const SizedBox(height: 20), // Espacio entre los botones
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
                   MaterialPageRoute(builder: (context) => const HomeView()),
                 );
               },
@@ -135,7 +83,7 @@ class _MyHomePageState extends State<MyHomePage> {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const EditBookView(bookId: 6)),
+                  MaterialPageRoute(builder: (context) => const LoginView()),
                 );
               },
               style: ElevatedButton.styleFrom(
@@ -148,7 +96,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
               ),
               child: const Text(
-                'Editar libro',
+                'Login',
                 style: TextStyle(
                   fontSize: 20,
                   color: Colors.white,

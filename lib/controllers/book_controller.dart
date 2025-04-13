@@ -74,34 +74,42 @@ class BookController extends BaseController{
     return await bookService.addBook(addBookViewModel);
   }
 
-  Future<Map<String, dynamic>> editBook(int id, String title, String author, String isbn, int pagesNumber, String language, String format,
-    File? file, String summary, String genres, String state, String ownerId, String currentHolderId, File? coverImage) async {
+  Future<Map<String, dynamic>> editBook(int id, String title, String author, String isbn, int pagesNumber, String language, String format, File? file, String summary,
+    String genres, String state, String ownerId, String currentHolderId, File? coverImage) async {
     String? imageUrl;
     String? coverUrl;
 
     // Obtener la URL del archivo actual del libro
     final currentBook = await bookService.getBookById(id);
+
     String? currentImageUrl;
     String? currentCoverImageUrl;
+
     if (currentBook['success'] && currentBook['data'] != null) {
       currentImageUrl = currentBook['data']['file'];
-      currentCoverImageUrl = currentBook['data']['cover'];  // Asegúrate de obtener la URL de la portada también
+      currentCoverImageUrl = currentBook['data']['cover'];
       print("URL del archivo actual: $currentImageUrl");
       print("URL de la portada actual: $currentCoverImageUrl");
     } else {
       print("Error al obtener el libro o archivo actual.");
     }
 
-    // Subir el archivo si es necesario
-    if (file != null && file.path.startsWith('/')) {
+    // Reglas para archivo según formato
+    bool soloFisico = format.toLowerCase().trim() == 'físico';
+
+    if (soloFisico) {
+      if (currentImageUrl != null) {
+        print("Solo 'Físico' seleccionado. Eliminando archivo...");
+        await bookService.deleteFile(currentImageUrl);
+      }
+      imageUrl = null;
+    } else if (file != null && file.path.startsWith('/')) {
       try {
-        // Eliminar archivo anterior si existe
         if (currentImageUrl != null) {
-          print("Eliminando archivo anterior...");
+          print("Reemplazando archivo anterior...");
           await bookService.deleteFile(currentImageUrl);
         }
 
-        // Subir nuevo archivo y obtener URL
         imageUrl = await bookService.uploadFile(file, title, ownerId);
 
         if (imageUrl == null) {
@@ -111,7 +119,8 @@ class BookController extends BaseController{
             'message': 'Error al subir el archivo. Por favor, intente nuevamente.'
           };
         }
-        print("Nueva URL del archivo: $imageUrl");
+
+        print("Archivo nuevo subido: $imageUrl");
       } catch (e) {
         print("Error al procesar el archivo: $e");
         return {
@@ -120,20 +129,17 @@ class BookController extends BaseController{
         };
       }
     } else {
-      // No se subió un nuevo archivo, mantener el actual
-      imageUrl = currentImageUrl ?? '';
+      imageUrl = currentImageUrl;
     }
 
     // Subir la nueva portada si es necesario
     if (coverImage != null && coverImage.path.startsWith('/')) {
       try {
-        // Eliminar portada anterior si existe
         if (currentCoverImageUrl != null) {
           print("Eliminando portada anterior...");
           await bookService.deleteFile(currentCoverImageUrl);
         }
 
-        // Subir nueva portada y obtener URL
         coverUrl = await bookService.uploadCover(coverImage, title, ownerId);
 
         if (coverUrl == null) {
@@ -143,6 +149,7 @@ class BookController extends BaseController{
             'message': 'Error al subir la portada. Por favor, intente nuevamente.'
           };
         }
+
         print("Nueva URL de la portada: $coverUrl");
       } catch (e) {
         print("Error al procesar la portada: $e");
@@ -152,8 +159,7 @@ class BookController extends BaseController{
         };
       }
     } else {
-      // No se subió una nueva portada, mantener la actual
-      coverUrl = currentCoverImageUrl ?? '';  // Aquí conservamos la URL actual de la portada
+      coverUrl = currentCoverImageUrl ?? '';
     }
 
     // Crear viewModel con los datos editados
@@ -167,11 +173,11 @@ class BookController extends BaseController{
       format: format,
       categories: genres,
       file: imageUrl,
-      cover: coverUrl,  // Usamos la URL de la portada actual si no se cambió
+      cover: coverUrl,
       summary: summary,
       state: state,
       ownerId: ownerId,
-      currentHolderId: currentHolderId
+      currentHolderId: currentHolderId,
     );
 
     // Llamar al servicio para actualizar el libro
@@ -186,6 +192,7 @@ class BookController extends BaseController{
       };
     }
   }
+
 
 
   /* Método asíncrono que devuelve los datos de un libro. */
