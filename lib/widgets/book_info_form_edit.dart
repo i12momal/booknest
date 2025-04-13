@@ -1,11 +1,13 @@
 import 'dart:io';
 import 'package:booknest/entities/models/book_model.dart';
+import 'package:booknest/widgets/book_cover_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:booknest/widgets/custom_text_field.dart';
 import 'package:booknest/widgets/language_dropdown.dart';
 import 'package:booknest/widgets/bookstate_dropdown.dart';
 import 'package:booknest/controllers/book_controller.dart';
+import 'package:image_picker/image_picker.dart';
 
 class BookInfoFormEdit extends StatefulWidget {
   final TextEditingController titleController;
@@ -20,6 +22,10 @@ class BookInfoFormEdit extends StatefulWidget {
   final void Function(bool isPhysical, bool isDigital) onFormatChanged;
   final void Function(File?) onFilePicked;
   final List<String> selectedFormats;
+  
+  final File? coverFile;
+  final String? coverImageUrl; 
+  final Function(File?) onCoverPicked; 
 
   // Nuevo parámetro para saber si estamos en modo de edición
   final bool isEditMode;
@@ -37,7 +43,10 @@ class BookInfoFormEdit extends StatefulWidget {
     required this.formKey,
     required this.onFormatChanged,
     required this.onFilePicked,
+    required this.onCoverPicked,
     required this.isEditMode,
+    required this.coverFile,
+    this.coverImageUrl,
     this.selectedFormats = const [],
   });
 
@@ -56,6 +65,7 @@ class _BookInfoFormEditState extends State<BookInfoFormEdit> {
 
   String? uploadedFileName;
   bool isUploading = false;
+  File? coverImage;
 
   late final BookController bookController;
 
@@ -108,10 +118,19 @@ class _BookInfoFormEditState extends State<BookInfoFormEdit> {
         uploadedFileName = fileName;  // Asigna el nombre del archivo
         print("Uploaded file name set: $uploadedFileName"); // Verificar que el nombre se asigna correctamente
       }
+
+      if (widget.coverImageUrl != null) {
+        // Verifica si coverImageUrl es una URL (por ejemplo, comienza con 'http')
+        if (widget.coverImageUrl!.startsWith('http') || widget.coverImageUrl!.startsWith('https')) {
+          // Es una URL, se debe usar NetworkImage
+          coverImage = null;
+        } else {
+          // Es un archivo local, se debe usar FileImage
+          coverImage = File(widget.coverImageUrl!);
+        }
+      }
     });
   }
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -238,9 +257,12 @@ class _BookInfoFormEditState extends State<BookInfoFormEdit> {
                       const SizedBox(height: 15),
                     ]else...[],
 
-
-
-
+                    BookCoverPickerWidget(
+                      initialCoverImage: coverImage,
+                      onCoverImagePicked: widget.onCoverPicked,
+                      coverImageUrl: widget.coverImageUrl,
+                    ),
+                    const SizedBox(height: 15),
                     const Text(
                       'Formato',
                       style: TextStyle(

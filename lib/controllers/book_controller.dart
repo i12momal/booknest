@@ -26,9 +26,10 @@ class BookController extends BaseController{
         - data (Opcional): Información del libro creado si la operación fue exitosa.
   */
   Future<Map<String, dynamic>> addBook(String title, String author, String isbn, int pagesNumber,
-    String language, String format, File? file, String summary, String categories) async {
+    String language, String format, File? file, String summary, String categories, File? coverImage) async {
 
     String? fileUrl = '';
+    String? coverImageUrl = '';
 
     // Obtener el ID del usuario
     final userId = await accountService.getCurrentUserId();
@@ -44,6 +45,14 @@ class BookController extends BaseController{
       }
     }
 
+    // Si el usuario sube una portada, la guardamos también
+    if (coverImage != null) {
+      coverImageUrl = await bookService.uploadCover(coverImage, title, userId);
+      if (coverImageUrl == null) {
+        return {'success': false, 'message': 'Error al subir la portada'};
+      }
+    }
+
     // Creación del viewModel
     final addBookViewModel = CreateBookViewModel(
       title: title,
@@ -53,6 +62,7 @@ class BookController extends BaseController{
       language: language,
       format: format,
       file: fileUrl,
+      cover: coverImageUrl,
       summary: summary,
       categories: categories,
       state: "Disponible",
@@ -65,20 +75,24 @@ class BookController extends BaseController{
   }
 
   Future<Map<String, dynamic>> editBook(int id, String title, String author, String isbn, int pagesNumber, String language, String format,
-    File? file, String summary, String genres, String state, String ownerId, String currentHolderId) async {
+    File? file, String summary, String genres, String state, String ownerId, String currentHolderId, File? coverImage) async {
     String? imageUrl;
+    String? coverUrl;
 
     // Obtener la URL del archivo actual del libro
     final currentBook = await bookService.getBookById(id);
     String? currentImageUrl;
+    String? currentCoverImageUrl;
     if (currentBook['success'] && currentBook['data'] != null) {
       currentImageUrl = currentBook['data']['file'];
+      currentCoverImageUrl = currentBook['data']['cover'];  // Asegúrate de obtener la URL de la portada también
       print("URL del archivo actual: $currentImageUrl");
+      print("URL de la portada actual: $currentCoverImageUrl");
     } else {
       print("Error al obtener el libro o archivo actual.");
     }
 
-    // Validar si el archivo es nuevo y local antes de subirlo
+    // Subir el archivo si es necesario
     if (file != null && file.path.startsWith('/')) {
       try {
         // Eliminar archivo anterior si existe
@@ -110,6 +124,38 @@ class BookController extends BaseController{
       imageUrl = currentImageUrl ?? '';
     }
 
+    // Subir la nueva portada si es necesario
+    if (coverImage != null && coverImage.path.startsWith('/')) {
+      try {
+        // Eliminar portada anterior si existe
+        if (currentCoverImageUrl != null) {
+          print("Eliminando portada anterior...");
+          await bookService.deleteFile(currentCoverImageUrl);
+        }
+
+        // Subir nueva portada y obtener URL
+        coverUrl = await bookService.uploadCover(coverImage, title, ownerId);
+
+        if (coverUrl == null) {
+          print("Error al subir la portada. La URL es nula.");
+          return {
+            'success': false,
+            'message': 'Error al subir la portada. Por favor, intente nuevamente.'
+          };
+        }
+        print("Nueva URL de la portada: $coverUrl");
+      } catch (e) {
+        print("Error al procesar la portada: $e");
+        return {
+          'success': false,
+          'message': 'Error al procesar la portada. Por favor, intente nuevamente.'
+        };
+      }
+    } else {
+      // No se subió una nueva portada, mantener la actual
+      coverUrl = currentCoverImageUrl ?? '';  // Aquí conservamos la URL actual de la portada
+    }
+
     // Crear viewModel con los datos editados
     final editBookViewModel = EditBookViewModel(
       id: id,
@@ -121,6 +167,7 @@ class BookController extends BaseController{
       format: format,
       categories: genres,
       file: imageUrl,
+      cover: coverUrl,  // Usamos la URL de la portada actual si no se cambió
       summary: summary,
       state: state,
       ownerId: ownerId,
@@ -139,9 +186,6 @@ class BookController extends BaseController{
       };
     }
   }
-
-
-
 
 
   /* Método asíncrono que devuelve los datos de un libro. */

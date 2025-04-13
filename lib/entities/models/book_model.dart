@@ -8,6 +8,7 @@ class Book{
   final String language;
   final String format;
   final String file;
+  final String cover;
   final String summary;
   final String categories;
   final String state;
@@ -23,6 +24,7 @@ class Book{
     required this.language,
     required this.format,
     required this.file,
+    required this.cover,
     required this.summary,
     required this.categories,
     required this.state,
@@ -41,6 +43,7 @@ class Book{
         language: json['language'] ?? '',
         format: json['format'] ?? '',  // Aseguramos que sea un String
         file: json['file'] ?? '',
+        cover: json['cover'] ?? '',
         summary: json['summary'] ?? '',
         categories: json['categories'] ?? '',  // Aseguramos que sea un String
         state: json['state'] ?? '',

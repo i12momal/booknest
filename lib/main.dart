@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'services/base_service.dart';
 import 'views/edit_user_view.dart';
 import 'views/login_view.dart';
-import 'views/add_book_view.dart';
 import 'views/edit_book_view.dart';
 
 void main() async {
@@ -136,7 +135,7 @@ class _MyHomePageState extends State<MyHomePage> {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const EditBookView(bookId: 12)),
+                  MaterialPageRoute(builder: (context) => const EditBookView(bookId: 6)),
                 );
               },
               style: ElevatedButton.styleFrom(
