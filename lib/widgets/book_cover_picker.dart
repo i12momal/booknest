@@ -55,22 +55,22 @@ class _BookCoverPickerWidgetState extends State<BookCoverPickerWidget> {
         const SizedBox(height: 5),
         
         // Aquí centramos solo la imagen
-        Center(  // Añadido Center para centrar solo la imagen
+        Center(  
           child: GestureDetector(
             onTap: _pickCoverImage, // Acción para seleccionar la portada
             child: Container(
               width: 100, // Ajusta el tamaño del cuadrado
-              height: 100, // Ajusta el tamaño del cuadrado
+              height: 150, // Ajusta el tamaño del cuadrado
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10), // Bordes redondeados si lo deseas
+                borderRadius: BorderRadius.circular(10),
                 image: DecorationImage(
                   image: _coverImageFile != null
-                      ? FileImage(_coverImageFile!) // Imagen seleccionada
-                      : (widget.coverImageUrl != null && widget.coverImageUrl!.isNotEmpty && widget.coverImageUrl!.startsWith('http'))
-                          ? NetworkImage(widget.coverImageUrl!) // Imagen de la URL si está disponible
-                          : const AssetImage('assets/images/portada.png') as ImageProvider, // Imagen predeterminada
-                  fit: BoxFit.contain, // Cambiado para que la imagen se vea entera sin recortarse
-                  alignment: Alignment.center, // Centra la imagen dentro del contenedor
+                      ? FileImage(_coverImageFile!) // Si hay un archivo, lo mostramos
+                      : widget.coverImageUrl != null && widget.coverImageUrl!.isNotEmpty && widget.coverImageUrl!.startsWith('http')
+                          ? NetworkImage(widget.coverImageUrl!) // Si hay una URL válida, la mostramos
+                          : const AssetImage('assets/images/portada.png') as ImageProvider, // Si no, mostramos una imagen predeterminada
+                  fit: BoxFit.cover, // Cambié a BoxFit.cover para que la imagen se recorte apropiadamente si es necesario
+                  alignment: Alignment.center,
                 ),
               ),
             ),

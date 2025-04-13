@@ -186,7 +186,7 @@ class _EditUserViewState extends State<EditUserView> {
       final confirmPassword = _confirmPasswordController.text.isNotEmpty ? _confirmPasswordController.text.trim() : null;
 
       // Mantener la imagen actual si no se ha seleccionado una nueva
-      final imageUrl = _imageFile ?? currentImageUrl ?? '';
+      // final imageUrl = _imageFile ?? currentImageUrl ?? '';
 
       print("Datos para actualizar:");
       print("Nombre: $name");

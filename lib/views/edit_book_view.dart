@@ -52,6 +52,7 @@ class _EditBookViewState extends State<EditBookView> {
 
   File? fileToSend;
   File? coverImage;
+  String? currentCoverImageUrl;
 
   @override
   void initState() {
@@ -71,6 +72,13 @@ class _EditBookViewState extends State<EditBookView> {
     _stateController.dispose();
     _pageController.dispose();
     super.dispose();
+  }
+
+  // Función que maneja la imagen seleccionada
+  void _handleImagePicked(File? image) {
+    setState(() {
+      coverImage = image;
+    });
   }
 
   // Función para cargar datos del libro
@@ -116,7 +124,7 @@ class _EditBookViewState extends State<EditBookView> {
 
         if (bookData.cover != null && bookData.cover.isNotEmpty) {
           setState(() {
-            currentImageUrl = bookData.cover;  // Aquí obtienes la URL de la portada
+            currentCoverImageUrl = bookData.cover ?? '';  // Aquí obtienes la URL de la portada
           });
         }
 
@@ -225,17 +233,7 @@ class _EditBookViewState extends State<EditBookView> {
       final isDigital = selectedFormat.contains("Digital");
       File? fileToSend = isDigital ? this.fileToSend : null;
 
-      File? coverToSend;
-
-      // Si se ha seleccionado una nueva portada, usamos la portada actual
-      if (coverImage != null) {
-        coverToSend = coverImage;  // Usamos el archivo directamente si está presente
-      } else if (currentImageUrl?.isNotEmpty ?? false) {
-        // Si no se ha seleccionado una nueva portada pero hay una URL de portada existente
-        coverToSend = null;  // Aquí puedes dejarlo como null, ya que la URL se pasará como String
-      } else {
-        coverToSend = null;  // Si no hay ni archivo ni URL, dejamos en null
-      }
+      print("Imagen: ${coverImage != null ? 'Nueva imagen de portada seleccionada' : 'Mantener imagen actual'}");
 
 
       final userId = await AccountController().getCurrentUserId();
@@ -249,7 +247,7 @@ class _EditBookViewState extends State<EditBookView> {
       print("Language: $language");
       print("Selected Formats: ${selectedFormat.join(", ")}");
       print("Image URL: $fileToSend");
-      print("Cover Image: $coverToSend");
+      print("Cover Image: $coverImage");
       print("Summary: $summary");
       print("Selected Genres: ${selectedGenres.join(", ")}");
       print("State: $state");
@@ -269,7 +267,7 @@ class _EditBookViewState extends State<EditBookView> {
         state,
         userId ?? '',
         userId ?? '',
-        coverToSend, // Ahora pasas el archivo si está presente, o null si no
+        coverImage, // Ahora pasas el archivo si está presente, o null si no
       );
 
       // Ocultar el spinner y mostrar el mensaje de éxito
@@ -365,11 +363,9 @@ class _EditBookViewState extends State<EditBookView> {
           fileToSend = file;
         });
       },
-      onCoverPicked: (imageFile) {
-        setState(() {
-          coverImage = imageFile; // Actualiza la portada seleccionada
-        });
-      },
+      onCoverPicked: _handleImagePicked,
+      coverFile: coverImage,
+      coverImageUrl: currentCoverImageUrl,
     );
   }
 

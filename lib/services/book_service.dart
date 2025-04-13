@@ -168,7 +168,6 @@ class BookService extends BaseService{
   }
 
 
-
   // Método asíncrono que obtiene los datos de un libro.
   Future<Map<String, dynamic>> getBookById(int bookId) async {
     try {
@@ -261,7 +260,7 @@ class BookService extends BaseService{
         updateData['file'] = editBookViewModel.file;
       }
       if (editBookViewModel.cover != existingBook['cover']) {
-        updateData['cover'] = editBookViewModel.cover;
+        updateData['cover'] = editBookViewModel.cover; 
       }
 
       print("Datos a actualizar: $updateData");

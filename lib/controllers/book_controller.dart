@@ -85,12 +85,14 @@ class BookController extends BaseController{
     String? currentCoverImageUrl;
     if (currentBook['success'] && currentBook['data'] != null) {
       currentImageUrl = currentBook['data']['file'];
+      currentCoverImageUrl = currentBook['data']['cover'];  // Asegúrate de obtener la URL de la portada también
       print("URL del archivo actual: $currentImageUrl");
+      print("URL de la portada actual: $currentCoverImageUrl");
     } else {
       print("Error al obtener el libro o archivo actual.");
     }
 
-    // Validar si el archivo es nuevo y local antes de subirlo
+    // Subir el archivo si es necesario
     if (file != null && file.path.startsWith('/')) {
       try {
         // Eliminar archivo anterior si existe
@@ -122,7 +124,7 @@ class BookController extends BaseController{
       imageUrl = currentImageUrl ?? '';
     }
 
-    // Validar si la portada es nueva y local antes de subirla
+    // Subir la nueva portada si es necesario
     if (coverImage != null && coverImage.path.startsWith('/')) {
       try {
         // Eliminar portada anterior si existe
@@ -132,7 +134,7 @@ class BookController extends BaseController{
         }
 
         // Subir nueva portada y obtener URL
-        coverUrl = await bookService.uploadFile(coverImage, title, ownerId);
+        coverUrl = await bookService.uploadCover(coverImage, title, ownerId);
 
         if (coverUrl == null) {
           print("Error al subir la portada. La URL es nula.");
@@ -151,7 +153,7 @@ class BookController extends BaseController{
       }
     } else {
       // No se subió una nueva portada, mantener la actual
-      coverUrl = currentCoverImageUrl ?? '';
+      coverUrl = currentCoverImageUrl ?? '';  // Aquí conservamos la URL actual de la portada
     }
 
     // Crear viewModel con los datos editados
@@ -165,7 +167,7 @@ class BookController extends BaseController{
       format: format,
       categories: genres,
       file: imageUrl,
-      cover: coverUrl,
+      cover: coverUrl,  // Usamos la URL de la portada actual si no se cambió
       summary: summary,
       state: state,
       ownerId: ownerId,
@@ -184,9 +186,6 @@ class BookController extends BaseController{
       };
     }
   }
-
-
-
 
 
   /* Método asíncrono que devuelve los datos de un libro. */
