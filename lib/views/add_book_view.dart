@@ -53,13 +53,6 @@ class _AddBookViewState extends State<AddBookView>{
     _fetchCategories();
   }
 
-  // Función que maneja la imagen seleccionada
-  void _handleCoverPicked(File? image) {
-    setState(() {
-      coverImage = image;
-    });
-  }
-
   // Función para obtener las categorías
   void _fetchCategories() async {
     List<String> categories = await _categoryController.getCategories();
@@ -106,7 +99,7 @@ class _AddBookViewState extends State<AddBookView>{
     }
 
     // Limpiar el mensaje de error si ya se seleccionaron géneros
-    setState(() { _message = '';});
+    setState(() { _message = ''; _isLoading = true;});
 
     final title = _titleController.text.trim();
     final author = _authorController.text.trim();
@@ -132,11 +125,8 @@ class _AddBookViewState extends State<AddBookView>{
 
     setState(() {
         _isLoading = false;
+        _message = result['message'];
       });
-
-    setState(() {
-      _message = result['message'];
-    });
 
     if (result['success']) {
       setState(() {

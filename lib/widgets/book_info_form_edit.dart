@@ -7,7 +7,6 @@ import 'package:booknest/widgets/custom_text_field.dart';
 import 'package:booknest/widgets/language_dropdown.dart';
 import 'package:booknest/widgets/bookstate_dropdown.dart';
 import 'package:booknest/controllers/book_controller.dart';
-import 'package:image_picker/image_picker.dart';
 
 class BookInfoFormEdit extends StatefulWidget {
   final TextEditingController titleController;
@@ -96,13 +95,14 @@ class _BookInfoFormEditState extends State<BookInfoFormEdit> {
       final rawName = Uri.decodeFull(fileUrl.split('/').last); // Extrae el nombre del archivo
       print("Raw name extracted: $rawName");
 
-      // Verifica si el nombre contiene un guion bajo (usualmente se usa para separar el nombre y el ID)
-      final lastUnderscore = rawName.lastIndexOf('_');
       final dotIndex = rawName.lastIndexOf('.');
+      final nameParts = rawName.substring(0, dotIndex).split('_');
 
-      if (lastUnderscore != -1 && dotIndex > lastUnderscore) {
-        // Extrae desde el inicio hasta el último '_', y agrega la extensión
-        fileName = rawName.substring(0, lastUnderscore) + rawName.substring(dotIndex);
+      // Asume que los últimos dos elementos son UID y timestamp
+      if (nameParts.length > 2) {
+        final cleanedName = nameParts.sublist(0, nameParts.length - 2).join('_');
+        final extension = rawName.substring(dotIndex);
+        fileName = "$cleanedName$extension";
       } else {
         fileName = rawName;
       }
