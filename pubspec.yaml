@@ -74,6 +74,7 @@ flutter:
    - assets/images/default.png
    - assets/images/reset_password.jpg
    - assets/images/portada.png
+   - assets/gifs/cargando.gif
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
