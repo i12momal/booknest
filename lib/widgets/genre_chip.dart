@@ -5,12 +5,14 @@ class GenreChip extends StatelessWidget {
   final String genre;
   final bool isSelected;
   final VoidCallback onTap;
+  final double fontSize;  // Añadir un parámetro para controlar el tamaño de la fuente
 
   const GenreChip({
     super.key,
     required this.genre,
     required this.isSelected,
     required this.onTap,
+    this.fontSize = 14.0,  // Valor por defecto para el tamaño de la fuente
   });
 
   @override
@@ -18,10 +20,10 @@ class GenreChip extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),  // Reducir el padding
         decoration: BoxDecoration(
           color: isSelected ? const Color(0xFFAD0000) : Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),  // Reducir el radio del borde
           border: Border.all(
             color: isSelected ? Colors.white : const Color(0xFF112363),
             width: 2,
@@ -30,6 +32,7 @@ class GenreChip extends StatelessWidget {
         child: AutoSizeText(
           genre,
           style: TextStyle(
+            fontSize: fontSize,  // Cambiar el tamaño de la fuente
             color: isSelected ? Colors.white : Colors.black,
           ),
         ),
