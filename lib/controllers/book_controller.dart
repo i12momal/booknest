@@ -74,6 +74,23 @@ class BookController extends BaseController{
     return await bookService.addBook(addBookViewModel);
   }
 
+  /* Método asíncrono que permite editar un libro.
+    Parámetros:
+      - title: Cadena con el tútlo del libro.
+      - author: Cadena con el nombre del autor.
+      - isbn: Cadena con el isbn del libro.
+      - pagesNumber: Entero con el número de páginas del libro.
+      - language: Cadena con el idioma del libro.
+      - format: Cadena con el formato del libro.
+      - file: Cadena con la ubicación del archivo del libro.
+      - summary: Cadena con un breve resumen del libro.
+      - categories: Cadena con los géneros seleccionados.
+    Return: 
+      Mapa con la clave:
+        - success: Indica si la edición del libro fue exitosa (true o false).
+        - message: Proporciona un mensaje de estado.
+        - data (Opcional): Información del libro editado si la operación fue exitosa.
+  */
   Future<Map<String, dynamic>> editBook(int id, String title, String author, String isbn, int pagesNumber, String language, String format, File? file, String summary,
     String genres, String state, String ownerId, String currentHolderId, File? coverImage) async {
     String? imageUrl;
@@ -193,8 +210,6 @@ class BookController extends BaseController{
     }
   }
 
-
-
   /* Método asíncrono que devuelve los datos de un libro. */
   Future<Book?> getBookById(int bookId) async {
     var response = await bookService.getBookById(bookId);
@@ -221,6 +236,5 @@ class BookController extends BaseController{
     }
     return null;
   }
-
 
 }

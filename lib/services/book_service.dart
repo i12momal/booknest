@@ -119,6 +119,7 @@ class BookService extends BaseService{
     }
   }
 
+  // Método asíncrono para subir una imagen de portada de libro a Supabase
   Future<String?> uploadCover(File file, String bookTitle, String? userId) async {
     try {
       // Normalizamos el título para crear un nombre de archivo único
@@ -163,7 +164,6 @@ class BookService extends BaseService{
     }
   }
 
-
   // Método asíncrono que obtiene los datos de un libro.
   Future<Map<String, dynamic>> getBookById(int bookId) async {
     try {
@@ -193,6 +193,23 @@ class BookService extends BaseService{
     }
   }
 
+  /* Método asíncrono que permite editar un libro.
+    Parámetros:
+      - title: Cadena con el tútlo del libro.
+      - author: Cadena con el nombre del autor.
+      - isbn: Cadena con el isbn del libro.
+      - pagesNumber: Entero con el número de páginas del libro.
+      - language: Cadena con el idioma del libro.
+      - format: Cadena con el formato del libro.
+      - file: Cadena con la ubicación del archivo del libro.
+      - summary: Cadena con un breve resumen del libro.
+      - categories: Cadena con los géneros seleccionados.
+    Return: 
+      Mapa con la clave:
+        - success: Indica si la edición del libro fue exitosa (true o false).
+        - message: Proporciona un mensaje de estado.
+        - data (Opcional): Información del libro editado si la operación fue exitosa.
+  */
   Future<Map<String, dynamic>> editBook(EditBookViewModel editBookViewModel) async {
     try {
       // Comprobamos si la conexión a Supabase está activa.
@@ -290,6 +307,7 @@ class BookService extends BaseService{
     }
   }
 
+  // Método asíncrono para eliminar un archivo 
   Future<void> deleteFile(String fileUrl) async {
     try {
       // Eliminar el archivo anterior utilizando la URL del archivo
@@ -317,4 +335,21 @@ class BookService extends BaseService{
 
   }
 
+  // Método asíncrono que busca los libros por título o autor
+  Future<List<Map<String, dynamic>>> searchBooksByTitleOrAuthor(String query) async {
+    // Creamos el filtro compuesto para búsqueda por título o autor
+    final filters = [
+      "title.ilike.%$query%", // Buscar por título
+      "author.ilike.%$query%", // Buscar por autor
+    ].join(',');
+
+    // Realizamos la consulta a la base de datos usando Supabase
+    final List<dynamic> response = await BaseService.client
+        .from('Book')
+        .select()
+        .or(filters); // Aplicamos el filtro OR con el título o autor
+
+    // Devolvemos los resultados como una lista de mapas
+    return response.map((e) => Map<String, dynamic>.from(e)).toList();
+  }
 }
