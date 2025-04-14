@@ -15,15 +15,6 @@ class _HomeViewState extends State<HomeView> {
   List<Map<String, dynamic>> categories = [];
   String? selectedCategory;
 
-  // Lista de libros (simulados con categoría incluida)
-  final List<Map<String, dynamic>> allBooks = List.generate(80, (index) {
-    final genres = ['Misterio', 'Amor', 'Policíaca', 'Terror', 'Fantasía'];
-    return {
-      'image': 'assets/harry${index % 8}.jpg',
-      'genre': genres[index % genres.length],
-    };
-  });
-
   List<Map<String, dynamic>> filteredBooks = [];
   int currentPage = 1;
   final int booksPerPage = 20;
@@ -75,9 +66,7 @@ class _HomeViewState extends State<HomeView> {
       } else {
         // Seleccionamos una categoría específica
         selectedCategory = category;
-        filteredBooks = allCategoryBooks
-            .where((book) => book['genre'] == category)
-            .toList();
+       filteredBooks = allCategoryBooks.where((book) => (book['categories'] as String).toLowerCase().contains(category.toLowerCase())).toList();
       }
       currentPage = 1;
     });
@@ -200,6 +189,7 @@ class _HomeViewState extends State<HomeView> {
             padding: EdgeInsets.symmetric(vertical: 8),
             child: Text("Libros relacionados", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
           ),
+          const Divider(thickness: 1, color: Color(0xFF112363)),
 
           // Lista de libros
           Expanded(
