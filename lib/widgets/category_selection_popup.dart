@@ -1,19 +1,42 @@
 import 'package:booknest/widgets/genre_chip.dart';
 import 'package:flutter/material.dart';
 
-class CategorySelectionPopup extends StatelessWidget {
+class CategorySelectionPopup extends StatefulWidget {
   final List<String> allCategories;
   final List<String> selectedCategories;
-  final ValueChanged<String> onCategorySelected;
-  final VoidCallback onSave;
+  final void Function(List<String>) onSave;
+  final bool isLoading;
 
   const CategorySelectionPopup({
     super.key,
     required this.allCategories,
     required this.selectedCategories,
-    required this.onCategorySelected,
     required this.onSave,
+    this.isLoading = false,
   });
+
+  @override
+  State<CategorySelectionPopup> createState() => _CategorySelectionPopupState();
+}
+
+class _CategorySelectionPopupState extends State<CategorySelectionPopup> {
+  late List<String> _selectedCategories;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedCategories = List.from(widget.selectedCategories);
+  }
+
+  void _toggleSelection(String category) {
+    setState(() {
+      if (_selectedCategories.contains(category)) {
+        _selectedCategories.remove(category);
+      } else {
+        _selectedCategories.add(category);
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,12 +54,10 @@ class CategorySelectionPopup extends StatelessWidget {
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   SizedBox(width: 5),
-                  Icon(Icons.favorite_border, size: 20),  // Icono de categoría
+                  Icon(Icons.favorite_border, size: 20),
                 ],
               ),
               const SizedBox(height: 18),
-
-              // Contenedor desplazable para categorías
               Container(
                 width: constraints.maxWidth,
                 decoration: BoxDecoration(
@@ -44,13 +65,9 @@ class CategorySelectionPopup extends StatelessWidget {
                     colors: [Color(0xFF687CFF), Color(0xFF2E3C94)],
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    stops: [0.29, 0.55],
                   ),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: const Color(0xFF112363),
-                    width: 3,
-                  ),
+                  border: Border.all(color: const Color(0xFF112363), width: 3),
                   boxShadow: const [
                     BoxShadow(
                       color: Colors.black26,
@@ -63,26 +80,26 @@ class CategorySelectionPopup extends StatelessWidget {
                 child: Scrollbar(
                   child: SingleChildScrollView(
                     child: Wrap(
-                      alignment: WrapAlignment.start,  // Centra los chips horizontalmente
                       spacing: 8.0,
                       runSpacing: 8.0,
-                      children: allCategories.map((category) => GenreChip(
-                        genre: category,
-                        isSelected: selectedCategories.contains(category),
-                        onTap: () => onCategorySelected(category),
-                      )).toList(),
+                      children: widget.allCategories.map((category) {
+                        return GenreChip(
+                          genre: category,
+                          isSelected: _selectedCategories.contains(category),
+                          onTap: () => _toggleSelection(category),
+                        );
+                      }).toList(),
                     ),
                   ),
                 ),
               ),
-
               const SizedBox(height: 20),
-
-              // Botón para confirmar la selección
               Align(
                 alignment: Alignment.center,
-                child: ElevatedButton(
-                  onPressed: onSave,
+                child: widget.isLoading
+                  ? const CircularProgressIndicator()
+                  : ElevatedButton(
+                  onPressed: () => widget.onSave(_selectedCategories),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFAD0000),
                     shape: RoundedRectangleBorder(

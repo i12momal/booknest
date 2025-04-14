@@ -89,45 +89,51 @@ class _HomeViewState extends State<HomeView> {
     return 3; // móvil pequeño
   }
 
-  _showCategorySelectionPopup(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          elevation: 5,
-          child: Container(
-            width: MediaQuery.of(context).size.width * 0.8,  // Ancho de la mitad de la pantalla
-            height: MediaQuery.of(context).size.height * 0.5,  // Altura de la mitad de la pantalla
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,  // Centra el contenido verticalmente
-              children: [
-                CategorySelectionPopup(
-                  allCategories: allCategories,
-                  selectedCategories: selectedCategory != null ? [selectedCategory!] : [],
-                  onCategorySelected: (category) {
-                    setState(() {
-                      if (selectedCategory == category) {
-                        selectedCategory = null;
-                      } else {
-                        selectedCategory = category;
-                      }
-                    });
-                  },
-                  onSave: () {
-                    Navigator.pop(context);  // Cerrar el popup
-                  },
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
+  void _showCategorySelectionPopup(BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (context) {
+      return Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        elevation: 5,
+        child: SizedBox(
+          width: MediaQuery.of(context).size.width * 0.8,
+          height: MediaQuery.of(context).size.height * 0.5,
+          child: CategorySelectionPopup(
+            allCategories: allCategories,
+            selectedCategories: categories.map((c) => c['name'].toString()).toList(),
+            onSave: (newSelectedCategories) async {
+              Navigator.pop(context); // Cierra el popup primero
 
+              setState(() {
+                isLoading = true; // Muestra el loader
+              });
+
+              final userId = Supabase.instance.client.auth.currentUser?.id;
+              if (userId != null) {
+                // Guarda las nuevas categorías en el campo 'genres'
+                final genresString = newSelectedCategories.join(',');
+                await Supabase.instance.client
+                    .from('User')
+                    .update({'genres': genresString})
+                    .eq('id', userId);
+
+                // Recarga las categorías y los libros
+                await _loadCategoriesAndBooks();
+              }
+
+              setState(() {
+                isLoading = false; // Oculta el loader
+              });
+            },
+          ),
+        ),
+      );
+    },
+  );
+}
 
 
 
