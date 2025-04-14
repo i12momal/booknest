@@ -34,37 +34,55 @@ class _HomeViewState extends State<HomeView> {
     _loadCategoriesAndBooks();
   }
 
+  List<Map<String, dynamic>> allLoadedBooks = [];
+  List<Map<String, dynamic>> allCategoryBooks = []; 
+
+
   Future<void> _loadCategoriesAndBooks() async {
     final userId = Supabase.instance.client.auth.currentUser?.id;
     if (userId != null) {
       final userCategories = await _controller.loadUserGenres(userId);
-
       final categoryNames = userCategories.map((c) => c['name'].toString()).toList();
-
       final books = await _controller.loadBooksByUserCategories(categoryNames);
 
       setState(() {
         categories = userCategories;
+        allCategoryBooks = books;
         filteredBooks = books;
+        selectedCategory = null;
         currentPage = 1;
       });
     }
   }
 
+  int _calculateCrossAxisCount(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    if (screenWidth >= 1200) return 7; // pantallas grandes
+    if (screenWidth >= 900) return 6;
+    if (screenWidth >= 600) return 5;
+    if (screenWidth >= 400) return 4;
+    return 3; // móvil pequeño
+  }
+
+
   void _toggleCategory(String category) {
     setState(() {
       if (selectedCategory == category) {
-        // Deseleccionamos
+        // Deseleccionamos → volver a mostrar todos los libros relacionados con las categorías del usuario
         selectedCategory = null;
-        filteredBooks = allBooks.where((book) => categories.contains(book['genre'])).toList();
+        filteredBooks = allCategoryBooks;
       } else {
         // Seleccionamos una categoría específica
         selectedCategory = category;
-        filteredBooks = allBooks.where((book) => book['genre'] == category).toList();
+        filteredBooks = allCategoryBooks
+            .where((book) => book['genre'] == category)
+            .toList();
       }
       currentPage = 1;
     });
   }
+
 
   List<Map<String, dynamic>> get currentBooks {
     final start = (currentPage - 1) * booksPerPage;
@@ -187,15 +205,40 @@ class _HomeViewState extends State<HomeView> {
           Expanded(
             child: GridView.builder(
               itemCount: currentBooks.length,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 4,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: _calculateCrossAxisCount(context),
                 crossAxisSpacing: 8,
                 mainAxisSpacing: 8,
-                childAspectRatio: 0.7,
+                childAspectRatio: 0.5,
               ),
               itemBuilder: (context, index) {
-                return Image.asset(currentBooks[index]['image'], fit: BoxFit.cover);
-              },
+                final book = currentBooks[index];
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: AspectRatio(
+                        aspectRatio: 0.7,
+                        child: Image.network(
+                          book['cover'], // asegúrate de que este campo exista
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              const Icon(Icons.broken_image),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      book['title'] ?? 'Sin título',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                    ),
+                  ],
+                );
+
+              }
             ),
           ),
 
