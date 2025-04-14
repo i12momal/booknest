@@ -1,3 +1,5 @@
+import 'package:booknest/controllers/categories_controller.dart';
+import 'package:booknest/widgets/category_selection_popup.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:booknest/widgets/background.dart';
@@ -15,6 +17,8 @@ class _HomeViewState extends State<HomeView> {
   List<Map<String, dynamic>> categories = [];
   String? selectedCategory;
   final TextEditingController _searchController = TextEditingController();
+
+  List<String> allCategories = [];
 
   List<Map<String, dynamic>> filteredBooks = [];
   int currentPage = 1;
@@ -58,10 +62,14 @@ class _HomeViewState extends State<HomeView> {
 
       final userCategories = await _controller.loadUserGenres(userId);
       final categoryNames = userCategories.map((c) => c['name'].toString()).toList();
+
+      // Aquí cargamos todas las categorías del sistema
+      final systemCategories = await CategoriesController().getCategories();
       final books = await _controller.loadBooksByUserCategories(categoryNames);
 
       setState(() {
         categories = userCategories;
+        allCategories = systemCategories;
         allCategoryBooks = books;
         filteredBooks = books;
         selectedCategory = null;
@@ -80,6 +88,47 @@ class _HomeViewState extends State<HomeView> {
     if (screenWidth >= 400) return 4;
     return 3; // móvil pequeño
   }
+
+  _showCategorySelectionPopup(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          elevation: 5,
+          child: Container(
+            width: MediaQuery.of(context).size.width * 0.8,  // Ancho de la mitad de la pantalla
+            height: MediaQuery.of(context).size.height * 0.5,  // Altura de la mitad de la pantalla
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,  // Centra el contenido verticalmente
+              children: [
+                CategorySelectionPopup(
+                  allCategories: allCategories,
+                  selectedCategories: selectedCategory != null ? [selectedCategory!] : [],
+                  onCategorySelected: (category) {
+                    setState(() {
+                      if (selectedCategory == category) {
+                        selectedCategory = null;
+                      } else {
+                        selectedCategory = category;
+                      }
+                    });
+                  },
+                  onSave: () {
+                    Navigator.pop(context);  // Cerrar el popup
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+
 
 
   void _toggleCategory(String category) {
@@ -154,13 +203,18 @@ class _HomeViewState extends State<HomeView> {
               ),
             
               // Categorías
-              const Padding(
-                padding: EdgeInsets.only(bottom: 8),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
                 child: Row(
                   children: [
-                    Text("Categorías", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
-                    Spacer(),
-                    Icon(Icons.add_circle_outline),
+                    const Text("Categorías", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(Icons.add_circle_outline),
+                      onPressed: () {
+                        _showCategorySelectionPopup(context);
+                      },
+                    )
                   ],
                 ),
               ),
