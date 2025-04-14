@@ -335,6 +335,14 @@ class BookService extends BaseService{
 
   }
 
+  // Método asíncrono que obtiene todos los libros existentes
+  Future<List<Map<String, dynamic>>> getAllBooks() async {
+    final List<dynamic> response = await Supabase.instance.client
+        .from('Book')
+        .select();
+    return response.map((e) => Map<String, dynamic>.from(e)).toList();
+  }
+
   // Método asíncrono que busca los libros por título o autor
   Future<List<Map<String, dynamic>>> searchBooksByTitleOrAuthor(String query) async {
     // Creamos el filtro compuesto para búsqueda por título o autor

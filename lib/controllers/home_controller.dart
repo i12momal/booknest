@@ -1,5 +1,4 @@
 import 'package:booknest/controllers/base_controller.dart';
-import 'package:booknest/services/base_service.dart';
 
 // Controlador con los métodos de las acciones de la página Home.
 class HomeController extends BaseController {
@@ -42,6 +41,11 @@ class HomeController extends BaseController {
   // Método que obtiene una lista con los libros ordenados por categorías
   Future<List<Map<String, dynamic>>> loadBooksByUserCategories(List<String> categoryNames) {
     return bookService.getBooksByCategories(categoryNames);
+  }
+
+  // Método que obtiene una lista con todos los libros existentes
+  Future<List<Map<String, dynamic>>> loadAllBooks() {
+    return bookService.getAllBooks();
   }
 
   // Método para buscar libros por título o autor

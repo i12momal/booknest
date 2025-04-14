@@ -35,21 +35,6 @@ class _HomeViewState extends State<HomeView> {
   List<Map<String, dynamic>> allLoadedBooks = [];
   List<Map<String, dynamic>> allCategoryBooks = []; 
 
-  // Función de búsqueda de libros por título o autor
-  Future<void> _searchBooks(String query) async {
-    final normalizedQuery = _controller.normalize(query);
-
-    final filtered = allCategoryBooks.where((book) {
-      final title = _controller.normalize(book['title'] ?? '');
-      final author = _controller.normalize(book['author'] ?? '');
-      return title.contains(normalizedQuery) || author.contains(normalizedQuery);
-    }).toList();
-
-    setState(() {
-      filteredBooks = query.isEmpty ? allCategoryBooks : filtered;
-    });
-  }
-
   Future<void> _loadCategoriesAndBooks() async {
     final userId = Supabase.instance.client.auth.currentUser?.id;
     if (userId != null) {
@@ -66,17 +51,36 @@ class _HomeViewState extends State<HomeView> {
       // Aquí cargamos todas las categorías del sistema
       final systemCategories = await CategoriesController().getCategories();
       final books = await _controller.loadBooksByUserCategories(categoryNames);
+      
+      final allBooks = await _controller.loadAllBooks();
 
       setState(() {
         categories = userCategories;
         allCategories = systemCategories;
         allCategoryBooks = books;
-        filteredBooks = books;
+        filteredBooks = allBooks;
         selectedCategory = null;
         currentPage = 1;
         isLoading = false;
+        allLoadedBooks = allBooks;
       });
     }
+  }
+
+
+   // Función de búsqueda de libros por título o autor
+  Future<void> _searchBooks(String query) async {
+    final normalizedQuery = _controller.normalize(query);
+
+    final filtered = allLoadedBooks.where((book) {
+      final title = _controller.normalize(book['title'] ?? '');
+      final author = _controller.normalize(book['author'] ?? '');
+      return title.contains(normalizedQuery) || author.contains(normalizedQuery);
+    }).toList();
+
+    setState(() {
+      filteredBooks = query.isEmpty ? allLoadedBooks : filtered;
+    });
   }
 
   int _calculateCrossAxisCount(BuildContext context) {
@@ -90,51 +94,50 @@ class _HomeViewState extends State<HomeView> {
   }
 
   void _showCategorySelectionPopup(BuildContext context) {
-  showDialog(
-    context: context,
-    builder: (context) {
-      return Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        elevation: 5,
-        child: SizedBox(
-          width: MediaQuery.of(context).size.width * 0.8,
-          height: MediaQuery.of(context).size.height * 0.5,
-          child: CategorySelectionPopup(
-            allCategories: allCategories,
-            selectedCategories: categories.map((c) => c['name'].toString()).toList(),
-            onSave: (newSelectedCategories) async {
-              Navigator.pop(context); // Cierra el popup primero
-
-              setState(() {
-                isLoading = true; // Muestra el loader
-              });
-
-              final userId = Supabase.instance.client.auth.currentUser?.id;
-              if (userId != null) {
-                // Guarda las nuevas categorías en el campo 'genres'
-                final genresString = newSelectedCategories.join(',');
-                await Supabase.instance.client
-                    .from('User')
-                    .update({'genres': genresString})
-                    .eq('id', userId);
-
-                // Recarga las categorías y los libros
-                await _loadCategoriesAndBooks();
-              }
-
-              setState(() {
-                isLoading = false; // Oculta el loader
-              });
-            },
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
           ),
-        ),
-      );
-    },
-  );
-}
+          elevation: 5,
+          child: SizedBox(
+            width: MediaQuery.of(context).size.width * 0.8,
+            height: MediaQuery.of(context).size.height * 0.5,
+            child: CategorySelectionPopup(
+              allCategories: allCategories,
+              selectedCategories: categories.map((c) => c['name'].toString()).toList(),
+              onSave: (newSelectedCategories) async {
+                Navigator.pop(context); // Cierra el popup primero
 
+                setState(() {
+                  isLoading = true; // Muestra el loader
+                });
+
+                final userId = Supabase.instance.client.auth.currentUser?.id;
+                if (userId != null) {
+                  // Guarda las nuevas categorías en el campo 'genres'
+                  final genresString = newSelectedCategories.join(',');
+                  await Supabase.instance.client
+                      .from('User')
+                      .update({'genres': genresString})
+                      .eq('id', userId);
+
+                  // Recarga las categorías y los libros
+                  await _loadCategoriesAndBooks();
+                }
+
+                setState(() {
+                  isLoading = false; // Oculta el loader
+                });
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
 
 
   void _toggleCategory(String category) {
@@ -146,7 +149,7 @@ class _HomeViewState extends State<HomeView> {
       } else {
         // Seleccionamos una categoría específica
         selectedCategory = category;
-       filteredBooks = allCategoryBooks.where((book) => (book['categories'] as String).toLowerCase().contains(category.toLowerCase())).toList();
+        filteredBooks = allCategoryBooks.where((book) => (book['categories'] as String).toLowerCase().contains(category.toLowerCase())).toList();
       }
       currentPage = 1;
     });
