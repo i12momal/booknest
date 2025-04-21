@@ -1,6 +1,7 @@
 import 'package:booknest/controllers/user_controller.dart';
 import 'package:booknest/entities/models/category_model.dart';
 import 'package:booknest/entities/models/user_model.dart';
+import 'package:booknest/views/category_view.dart';
 import 'package:booknest/views/edit_user_view.dart';
 import 'package:booknest/views/login_view.dart';
 import 'package:booknest/widgets/background.dart';
@@ -184,9 +185,24 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
                       runSpacing: 12,  // Espacio entre filas
                       alignment: WrapAlignment.start,  // Alineación a la izquierda
                       children: categories.sublist(0, (categories.length / 2).ceil()).map((category) {
-                        return _CategoryItem(
-                          label: category.name,
-                          imageUrl: category.image,  // Imagen directamente desde el modelo
+                        return GestureDetector(
+                          onTap: () {
+                            // Navegar a CategoryView al tocar una categoría
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => CategoryView(
+                                  categoryName: category.name,
+                                  categoryImageUrl: category.image ?? '', // URL de la imagen de la categoría
+                                  userId: widget.userId,
+                                ),
+                              ),
+                            );
+                          },
+                          child: _CategoryItem(
+                            label: category.name,
+                            imageUrl: category.image,  // Imagen directamente desde el modelo
+                          ),
                         );
                       }).toList(),
                     ),
@@ -201,9 +217,24 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
                       runSpacing: 12,  // Espacio entre filas
                       alignment: WrapAlignment.start,  // Alineación a la izquierda
                       children: categories.sublist((categories.length / 2).ceil()).map((category) {
-                        return _CategoryItem(
-                          label: category.name,
-                          imageUrl: category.image,  // Imagen directamente desde el modelo
+                        return GestureDetector(
+                          onTap: () {
+                            // Navegar a CategoryView al tocar una categoría
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => CategoryView(
+                                  categoryName: category.name,
+                                  categoryImageUrl: category.image ?? '', // URL de la imagen de la categoría
+                                  userId: widget.userId,
+                                ),
+                              ),
+                            );
+                          },
+                          child: _CategoryItem(
+                            label: category.name,
+                            imageUrl: category.image,  // Imagen directamente desde el modelo
+                          ),
                         );
                       }).toList(),
                     ),

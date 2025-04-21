@@ -362,8 +362,6 @@ class BookService extends BaseService{
     return response.map((e) => Map<String, dynamic>.from(e)).toList();
   }
 
-
-
   // Obtener los libros del usuario
   Future<List<Book>> getBooksForUser(String userId) async {
     try {
@@ -385,5 +383,34 @@ class BookService extends BaseService{
       return [];
     }
   }
+
+  // Obtener los libros de un usuario y filtrar por categoría
+  Future<List<Book>> getBooksByCategoryForUser(String userId, String categoryName) async {
+    try {
+      // Primero obtenemos todos los libros del usuario
+      final books = await getBooksForUser(userId);
+
+      // Filtramos los libros que contienen la categoría especificada
+      List<Book> filteredBooks = books.where((book) {
+        if (book.categories == null || book.categories.isEmpty) {
+          return false; // Si no tiene categorías, no lo incluimos
+        }
+
+        // Dividimos las categorías y las limpiamos de espacios extras
+        List<String> categories = book.categories.split(',').map((category) => category.trim()).toList();
+
+        // Verificar si la categoría especificada está entre las categorías del libro
+        bool matchFound = categories.any((category) => category.toLowerCase() == categoryName.toLowerCase());
+
+        return matchFound;
+      }).toList();
+
+      return filteredBooks;
+    } catch (e) {
+      print('Error al obtener los libros por categoría para el usuario: $e');
+      return [];
+    }
+  }
+
 
 }
