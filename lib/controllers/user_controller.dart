@@ -1,4 +1,5 @@
 import 'package:booknest/entities/models/book_model.dart';
+import 'package:booknest/entities/models/category_model.dart';
 import 'package:booknest/entities/models/user_model.dart';
 import "package:booknest/entities/viewmodels/user_view_model.dart";
 import "base_controller.dart";
@@ -118,30 +119,40 @@ class UserController extends BaseController{
   }
 
   // Método para obtener las categorías de los libros del usuario
-  Future<List<String>> getCategoriesFromBooks(String userId) async {
+  Future<List<Category>> getCategoriesFromBooks(String userId) async {
     try {
-      // Obtenemos los libros del usuario
       final books = await bookService.getBooksForUser(userId);
-      
-      // Usamos un Set para asegurarnos de que las categorías sean únicas
       Set<String> categoriesSet = {};
 
-      // Iteramos sobre cada libro y extraemos las categorías
       for (var book in books) {
         if (book.categories != null && book.categories.isNotEmpty) {
-          // Dividimos las categorías por la coma y las agregamos al Set
-          var categories = book.categories.split(',').map((category) => category.trim()).toList();
-          categoriesSet.addAll(categories);  // Agregamos las categorías al Set
+          final categories = book.categories
+              .split(',')
+              .map((c) => c.trim());
+          categoriesSet.addAll(categories);
         }
       }
 
-      // Convertimos el Set a una lista, la ordenamos alfabéticamente y la retornamos
-      var sortedCategories = categoriesSet.toList()..sort();
-      return sortedCategories;
+      if (categoriesSet.isEmpty) return [];
+
+      // En lugar de hacer otra consulta por categoría, usamos tu método actual para traer todas
+      final result = await categoryService.getUserCategories(); // ya devuelve name + image
+
+      if (result['success']) {
+        final allCategories = (result['data'] as List<dynamic>)
+            .map((json) => Category.fromJson(json))
+            .toList();
+
+        // Filtrar solo las que están en los libros del usuario
+        return allCategories.where((cat) => categoriesSet.contains(cat.name)).toList();
+      } else {
+        return [];
+      }
     } catch (e) {
-      print('Error obteniendo categorías de los libros: $e');
+      print('Error obteniendo categorías: $e');
       return [];
     }
   }
+
 
 }

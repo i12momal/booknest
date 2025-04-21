@@ -1,4 +1,5 @@
 import 'package:booknest/controllers/user_controller.dart';
+import 'package:booknest/entities/models/category_model.dart';
 import 'package:booknest/entities/models/user_model.dart';
 import 'package:booknest/views/edit_user_view.dart';
 import 'package:booknest/views/login_view.dart';
@@ -20,7 +21,7 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
   final _phoneNumberController = TextEditingController();
   String? currentImageUrl;
 
-  List<String> categories = [];
+  List<Category> categories = [];
   bool _isLoading = false;
   String _message = '';
 
@@ -36,7 +37,7 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
   // Obtener categorías desde los libros
   void _fetchUserCategoriesFromBooks() async {
     try {
-      List<String> categoriesFromBooks = await _userController.getCategoriesFromBooks(widget.userId);
+      final categoriesFromBooks = await _userController.getCategoriesFromBooks(widget.userId);
       setState(() {
         categories = categoriesFromBooks;
       });
@@ -46,6 +47,7 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
       });
     }
   }
+
 
   Future<void> _fetchUserData() async {
     setState(() {
@@ -171,28 +173,47 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
 
             // Contenedor con Scroll Horizontal para categorías
             SizedBox(
-              height: 100,  // Establecemos la altura fija para el contenedor
-              child: ListView(
-                scrollDirection: Axis.horizontal, // Permitir scroll horizontal
+              height: 200,  // Altura fija para el contenedor
+              child: Column(
                 children: [
-                  Wrap(
-                    spacing: 12,  // Espacio entre elementos
-                    runSpacing: 12,  // Espacio entre filas
-                    alignment: WrapAlignment.start,  // Alineación a la izquierda
-                    children: categories.map((category) {
-                      // Asegúrate de tener una URL de imagen para cada categoría
-                      String imageUrl = 'URL_DE_LA_IMAGEN_DE_LA_CATEGORIA'; // Aquí se podría poner una imagen asociada a cada categoría
-                      return _CategoryItem(
-                        label: category,
-                        imageUrl: imageUrl,  // Aquí pasas la URL de la imagen
-                      );
-                    }).toList(),
+                  // Fila 1
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal, // Permitir scroll horizontal
+                    child: Wrap(
+                      spacing: 20,  // Espacio entre elementos
+                      runSpacing: 12,  // Espacio entre filas
+                      alignment: WrapAlignment.start,  // Alineación a la izquierda
+                      children: categories.sublist(0, (categories.length / 2).ceil()).map((category) {
+                        return _CategoryItem(
+                          label: category.name,
+                          imageUrl: category.image,  // Imagen directamente desde el modelo
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Fila 2
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal, // Permitir scroll horizontal
+                    child: Wrap(
+                      spacing: 20,  // Espacio entre elementos
+                      runSpacing: 12,  // Espacio entre filas
+                      alignment: WrapAlignment.start,  // Alineación a la izquierda
+                      children: categories.sublist((categories.length / 2).ceil()).map((category) {
+                        return _CategoryItem(
+                          label: category.name,
+                          imageUrl: category.image,  // Imagen directamente desde el modelo
+                        );
+                      }).toList(),
+                    ),
                   ),
                 ],
               ),
             ),
 
-            const SizedBox(height: 24),
+
+            const SizedBox(height: 20),
             const Text('Prestados', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             const SizedBox(height: 16),
             const Divider(thickness: 1, color: Color(0xFF112363)),
@@ -217,21 +238,50 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
 class _CategoryItem extends StatelessWidget {
   final String label;
   final String? imageUrl;  // URL de la imagen para la categoría
-  const _CategoryItem({required this.label, this.imageUrl});
+
+  const _CategoryItem({
+    required this.label,
+    this.imageUrl,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        CircleAvatar(
-          radius: 25,
-          backgroundImage: imageUrl != null && imageUrl!.isNotEmpty
-              ? NetworkImage(imageUrl!)  // Usamos la URL de la imagen
-              : const AssetImage('assets/estanteria.jpg') as ImageProvider,  // Imagen por defecto
-        ),
-        const SizedBox(height: 4),
-        Text(label, style: const TextStyle(fontSize: 12)),
-      ],
+    return SizedBox(
+      width: 80,  // Limitar el ancho del contenedor para evitar desbordamientos
+      child: Column(
+        children: [
+          // Contenedor con borde azul y circular para la imagen
+          Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: const Color(0xFF112363),  // Borde azul
+                width: 2,
+              ),
+            ),
+            child: ClipOval(
+              child: Image.network(
+                imageUrl ?? '',  // Si no hay URL, se muestra la imagen por defecto
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
+          // Texto con truncamiento en caso de ser muy largo
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.normal,  // El texto no se pone en negrita
+              color: Colors.black87,
+            ),
+            overflow: TextOverflow.ellipsis,  // Truncar texto si es largo
+            maxLines: 1,  // Asegurarnos que el texto no se extienda a más de una línea
+          ),
+        ],
+      ),
     );
   }
 }
