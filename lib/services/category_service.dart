@@ -1,3 +1,4 @@
+import 'package:booknest/entities/models/category_model.dart';
 import 'package:booknest/services/base_service.dart';
 
 // Servicio con los métodos de negocio de la entidad Categoría.
@@ -36,7 +37,7 @@ class CategoryService extends BaseService {
       // Llamada a la base de datos para obtener las categorías, incluyendo imagen
       final response = await BaseService.client
           .from('Categories')
-          .select('name, image')
+          .select('id, name, image')
           .order('name', ascending: true);
 
       // Verificamos si la respuesta contiene datos.
@@ -49,6 +50,5 @@ class CategoryService extends BaseService {
       return {'success': false, 'message': ex.toString()};
     }
   }
-
 
 }
