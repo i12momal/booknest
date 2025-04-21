@@ -1,6 +1,5 @@
 import 'package:booknest/entities/viewmodels/user_view_model.dart';
 import 'package:booknest/services/base_service.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 // Servicio con los métodos de negocio de la entidad Usuario.
 class UserService extends BaseService{
@@ -215,4 +214,6 @@ class UserService extends BaseService{
       return [];
     }
   }
+
+  
 }
