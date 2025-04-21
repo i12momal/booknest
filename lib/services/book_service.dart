@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:booknest/entities/models/book_model.dart';
 import 'package:booknest/entities/viewmodels/book_view_model.dart';
 import 'package:booknest/services/base_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -360,4 +361,29 @@ class BookService extends BaseService{
     // Devolvemos los resultados como una lista de mapas
     return response.map((e) => Map<String, dynamic>.from(e)).toList();
   }
+
+
+
+  // Obtener los libros del usuario
+  Future<List<Book>> getBooksForUser(String userId) async {
+    try {
+      final response = await BaseService.client
+          .from('Book')
+          .select()
+          .eq('owner_id', userId);
+
+      // Verificamos si la respuesta es nula o si no contiene datos
+      if (response == null || response.isEmpty) {
+        return [];
+      }
+
+      // Convertimos los datos en una lista de libros
+      List<dynamic> data = response;
+      return data.map((book) => Book.fromJson(book)).toList();
+    } catch (e) {
+      print('Error obteniendo libros: $e');
+      return [];
+    }
+  }
+
 }

@@ -1,4 +1,3 @@
-import 'package:booknest/controllers/categories_controller.dart';
 import 'package:booknest/controllers/user_controller.dart';
 import 'package:booknest/entities/models/user_model.dart';
 import 'package:booknest/views/edit_user_view.dart';
@@ -19,10 +18,9 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneNumberController = TextEditingController();
-  final CategoriesController _categoryController = CategoriesController();
   String? currentImageUrl;
 
-  List<String> genres = [];
+  List<String> categories = [];
   bool _isLoading = false;
   String _message = '';
 
@@ -32,18 +30,19 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
   void initState() {
     super.initState();
     _fetchUserData();
-    _fetchCategories();
+    _fetchUserCategoriesFromBooks();
   }
 
-  void _fetchCategories() async {
+  // Obtener categorías desde los libros
+  void _fetchUserCategoriesFromBooks() async {
     try {
-      List<String> categories = await _categoryController.getCategories();
+      List<String> categoriesFromBooks = await _userController.getCategoriesFromBooks(widget.userId);
       setState(() {
-        genres = categories;
+        categories = categoriesFromBooks;
       });
     } catch (e) {
       setState(() {
-        _message = 'Error al cargar las categorías';
+        _message = 'Error al cargar las categorías de los libros.';
       });
     }
   }
@@ -61,7 +60,6 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
           _nameController.text = userData.name;
           _emailController.text = userData.email;
           _phoneNumberController.text = userData.phoneNumber.toString();
-          genres = List<String>.from(userData.genres);
           currentImageUrl = userData.image ?? '';
           _isLoading = false;
         });
@@ -100,6 +98,7 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
       child: SingleChildScrollView(
         child: Column(
           children: [
+            const SizedBox(height: 40),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -111,7 +110,6 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
                       : const AssetImage('assets/images/default.png') as ImageProvider,
                 ),
                 const SizedBox(width: 16),
-
                 Expanded(
                   child: GestureDetector(
                     onTap: () {
@@ -164,21 +162,36 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
                     ),
                   ),
                 ),
-
-
-
               ],
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 50),
             const Text('Mi Biblioteca', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             const SizedBox(height: 16),
             const Divider(thickness: 1, color: Color(0xFF112363)),
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              alignment: WrapAlignment.center,
-              children: genres.map((genre) => _CategoryItem(label: genre)).toList(),
+
+            // Contenedor con Scroll Horizontal para categorías
+            SizedBox(
+              height: 100,  // Establecemos la altura fija para el contenedor
+              child: ListView(
+                scrollDirection: Axis.horizontal, // Permitir scroll horizontal
+                children: [
+                  Wrap(
+                    spacing: 12,  // Espacio entre elementos
+                    runSpacing: 12,  // Espacio entre filas
+                    alignment: WrapAlignment.start,  // Alineación a la izquierda
+                    children: categories.map((category) {
+                      // Asegúrate de tener una URL de imagen para cada categoría
+                      String imageUrl = 'URL_DE_LA_IMAGEN_DE_LA_CATEGORIA'; // Aquí se podría poner una imagen asociada a cada categoría
+                      return _CategoryItem(
+                        label: category,
+                        imageUrl: imageUrl,  // Aquí pasas la URL de la imagen
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ),
             ),
+
             const SizedBox(height: 24),
             const Text('Prestados', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             const SizedBox(height: 16),
@@ -203,15 +216,18 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
 
 class _CategoryItem extends StatelessWidget {
   final String label;
-  const _CategoryItem({required this.label});
+  final String? imageUrl;  // URL de la imagen para la categoría
+  const _CategoryItem({required this.label, this.imageUrl});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const CircleAvatar(
+        CircleAvatar(
           radius: 25,
-          backgroundImage: AssetImage('assets/estanteria.jpg'),
+          backgroundImage: imageUrl != null && imageUrl!.isNotEmpty
+              ? NetworkImage(imageUrl!)  // Usamos la URL de la imagen
+              : const AssetImage('assets/estanteria.jpg') as ImageProvider,  // Imagen por defecto
         ),
         const SizedBox(height: 4),
         Text(label, style: const TextStyle(fontSize: 12)),

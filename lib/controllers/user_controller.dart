@@ -1,3 +1,4 @@
+import 'package:booknest/entities/models/book_model.dart';
 import 'package:booknest/entities/models/user_model.dart';
 import "package:booknest/entities/viewmodels/user_view_model.dart";
 import "base_controller.dart";
@@ -104,7 +105,6 @@ class UserController extends BaseController{
     return await userService.editUser(editUserViewModel);
   }
 
-
   /* Método asíncrono que devuelve los datos de un usuario. */
   Future<User?> getUserById(String userId) async {
     var response = await userService.getUserById(userId);
@@ -116,4 +116,32 @@ class UserController extends BaseController{
 
     return null;
   }
+
+  // Método para obtener las categorías de los libros del usuario
+  Future<List<String>> getCategoriesFromBooks(String userId) async {
+    try {
+      // Obtenemos los libros del usuario
+      final books = await bookService.getBooksForUser(userId);
+      
+      // Usamos un Set para asegurarnos de que las categorías sean únicas
+      Set<String> categoriesSet = {};
+
+      // Iteramos sobre cada libro y extraemos las categorías
+      for (var book in books) {
+        if (book.categories != null && book.categories.isNotEmpty) {
+          // Dividimos las categorías por la coma y las agregamos al Set
+          var categories = book.categories.split(',').map((category) => category.trim()).toList();
+          categoriesSet.addAll(categories);  // Agregamos las categorías al Set
+        }
+      }
+
+      // Convertimos el Set a una lista, la ordenamos alfabéticamente y la retornamos
+      var sortedCategories = categoriesSet.toList()..sort();
+      return sortedCategories;
+    } catch (e) {
+      print('Error obteniendo categorías de los libros: $e');
+      return [];
+    }
+  }
+
 }
