@@ -145,7 +145,7 @@ class _HomeViewState extends State<HomeView> {
       if (selectedCategory == category) {
         // Deseleccionamos → volver a mostrar todos los libros relacionados con las categorías del usuario
         selectedCategory = null;
-        filteredBooks = allCategoryBooks;
+        filteredBooks = allLoadedBooks;
       } else {
         // Seleccionamos una categoría específica
         selectedCategory = category;

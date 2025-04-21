@@ -2,20 +2,20 @@ import 'package:booknest/controllers/user_controller.dart';
 import 'package:booknest/entities/models/category_model.dart';
 import 'package:booknest/entities/models/user_model.dart';
 import 'package:booknest/views/category_view.dart';
-import 'package:booknest/views/edit_user_view.dart';
 import 'package:booknest/views/login_view.dart';
 import 'package:booknest/widgets/background.dart';
+import 'package:booknest/widgets/tap_bubble_text.dart';
 import 'package:flutter/material.dart';
 
-class OwnerProfileView extends StatefulWidget {
+class UserProfileView extends StatefulWidget {
   final String userId;
-  const OwnerProfileView({super.key, required this.userId});
+  const UserProfileView({super.key, required this.userId});
 
   @override
-  State<OwnerProfileView> createState() => _OwnerProfileViewState();
+  State<UserProfileView> createState() => _UserProfileViewState();
 }
 
-class _OwnerProfileViewState extends State<OwnerProfileView> {
+class _UserProfileViewState extends State<UserProfileView> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneNumberController = TextEditingController();
@@ -47,6 +47,7 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
       });
     }
   }
+
 
   Future<void> _fetchUserData() async {
     setState(() {
@@ -90,29 +91,8 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return Center(
-        child: Container(
-          color: Colors.white,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Image.asset('assets/gifs/cargando.gif', height: 500, width: 500),
-              const SizedBox(height: 10),
-              const Text(
-                'Cargando...',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Color(0xFF112363)),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-
-    if (_message.isNotEmpty) {
-      return Center(child: Text(_message));
-    }
+    if (_isLoading) return const Center(child: CircularProgressIndicator());
+    if (_message.isNotEmpty) return Center(child: Text(_message));
 
     return Background(
       title: 'Mi Perfil',
@@ -134,14 +114,6 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
                 const SizedBox(width: 16),
                 Expanded(
                   child: GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => EditUserView(userId: widget.userId),
-                        ),
-                      );
-                    },
                     child: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
@@ -151,11 +123,9 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            _nameController.text,
+                          TapBubbleText(
+                            text: _nameController.text,
                             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 1,
                           ),
                           const SizedBox(height: 4),
                           Row(
@@ -163,9 +133,7 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
                             children: [
                               const Icon(Icons.email, size: 16),
                               const SizedBox(width: 4),
-                              Expanded(
-                                child: Text(_emailController.text, overflow: TextOverflow.ellipsis, maxLines: 1),
-                              ),
+                              Expanded(child: TapBubbleText(text: _emailController.text)),
                             ],
                           ),
                           const SizedBox(height: 4),
@@ -191,7 +159,7 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
               ],
             ),
             const SizedBox(height: 50),
-            const Text('Mi Biblioteca', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            const Text('Biblioteca', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             const SizedBox(height: 16),
             const Divider(thickness: 1, color: Color(0xFF112363)),
 
@@ -265,23 +233,6 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
                 ],
               ),
             ),
-
-
-            const SizedBox(height: 20),
-            const Text('Prestados', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            const SizedBox(height: 16),
-            const Divider(thickness: 1, color: Color(0xFF112363)),
-            SizedBox(
-              height: 150,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                children: const [
-                  _BookImage('assets/culpa_tuya.png'),
-                  _BookImage('assets/culpa_mia.png'),
-                  _BookImage('assets/culpa_nuestra.png'),
-                ],
-              ),
-            ),
           ],
         ),
       ),
@@ -335,22 +286,6 @@ class _CategoryItem extends StatelessWidget {
             maxLines: 1,  // Asegurarnos que el texto no se extienda a más de una línea
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _BookImage extends StatelessWidget {
-  final String path;
-  const _BookImage(this.path);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: Image.asset(path, width: 100, fit: BoxFit.cover),
       ),
     );
   }
