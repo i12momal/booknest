@@ -1,9 +1,8 @@
 import 'package:booknest/views/home_view.dart';
+import 'package:booknest/views/owner_profile_view.dart';
 import 'package:flutter/material.dart'; 
 import 'services/base_service.dart';
-import 'views/edit_user_view.dart';
 import 'views/login_view.dart';
-import 'views/edit_book_view.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -97,6 +96,32 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
               child: const Text(
                 'Login',
+                style: TextStyle(
+                  fontSize: 20,
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const OwnerProfileView(userId: 'c3560a09-f261-4f39-ae15-bf6d16ea9b2b')),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                minimumSize: Size(screenWidth * 0.8, 50),
+                backgroundColor: const Color(0xFF61BBFF),
+                side: const BorderSide(
+                  color: Colors.white,
+                  width: 2,
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+              ),
+              child: const Text(
+                'Profile owner',
                 style: TextStyle(
                   fontSize: 20,
                   color: Colors.white,
