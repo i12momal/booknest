@@ -1,4 +1,4 @@
-import 'package:booknest/entities/models/user_model.dart';
+import 'package:booknest/views/book_details_owner_view.dart';
 import 'package:booknest/views/home_view.dart';
 import 'package:booknest/views/owner_profile_view.dart';
 import 'package:booknest/views/user_profile_view.dart';
@@ -150,6 +150,32 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
               child: const Text(
                 'Profile user',
+                style: TextStyle(
+                  fontSize: 20,
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const BookDetailsOwnerView(bookId : 1)),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                minimumSize: Size(screenWidth * 0.8, 50),
+                backgroundColor: const Color(0xFF61BBFF),
+                side: const BorderSide(
+                  color: Colors.white,
+                  width: 2,
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+              ),
+              child: const Text(
+                'Book Details',
                 style: TextStyle(
                   fontSize: 20,
                   color: Colors.white,
