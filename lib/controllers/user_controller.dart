@@ -1,4 +1,3 @@
-import 'package:booknest/entities/models/book_model.dart';
 import 'package:booknest/entities/models/category_model.dart';
 import 'package:booknest/entities/models/user_model.dart';
 import "package:booknest/entities/viewmodels/user_view_model.dart";
@@ -153,6 +152,5 @@ class UserController extends BaseController{
       return [];
     }
   }
-
 
 }

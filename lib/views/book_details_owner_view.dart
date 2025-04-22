@@ -1,6 +1,11 @@
 import 'package:booknest/controllers/book_controller.dart';
+import 'package:booknest/controllers/review_controller.dart';
+import 'package:booknest/controllers/user_controller.dart';
 import 'package:booknest/entities/models/book_model.dart';
+import 'package:booknest/entities/models/review_model.dart';
+import 'package:booknest/entities/models/user_model.dart';
 import 'package:booknest/widgets/background.dart';
+import 'package:booknest/widgets/review_item.dart';
 import 'package:booknest/widgets/tap_bubble_text.dart';
 import 'package:flutter/material.dart';
 
@@ -78,7 +83,7 @@ class BookInfoTabs extends StatelessWidget {
             child: TabBarView(
               children: [
                 _BookDetailsTab(book: book),
-                const _BookReviewsTab(),
+                _BookReviewsTab(bookId: book.id),
               ],
             ),
           ),
@@ -175,25 +180,27 @@ class _BookHeader extends StatelessWidget {
                           Text("Disponible"),
                         ],
                       ),
-                    Row(
-                      children: [
-                        const Icon(Icons.cancel, color: Colors.red, size: 18),
-                        const SizedBox(width: 4),
-                        const Text("Prestado", style: TextStyle(fontSize: 12)),
-                        const SizedBox(width: 12),
-                        GestureDetector(
-                          //onTap: () => _showLoanDetailsPopup(context, book),
-                          child: const Text(
-                            "Información del préstamo",
-                            style: TextStyle(
-                              color: Color(0xFF112363),
-                              fontWeight: FontWeight.bold,
-                              decoration: TextDecoration.underline,
+                    if (book.state.toLowerCase() == "prestado")
+                      Row(
+                        children: [
+                          const Icon(Icons.cancel, color: Colors.red, size: 18),
+                          const SizedBox(width: 4),
+                          const Text("Prestado", style: TextStyle(fontSize: 12)),
+                          const SizedBox(width: 12),
+                          GestureDetector(
+                            //onTap: () => _showLoanDetailsPopup(context, book),
+                            child: const Text(
+                              "Información del préstamo",
+                              style: TextStyle(
+                                color: Color(0xFF112363),
+                                fontWeight: FontWeight.bold,
+                                decoration: TextDecoration.underline,
+                                fontSize: 10 
+                              ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
+                        ],
+                      ),
                   ],
                 ),
               ],
@@ -204,7 +211,6 @@ class _BookHeader extends StatelessWidget {
     );
   }
 }
-
 
 
 class _BookDetailsTab extends StatelessWidget {
@@ -269,55 +275,62 @@ class _BookDetailsTab extends StatelessWidget {
 }
 
 class _BookReviewsTab extends StatelessWidget {
-  const _BookReviewsTab();
+  final int bookId;
 
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-      children: const [
-        ReviewItem(name: "Angeles Marín Serrano", rating: 1, comment: ""),
-        ReviewItem(name: "Manuel Crespo Mora", rating: 1, comment: ""),
-      ],
-    );
+  const _BookReviewsTab({required this.bookId});
+
+  Future<List<Review>> fetchReviews() async {
+    var response = await ReviewController().getReviews(bookId);
+    return response;
   }
-}
-
-class ReviewItem extends StatelessWidget {
-  final String name;
-  final int rating;
-  final String comment;
-
-  const ReviewItem({
-    super.key,
-    required this.name,
-    required this.rating,
-    required this.comment,
-  });
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      title: Text(name),
-      subtitle: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: List.generate(
-              5,
-              (index) => Icon(
-                index < rating ? Icons.star : Icons.star_border,
-                color: Colors.amber,
-                size: 20,
-              ),
-            ),
-          ),
-          if (comment.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 8.0),
-              child: Text(comment),
-            ),
-        ],
-      ),
+    return FutureBuilder<List<Review>>(
+      future: fetchReviews(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(child: Text('No hay reseñas disponibles.'));
+        } else {
+          final reviews = snapshot.data!;
+          return ListView.builder(
+            itemCount: reviews.length,
+            itemBuilder: (context, index) {
+              final review = reviews[index];
+
+              // Obtener los detalles del usuario
+              return FutureBuilder<User?>(
+                future: UserController().getUserById(review.userId.toString()),
+                builder: (context, userSnapshot) {
+                  if (userSnapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (userSnapshot.hasError) {
+                    return Center(child: Text('Error: ${userSnapshot.error}'));
+                  } else if (!userSnapshot.hasData || userSnapshot.data == null) {
+                    return const Center(child: Text('Usuario no encontrado'));
+                  } else {
+                    // Aquí obtenemos el nombre y la imagen del usuario
+                    var user = userSnapshot.data!; // Accedemos directamente al objeto User
+                    String userName = user.name;
+                    String imageUrl = user.image ?? ''; // Si no hay imagen, dejar vacío
+
+                    return ReviewItem(
+                      name: userName, // Nombre del usuario
+                      rating: review.rating,
+                      comment: review.comment,
+                      imageUrl: imageUrl, // Imagen del usuario
+                    );
+                  }
+                },
+              );
+            },
+          );
+        }
+      },
     );
   }
 }
