@@ -1,5 +1,6 @@
 import 'package:booknest/controllers/book_controller.dart';
 import 'package:booknest/entities/models/book_model.dart';
+import 'package:booknest/views/book_details_owner_view.dart';
 import 'package:booknest/widgets/background.dart';
 import 'package:flutter/material.dart';
 
@@ -146,32 +147,43 @@ class _CategoryViewState extends State<CategoryView> {
                               itemCount: _books.length,
                               itemBuilder: (context, index) {
                                 final book = _books[index];
-                                return Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    ClipRRect(
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: AspectRatio(
-                                        aspectRatio: 0.7,
-                                        child: Image.network(
-                                          book.cover,
-                                          fit: BoxFit.cover,
-                                          errorBuilder: (context, error, stackTrace) =>
-                                              const Icon(Icons.broken_image),
+                                return GestureDetector(
+                                  onTap: () {
+                                    // Navegar a la página de detalles del libro
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => BookDetailsOwnerView(bookId: book.id),
+                                      ),
+                                    );
+                                  },
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: AspectRatio(
+                                          aspectRatio: 0.7,
+                                          child: Image.network(
+                                            book.cover,
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (context, error, stackTrace) =>
+                                                const Icon(Icons.broken_image),
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      book.title,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w500,
+                                      const SizedBox(height: 6),
+                                      Text(
+                                        book.title,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 );
                               },
                             ),

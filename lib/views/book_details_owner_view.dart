@@ -1,9 +1,11 @@
+import 'package:booknest/controllers/account_controller.dart';
 import 'package:booknest/controllers/book_controller.dart';
 import 'package:booknest/controllers/review_controller.dart';
 import 'package:booknest/controllers/user_controller.dart';
 import 'package:booknest/entities/models/book_model.dart';
 import 'package:booknest/entities/models/review_model.dart';
 import 'package:booknest/entities/models/user_model.dart';
+import 'package:booknest/views/add_review_view.dart';
 import 'package:booknest/widgets/background.dart';
 import 'package:booknest/widgets/review_item.dart';
 import 'package:booknest/widgets/tap_bubble_text.dart';
@@ -22,30 +24,81 @@ class BookDetailsOwnerView extends StatefulWidget {
 
 class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
   late Future<Book?> _bookFuture;
+  late Future<String?> _currentUserFuture;
   final _controller = BookController();
 
   @override
   void initState() {
     super.initState();
     _bookFuture = _controller.getBookById(widget.bookId);
+    _currentUserFuture = AccountController().getCurrentUserId();
   }
 
   @override
   Widget build(BuildContext context) {
+    double screenWidth = MediaQuery.of(context).size.width;
+    double screenHeight = MediaQuery.of(context).size.height;
+
     return FutureBuilder<Book?>(
       future: _bookFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
+      builder: (context, bookSnapshot) {
+        if (bookSnapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(body: Center(child: CircularProgressIndicator()));
-        } else if (snapshot.hasError || !snapshot.hasData) {
+        } else if (bookSnapshot.hasError || !bookSnapshot.hasData) {
           return const Scaffold(body: Center(child: Text("Error cargando el libro")));
         }
 
-        final book = snapshot.data!;
-        return Background(
-          title: 'Book details',
-          onBack: () => Navigator.pop(context),
-          child: BookInfoTabs(book: book),
+        final book = bookSnapshot.data!;
+
+        return FutureBuilder<String?>(
+          future: _currentUserFuture,
+          builder: (context, userIdSnapshot) {
+            if (userIdSnapshot.connectionState == ConnectionState.waiting) {
+              return const Scaffold(body: Center(child: CircularProgressIndicator()));
+            } else if (userIdSnapshot.hasError || !userIdSnapshot.hasData) {
+              return const Scaffold(body: Center(child: Text("Error cargando el usuario")));
+            }
+
+            final currentUserId = userIdSnapshot.data;
+            final isOwner = book.ownerId.toString() == currentUserId;
+
+            return Background(
+              title: 'Detalles del libro',
+              onBack: () => Navigator.pop(context),
+              child: Column(
+                children: [
+                  Expanded(child: BookInfoTabs(book: book, isOwner: isOwner)),  // Aquí pasamos isOwner
+                  if (!isOwner)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            // Aquí puedes agregar tu lógica para solicitar el préstamo
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFAD0000),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: screenWidth * 0.1,
+                              vertical: screenHeight * 0.02,
+                            ),
+                             shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                              side: const BorderSide(color: Colors.white, width: 3),
+                            ),
+                          ),
+                          child: const Text(
+                            "Solicitar Préstamo",
+                            style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            );
+          },
         );
       },
     );
@@ -55,8 +108,9 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
 
 class BookInfoTabs extends StatelessWidget {
   final Book book;
+  final bool isOwner;  // Añadimos isOwner aquí
 
-  const BookInfoTabs({super.key, required this.book});
+  const BookInfoTabs({super.key, required this.book, required this.isOwner});
 
   @override
   Widget build(BuildContext context) {
@@ -83,7 +137,7 @@ class BookInfoTabs extends StatelessWidget {
             child: TabBarView(
               children: [
                 _BookDetailsTab(book: book),
-                _BookReviewsTab(bookId: book.id),
+                _BookReviewsTab(bookId: book.id, isOwner: isOwner),  // Aquí pasamos isOwner
               ],
             ),
           ),
@@ -242,6 +296,7 @@ class _BookDetailsTab extends StatelessWidget {
           const SizedBox(height: 20),
           Container(
             width: double.infinity,
+            height: 300,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
@@ -259,15 +314,20 @@ class _BookDetailsTab extends StatelessWidget {
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  book.summary.isNotEmpty
-                      ? book.summary
-                      : "Este libro no tiene un resumen disponible.",
-                  style: const TextStyle(color: Colors.white),
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Text(
+                      book.summary.isNotEmpty
+                          ? book.summary
+                          : "Este libro no tiene un resumen disponible.",
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  ),
                 ),
               ],
             ),
           ),
+
         ],
       ),
     );
@@ -276,8 +336,9 @@ class _BookDetailsTab extends StatelessWidget {
 
 class _BookReviewsTab extends StatelessWidget {
   final int bookId;
+  final bool isOwner;  // Recibimos isOwner aquí
 
-  const _BookReviewsTab({required this.bookId});
+  const _BookReviewsTab({required this.bookId, required this.isOwner});
 
   Future<List<Review>> fetchReviews() async {
     var response = await ReviewController().getReviews(bookId);
@@ -294,40 +355,107 @@ class _BookReviewsTab extends StatelessWidget {
         } else if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}'));
         } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(child: Text('No hay reseñas disponibles.'));
+          return Column(
+            children: [
+              // Icono más arriba, justo debajo de la pestaña
+              if (!isOwner)  // Solo mostramos el icono si no es el propietario
+                Align(
+                  alignment: Alignment.topRight,  // Alineamos el icono a la derecha
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 16.0), // Ajuste para estar debajo de la pestaña
+                    child: IconButton(
+                      icon: const Icon(Icons.add_circle_outline, color: Color(0xFF112363), size: 30),
+                      onPressed: () {
+                        // Aquí redirigimos a la página para añadir reseña
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => AddReviewView(bookId: bookId), // Redirige a la pantalla de añadir reseña
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              // Frase centrada al final
+              const Expanded(
+                child: Center(
+                  child: Text('No hay reseñas disponibles.'),
+                ),
+              ),
+            ],
+          );
         } else {
           final reviews = snapshot.data!;
-          return ListView.builder(
-            itemCount: reviews.length,
-            itemBuilder: (context, index) {
-              final review = reviews[index];
 
-              // Obtener los detalles del usuario
-              return FutureBuilder<User?>(
-                future: UserController().getUserById(review.userId.toString()),
-                builder: (context, userSnapshot) {
-                  if (userSnapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (userSnapshot.hasError) {
-                    return Center(child: Text('Error: ${userSnapshot.error}'));
-                  } else if (!userSnapshot.hasData || userSnapshot.data == null) {
-                    return const Center(child: Text('Usuario no encontrado'));
-                  } else {
-                    // Aquí obtenemos el nombre y la imagen del usuario
-                    var user = userSnapshot.data!; // Accedemos directamente al objeto User
-                    String userName = user.name;
-                    String imageUrl = user.image ?? ''; // Si no hay imagen, dejar vacío
+          return Column(
+            children: [
+              const SizedBox(height: 30), // Espacio adicional si es necesario
+              const TabBar(
+                indicatorColor: Color(0xFF112363),
+                labelColor: Colors.black,
+                unselectedLabelColor: Colors.grey,
+                labelStyle: TextStyle(fontWeight: FontWeight.bold),
+                tabs: [
+                  Tab(icon: Icon(Icons.edit, size: 16), text: 'Detalles'),
+                  Tab(icon: Icon(Icons.lock, size: 16), text: 'Reseñas y valoraciones'),
+                ],
+              ),
+              Expanded(
+                child: Stack(
+                  children: [
+                    ListView.builder(
+                      itemCount: reviews.length,
+                      itemBuilder: (context, index) {
+                        final review = reviews[index];
+                        return FutureBuilder<User?>(
+                          future: UserController().getUserById(review.userId.toString()),
+                          builder: (context, userSnapshot) {
+                            if (userSnapshot.connectionState == ConnectionState.waiting) {
+                              return const Center(child: CircularProgressIndicator());
+                            } else if (userSnapshot.hasError) {
+                              return Center(child: Text('Error: ${userSnapshot.error}'));
+                            } else if (!userSnapshot.hasData || userSnapshot.data == null) {
+                              return const Center(child: Text('Usuario no encontrado'));
+                            } else {
+                              var user = userSnapshot.data!;
+                              String userName = user.name;
+                              String imageUrl = user.image ?? '';
 
-                    return ReviewItem(
-                      name: userName, // Nombre del usuario
-                      rating: review.rating,
-                      comment: review.comment,
-                      imageUrl: imageUrl, // Imagen del usuario
-                    );
-                  }
-                },
-              );
-            },
+                              return ReviewItem(
+                                name: userName,
+                                rating: review.rating,
+                                comment: review.comment,
+                                imageUrl: imageUrl,
+                              );
+                            }
+                          },
+                        );
+                      },
+                    ),
+                    if (!isOwner) // Solo mostramos el icono si no es el propietario
+                      Align(
+                        alignment: Alignment.topRight,  // Alineamos el icono a la derecha
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 50.0, right: 16.0),  // Ajuste de espaciado para estar justo debajo de la pestaña
+                          child: IconButton(
+                            icon: const Icon(Icons.add_circle_outline, color: Color(0xFF112363), size: 30),
+                            onPressed: () {
+                              // Aquí redirigimos a la página para añadir reseña
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => AddReviewView(bookId: bookId), // Redirige a la pantalla de añadir reseña
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
           );
         }
       },
