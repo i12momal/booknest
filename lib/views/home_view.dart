@@ -1,4 +1,5 @@
 import 'package:booknest/controllers/categories_controller.dart';
+import 'package:booknest/views/book_details_owner_view.dart';
 import 'package:booknest/widgets/category_selection_popup.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -323,7 +324,16 @@ class _HomeViewState extends State<HomeView> {
                   ),
                   itemBuilder: (context, index) {
                     final book = currentBooks[index];
-                    return Column(
+                    return GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => BookDetailsOwnerView(bookId: book['id']),
+                        ),
+                      );
+                    },
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         ClipRRect(
@@ -331,7 +341,7 @@ class _HomeViewState extends State<HomeView> {
                           child: AspectRatio(
                             aspectRatio: 0.7,
                             child: Image.network(
-                              book['cover'], // asegúrate de que este campo exista
+                              book['cover'],
                               fit: BoxFit.cover,
                               errorBuilder: (context, error, stackTrace) =>
                                   const Icon(Icons.broken_image),
@@ -346,7 +356,9 @@ class _HomeViewState extends State<HomeView> {
                           style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
                         ),
                       ],
-                    );
+                    ),
+                  );
+
 
                   }
                 ),
