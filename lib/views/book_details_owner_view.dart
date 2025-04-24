@@ -85,7 +85,7 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
                             ),
                              shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30),
-                              side: const BorderSide(color: Colors.white, width: 3),
+                              side: const BorderSide(color: Color(0xFF700101), width: 3),
                             ),
                           ),
                           child: const Text(
@@ -108,7 +108,7 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
 
 class BookInfoTabs extends StatelessWidget {
   final Book book;
-  final bool isOwner;  // Añadimos isOwner aquí
+  final bool isOwner;
 
   const BookInfoTabs({super.key, required this.book, required this.isOwner});
 
@@ -137,7 +137,7 @@ class BookInfoTabs extends StatelessWidget {
             child: TabBarView(
               children: [
                 _BookDetailsTab(book: book),
-                _BookReviewsTab(bookId: book.id, isOwner: isOwner),  // Aquí pasamos isOwner
+                _BookReviewsTab(book: book, isOwner: isOwner),
               ],
             ),
           ),
@@ -335,13 +335,13 @@ class _BookDetailsTab extends StatelessWidget {
 }
 
 class _BookReviewsTab extends StatelessWidget {
-  final int bookId;
+  final Book book;
   final bool isOwner;  // Recibimos isOwner aquí
 
-  const _BookReviewsTab({required this.bookId, required this.isOwner});
+  const _BookReviewsTab({required this.book, required this.isOwner});
 
   Future<List<Review>> fetchReviews() async {
-    var response = await ReviewController().getReviews(bookId);
+    var response = await ReviewController().getReviews(book.id);
     return response;
   }
 
@@ -370,7 +370,7 @@ class _BookReviewsTab extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => AddReviewView(bookId: bookId), // Redirige a la pantalla de añadir reseña
+                            builder: (context) => AddReviewView(book: book), // Redirige a la pantalla de añadir reseña
                           ),
                         );
                       },
@@ -445,7 +445,7 @@ class _BookReviewsTab extends StatelessWidget {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => AddReviewView(bookId: bookId), // Redirige a la pantalla de añadir reseña
+                                  builder: (context) => AddReviewView(book: book), // Redirige a la pantalla de añadir reseña
                                 ),
                               );
                             },
