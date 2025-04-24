@@ -6,6 +6,7 @@ import 'package:booknest/entities/models/book_model.dart';
 import 'package:booknest/entities/models/review_model.dart';
 import 'package:booknest/entities/models/user_model.dart';
 import 'package:booknest/views/add_review_view.dart';
+import 'package:booknest/views/edit_book_view.dart';
 import 'package:booknest/widgets/background.dart';
 import 'package:booknest/widgets/review_item.dart';
 import 'package:booknest/widgets/tap_bubble_text.dart';
@@ -26,7 +27,7 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
   late Future<Book?> _bookFuture;
   late Future<String?> _currentUserFuture;
   final _controller = BookController();
-  bool _shouldReloadReviews = false;
+  final bool _shouldReloadReviews = false;
 
   @override
   void initState() {
@@ -157,7 +158,7 @@ class _BookInfoTabsState extends State<BookInfoTabs> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 20),
-          _BookHeader(book: widget.book),
+          _BookHeader(book: widget.book, isOwner: widget.isOwner),
           const SizedBox(height: 40),
           const TabBar(
             indicatorColor: Color(0xFF112363),
@@ -187,8 +188,9 @@ class _BookInfoTabsState extends State<BookInfoTabs> {
 
 class _BookHeader extends StatelessWidget {
   final Book book;
+  final bool isOwner;
 
-  const _BookHeader({required this.book});
+  const _BookHeader({required this.book, required this.isOwner});
 
   @override
   Widget build(BuildContext context) {
@@ -204,97 +206,123 @@ class _BookHeader extends StatelessWidget {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
-            child: Image.network(
-              book.cover,
-              height: 140,
-              width: 90,
-              fit: BoxFit.cover,
+            child: GestureDetector(
+              onTap: () {
+                // Redirigir a la página de edición si es el propietario
+                if (isOwner) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => EditBookView(bookId: book.id),
+                    ),
+                  );
+                }
+              },
+              child: Image.network(
+                book.cover,
+                height: 140,
+                width: 90,
+                fit: BoxFit.cover,
+              ),
             ),
           ),
           const SizedBox(width: 16),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TapBubbleText(text: book.title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),),
+            child: GestureDetector(
+              onTap: () {
+                // Redirigir a la página de edición si es el propietario
+                if (isOwner) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => EditBookView(bookId: book.id),
+                    ),
+                  );
+                }
+              },
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TapBubbleText(text: book.title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),),
 
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    const Icon(Icons.person, size: 16, color: Colors.grey),
-                    const SizedBox(width: 6),
-                    Expanded(child: TapBubbleText(text: book.author, style: const TextStyle(color: Colors.grey),),),
-                  ],
-                ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(Icons.person, size: 16, color: Colors.grey),
+                      const SizedBox(width: 6),
+                      Expanded(child: TapBubbleText(text: book.author, style: const TextStyle(color: Colors.grey),),),
+                    ],
+                  ),
 
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    const Icon(Icons.qr_code, size: 16, color: Colors.grey),
-                    const SizedBox(width: 6),
-                    Text(book.isbn),
-                  ],
-                ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(Icons.qr_code, size: 16, color: Colors.grey),
+                      const SizedBox(width: 6),
+                      Text(book.isbn),
+                    ],
+                  ),
 
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    if (formats.contains("Físico"))
-                      const Row(
-                        children: [
-                          Icon(Icons.book, size: 18),
-                          SizedBox(width: 4),
-                          Text("Físico"),
-                        ],
-                      ),
-                    if (formats.contains("Físico") && formats.contains("Digital"))
-                      const SizedBox(width: 12),
-                    if (formats.contains("Digital"))
-                      const Row(
-                        children: [
-                          Icon(Icons.tablet_android, size: 18),
-                          SizedBox(width: 4),
-                          Text("Digital"),
-                        ],
-                      ),
-                  ],
-                ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      if (formats.contains("Físico"))
+                        const Row(
+                          children: [
+                            Icon(Icons.book, size: 18),
+                            SizedBox(width: 4),
+                            Text("Físico"),
+                          ],
+                        ),
+                      if (formats.contains("Físico") && formats.contains("Digital"))
+                        const SizedBox(width: 12),
+                      if (formats.contains("Digital"))
+                        const Row(
+                          children: [
+                            Icon(Icons.tablet_android, size: 18),
+                            SizedBox(width: 4),
+                            Text("Digital"),
+                          ],
+                        ),
+                    ],
+                  ),
 
-                const SizedBox(height: 6),
-                Row(
-                  children: [
-                    if (book.state.toLowerCase() == "disponible")
-                      const Row(
-                        children: [
-                          Icon(Icons.check_circle, color: Colors.green, size: 18),
-                          SizedBox(width: 4),
-                          Text("Disponible"),
-                        ],
-                      ),
-                    if (book.state.toLowerCase() == "prestado")
-                      Row(
-                        children: [
-                          const Icon(Icons.cancel, color: Colors.red, size: 18),
-                          const SizedBox(width: 4),
-                          const Text("Prestado", style: TextStyle(fontSize: 12)),
-                          const SizedBox(width: 12),
-                          GestureDetector(
-                            //onTap: () => _showLoanDetailsPopup(context, book),
-                            child: const Text(
-                              "Información del préstamo",
-                              style: TextStyle(
-                                color: Color(0xFF112363),
-                                fontWeight: FontWeight.bold,
-                                decoration: TextDecoration.underline,
-                                fontSize: 10 
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      if (book.state.toLowerCase() == "disponible")
+                        const Row(
+                          children: [
+                            Icon(Icons.check_circle, color: Colors.green, size: 18),
+                            SizedBox(width: 4),
+                            Text("Disponible"),
+                          ],
+                        ),
+                      if (book.state.toLowerCase() == "prestado")
+                        Row(
+                          children: [
+                            const Icon(Icons.cancel, color: Colors.red, size: 18),
+                            const SizedBox(width: 4),
+                            const Text("Prestado", style: TextStyle(fontSize: 12)),
+                            const SizedBox(width: 12),
+                            GestureDetector(
+                              //onTap: () => _showLoanDetailsPopup(context, book),
+                              child: const Text(
+                                "Información del préstamo",
+                                style: TextStyle(
+                                  color: Color(0xFF112363),
+                                  fontWeight: FontWeight.bold,
+                                  decoration: TextDecoration.underline,
+                                  fontSize: 10 
+                                ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                  ],
-                ),
-              ],
+                          ],
+                        ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -429,8 +457,13 @@ class _BookReviewsTabState extends State<_BookReviewsTab> {
                     ),
                   ),
                 ),
-              const Center(
-                child: Text('No hay reseñas disponibles.'),
+              const Expanded(
+                child: Center(
+                  child: Text(
+                    'No hay reseñas disponibles.',
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
+                ),
               ),
             ],
           );
