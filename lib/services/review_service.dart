@@ -13,8 +13,8 @@ class ReviewService extends BaseService {
       // Llamada para obtener las reseñas
       final response = await BaseService.client
           .from('Review')
-          .select('id, comment, rating, userId, bookId')
-          .eq('bookId', bookId);
+          .select('id, comment, rating, userId, bookId, created_at')
+          .eq('bookId', bookId).order('created_at', ascending: false);
 
       if (response != null && response.isNotEmpty) {
         return {
