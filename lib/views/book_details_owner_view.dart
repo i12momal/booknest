@@ -26,6 +26,7 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
   late Future<Book?> _bookFuture;
   late Future<String?> _currentUserFuture;
   final _controller = BookController();
+  bool _shouldReloadReviews = false;
 
   @override
   void initState() {
@@ -67,7 +68,7 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
               onBack: () => Navigator.pop(context),
               child: Column(
                 children: [
-                  Expanded(child: BookInfoTabs(book: book, isOwner: isOwner)),  // Aquí pasamos isOwner
+                  Expanded(child: BookInfoTabs(book: book, isOwner: isOwner, reloadReviews: _shouldReloadReviews)),  // Aquí pasamos isOwner
                   if (!isOwner)
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
@@ -106,11 +107,47 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
 }
 
 
-class BookInfoTabs extends StatelessWidget {
+class BookInfoTabs extends StatefulWidget {
   final Book book;
   final bool isOwner;
+  final bool reloadReviews;
 
-  const BookInfoTabs({super.key, required this.book, required this.isOwner});
+  const BookInfoTabs({
+    super.key,
+    required this.book,
+    required this.isOwner,
+    required this.reloadReviews,
+  });
+
+  @override
+  State<BookInfoTabs> createState() => _BookInfoTabsState();
+}
+
+class _BookInfoTabsState extends State<BookInfoTabs> {
+  late Future<List<Review>> _reviewsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    // Inicializamos las reseñas
+    _reviewsFuture = fetchReviews();
+  }
+
+  @override
+  void didUpdateWidget(covariant BookInfoTabs oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Si las reseñas necesitan recargarse
+    if (widget.reloadReviews != oldWidget.reloadReviews && widget.reloadReviews) {
+      setState(() {
+        _reviewsFuture = fetchReviews();  // Recargamos las reseñas
+      });
+    }
+  }
+
+  Future<List<Review>> fetchReviews() async {
+    var response = await ReviewController().getReviews(widget.book.id);
+    return response;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -120,7 +157,7 @@ class BookInfoTabs extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 20),
-          _BookHeader(book: book),
+          _BookHeader(book: widget.book),
           const SizedBox(height: 40),
           const TabBar(
             indicatorColor: Color(0xFF112363),
@@ -132,12 +169,12 @@ class BookInfoTabs extends StatelessWidget {
               Tab(icon: Icon(Icons.lock, size: 16), text: 'Reseñas y valoraciones'),
             ],
           ),
-          const SizedBox(height: 30),
+          const SizedBox(height: 15),
           Expanded(
             child: TabBarView(
               children: [
-                _BookDetailsTab(book: book),
-                _BookReviewsTab(book: book, isOwner: isOwner),
+                _BookDetailsTab(book: widget.book),
+                _BookReviewsTab(book: widget.book, isOwner: widget.isOwner, reviewsFuture: _reviewsFuture),
               ],
             ),
           ),
@@ -334,21 +371,36 @@ class _BookDetailsTab extends StatelessWidget {
   }
 }
 
-class _BookReviewsTab extends StatelessWidget {
+class _BookReviewsTab extends StatefulWidget {
   final Book book;
-  final bool isOwner;  // Recibimos isOwner aquí
+  final bool isOwner;
+  final Future<List<Review>> reviewsFuture;
 
-  const _BookReviewsTab({required this.book, required this.isOwner});
+  const _BookReviewsTab({required this.book, required this.isOwner, required this.reviewsFuture});
 
-  Future<List<Review>> fetchReviews() async {
-    var response = await ReviewController().getReviews(book.id);
-    return response;
+  @override
+  _BookReviewsTabState createState() => _BookReviewsTabState();
+}
+
+class _BookReviewsTabState extends State<_BookReviewsTab> {
+  late Future<List<Review>> _reviewsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _reviewsFuture = widget.reviewsFuture;
+  }
+
+  void _refreshReviews() {
+    setState(() {
+      _reviewsFuture = ReviewController().getReviews(widget.book.id);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<List<Review>>(
-      future: fetchReviews(),
+      future: _reviewsFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -357,31 +409,28 @@ class _BookReviewsTab extends StatelessWidget {
         } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
           return Column(
             children: [
-              // Icono más arriba, justo debajo de la pestaña
-              if (!isOwner)  // Solo mostramos el icono si no es el propietario
+              if (!widget.isOwner)
                 Align(
-                  alignment: Alignment.topRight,  // Alineamos el icono a la derecha
+                  alignment: Alignment.topRight,
                   child: Padding(
-                    padding: const EdgeInsets.only(right: 16.0), // Ajuste para estar debajo de la pestaña
+                    padding: const EdgeInsets.only(right: 16.0, top: 4.0),
                     child: IconButton(
                       icon: const Icon(Icons.add_circle_outline, color: Color(0xFF112363), size: 30),
                       onPressed: () {
-                        // Aquí redirigimos a la página para añadir reseña
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => AddReviewView(book: book), // Redirige a la pantalla de añadir reseña
+                            builder: (context) => AddReviewView(book: widget.book),
                           ),
-                        );
+                        ).then((_) {
+                          _refreshReviews();
+                        });
                       },
                     ),
                   ),
                 ),
-              // Frase centrada al final
-              const Expanded(
-                child: Center(
-                  child: Text('No hay reseñas disponibles.'),
-                ),
+              const Center(
+                child: Text('No hay reseñas disponibles.'),
               ),
             ],
           );
@@ -390,69 +439,55 @@ class _BookReviewsTab extends StatelessWidget {
 
           return Column(
             children: [
-              const SizedBox(height: 30), // Espacio adicional si es necesario
-              const TabBar(
-                indicatorColor: Color(0xFF112363),
-                labelColor: Colors.black,
-                unselectedLabelColor: Colors.grey,
-                labelStyle: TextStyle(fontWeight: FontWeight.bold),
-                tabs: [
-                  Tab(icon: Icon(Icons.edit, size: 16), text: 'Detalles'),
-                  Tab(icon: Icon(Icons.lock, size: 16), text: 'Reseñas y valoraciones'),
-                ],
-              ),
-              Expanded(
-                child: Stack(
-                  children: [
-                    ListView.builder(
-                      itemCount: reviews.length,
-                      itemBuilder: (context, index) {
-                        final review = reviews[index];
-                        return FutureBuilder<User?>(
-                          future: UserController().getUserById(review.userId.toString()),
-                          builder: (context, userSnapshot) {
-                            if (userSnapshot.connectionState == ConnectionState.waiting) {
-                              return const Center(child: CircularProgressIndicator());
-                            } else if (userSnapshot.hasError) {
-                              return Center(child: Text('Error: ${userSnapshot.error}'));
-                            } else if (!userSnapshot.hasData || userSnapshot.data == null) {
-                              return const Center(child: Text('Usuario no encontrado'));
-                            } else {
-                              var user = userSnapshot.data!;
-                              String userName = user.name;
-                              String imageUrl = user.image ?? '';
-
-                              return ReviewItem(
-                                name: userName,
-                                rating: review.rating,
-                                comment: review.comment,
-                                imageUrl: imageUrl,
-                              );
-                            }
-                          },
-                        );
+              if (!widget.isOwner)
+                Align(
+                  alignment: Alignment.topRight,
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 16.0, top: 4.0),
+                    child: IconButton(
+                      icon: const Icon(Icons.add_circle_outline, color: Color(0xFF112363), size: 30),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => AddReviewView(book: widget.book),
+                          ),
+                        ).then((_) {
+                          _refreshReviews();
+                        });
                       },
                     ),
-                    if (!isOwner) // Solo mostramos el icono si no es el propietario
-                      Align(
-                        alignment: Alignment.topRight,  // Alineamos el icono a la derecha
-                        child: Padding(
-                          padding: const EdgeInsets.only(top: 50.0, right: 16.0),  // Ajuste de espaciado para estar justo debajo de la pestaña
-                          child: IconButton(
-                            icon: const Icon(Icons.add_circle_outline, color: Color(0xFF112363), size: 30),
-                            onPressed: () {
-                              // Aquí redirigimos a la página para añadir reseña
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => AddReviewView(book: book), // Redirige a la pantalla de añadir reseña
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ),
-                  ],
+                  ),
+                ),
+              Flexible( 
+                child: ListView.builder(
+                  itemCount: reviews.length,
+                  itemBuilder: (context, index) {
+                    final review = reviews[index];
+                    return FutureBuilder<User?>(
+                      future: UserController().getUserById(review.userId.toString()),
+                      builder: (context, userSnapshot) {
+                        if (userSnapshot.connectionState == ConnectionState.waiting) {
+                          return const Center(child: CircularProgressIndicator());
+                        } else if (userSnapshot.hasError) {
+                          return Center(child: Text('Error: ${userSnapshot.error}'));
+                        } else if (!userSnapshot.hasData || userSnapshot.data == null) {
+                          return const Center(child: Text('Usuario no encontrado'));
+                        } else {
+                          var user = userSnapshot.data!;
+                          String userName = user.name;
+                          String imageUrl = user.image ?? '';
+
+                          return ReviewItem(
+                            name: userName,
+                            rating: review.rating,
+                            comment: review.comment,
+                            imageUrl: imageUrl,
+                          );
+                        }
+                      },
+                    );
+                  },
                 ),
               ),
             ],
