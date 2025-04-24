@@ -140,7 +140,7 @@ class _BookInfoTabsState extends State<BookInfoTabs> {
     // Si las reseñas necesitan recargarse
     if (widget.reloadReviews != oldWidget.reloadReviews && widget.reloadReviews) {
       setState(() {
-        _reviewsFuture = fetchReviews();  // Recargamos las reseñas
+        _reviewsFuture = fetchReviews();
       });
     }
   }
@@ -412,6 +412,8 @@ class _BookReviewsTab extends StatefulWidget {
 
 class _BookReviewsTabState extends State<_BookReviewsTab> {
   late Future<List<Review>> _reviewsFuture;
+  int _currentPage = 0;
+  static const int _reviewsPerPage = 10;
 
   @override
   void initState() {
@@ -422,6 +424,7 @@ class _BookReviewsTabState extends State<_BookReviewsTab> {
   void _refreshReviews() {
     setState(() {
       _reviewsFuture = ReviewController().getReviews(widget.book.id);
+      _currentPage = 0;
     });
   }
 
@@ -469,6 +472,13 @@ class _BookReviewsTabState extends State<_BookReviewsTab> {
           );
         } else {
           final reviews = snapshot.data!;
+          final totalPages = (reviews.length / _reviewsPerPage).ceil();
+          final startIndex = _currentPage * _reviewsPerPage;
+          final endIndex = (startIndex + _reviewsPerPage) < reviews.length
+              ? (startIndex + _reviewsPerPage)
+              : reviews.length;
+
+          final currentReviews = reviews.sublist(startIndex, endIndex);
 
           return Column(
             children: [
@@ -492,11 +502,11 @@ class _BookReviewsTabState extends State<_BookReviewsTab> {
                     ),
                   ),
                 ),
-              Flexible( 
+              Flexible(
                 child: ListView.builder(
-                  itemCount: reviews.length,
+                  itemCount: currentReviews.length,
                   itemBuilder: (context, index) {
-                    final review = reviews[index];
+                    final review = currentReviews[index];
                     return FutureBuilder<User?>(
                       future: UserController().getUserById(review.userId.toString()),
                       builder: (context, userSnapshot) {
@@ -521,6 +531,39 @@ class _BookReviewsTabState extends State<_BookReviewsTab> {
                       },
                     );
                   },
+                ),
+              ),
+              // Paginación
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back),
+                      onPressed: _currentPage > 0
+                          ? () {
+                              setState(() {
+                                _currentPage--;
+                              });
+                            }
+                          : null,
+                    ),
+                    Text(
+                      'Página ${_currentPage + 1} de $totalPages',
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.arrow_forward),
+                      onPressed: _currentPage < totalPages - 1
+                          ? () {
+                              setState(() {
+                                _currentPage++;
+                              });
+                            }
+                          : null,
+                    ),
+                  ],
                 ),
               ),
             ],
