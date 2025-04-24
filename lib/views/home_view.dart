@@ -39,7 +39,6 @@ class _HomeViewState extends State<HomeView> {
   Future<void> _loadCategoriesAndBooks() async {
     final userId = Supabase.instance.client.auth.currentUser?.id;
     if (userId != null) {
-
       setState(() {
         isLoading = true;
       });
@@ -55,19 +54,23 @@ class _HomeViewState extends State<HomeView> {
       
       final allBooks = await _controller.loadAllBooks();
 
+      // Filtrar los libros para excluir los del usuario actual
+      final filteredBooks = allBooks.where((book) {
+        return book['owner_id'] != userId;
+      }).toList();
+
       setState(() {
         categories = userCategories;
         allCategories = systemCategories;
         allCategoryBooks = books;
-        filteredBooks = allBooks;
+        this.filteredBooks = filteredBooks;
         selectedCategory = null;
         currentPage = 1;
         isLoading = false;
-        allLoadedBooks = allBooks;
+        allLoadedBooks = filteredBooks;
       });
     }
   }
-
 
    // Función de búsqueda de libros por título o autor
   Future<void> _searchBooks(String query) async {
@@ -84,14 +87,15 @@ class _HomeViewState extends State<HomeView> {
     });
   }
 
+
   int _calculateCrossAxisCount(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
 
-    if (screenWidth >= 1200) return 7; // pantallas grandes
+    if (screenWidth >= 1200) return 7;
     if (screenWidth >= 900) return 6;
     if (screenWidth >= 600) return 5;
     if (screenWidth >= 400) return 4;
-    return 3; // móvil pequeño
+    return 3;
   }
 
   void _showCategorySelectionPopup(BuildContext context) {
@@ -130,7 +134,7 @@ class _HomeViewState extends State<HomeView> {
                 }
 
                 setState(() {
-                  isLoading = false; // Oculta el loader
+                  isLoading = false;
                 });
               },
             ),
@@ -144,13 +148,17 @@ class _HomeViewState extends State<HomeView> {
   void _toggleCategory(String category) {
     setState(() {
       if (selectedCategory == category) {
-        // Deseleccionamos → volver a mostrar todos los libros relacionados con las categorías del usuario
         selectedCategory = null;
-        filteredBooks = allLoadedBooks;
+        filteredBooks = allLoadedBooks.where((book) {
+          return book['owner_id'] != Supabase.instance.client.auth.currentUser?.id; 
+        }).toList();
       } else {
         // Seleccionamos una categoría específica
         selectedCategory = category;
-        filteredBooks = allCategoryBooks.where((book) => (book['categories'] as String).toLowerCase().contains(category.toLowerCase())).toList();
+        filteredBooks = allCategoryBooks.where((book) {
+          return (book['categories'] as String).toLowerCase().contains(category.toLowerCase()) &&
+                book['owner_id'] != Supabase.instance.client.auth.currentUser?.id;
+        }).toList();
       }
       currentPage = 1;
     });
