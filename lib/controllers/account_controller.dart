@@ -148,7 +148,6 @@ class AccountController extends BaseController{
       String con el ID del usuario autenticado o null si no hay usuario autenticado.
   */
   Future<String?> getCurrentUserId() async {
-
     final result = await accountService.getCurrentUserId();
     return result;
   }

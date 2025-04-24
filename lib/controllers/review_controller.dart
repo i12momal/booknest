@@ -1,5 +1,6 @@
 import 'package:booknest/controllers/base_controller.dart';
 import 'package:booknest/entities/models/review_model.dart';
+import 'package:booknest/entities/viewmodels/review_view_model.dart';
 
 
 // Controlador con los métodos de las acciones de Reseñas y Valoraciones.
@@ -28,6 +29,20 @@ class ReviewController extends BaseController {
       // Si no se obtuvieron reseñas, devolver una lista vacía
       return [];
     }
+  }
+
+  // Método asíncrono para añadir una nueva reseña a un libro
+   Future<Map<String, dynamic>> addReview(String comment, int rating, String userId, int bookId) async {
+    // Creación del viewModel
+    final addReviewViewModel = CreateReviewViewModel(
+      comment: comment,
+      rating: rating,
+      userId: userId,
+      bookId: bookId
+    );
+    
+    // Llamada al servicio para registrar al usuario
+    return await reviewService.addReview(addReviewViewModel);
   }
 
 }

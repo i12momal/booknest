@@ -1,3 +1,5 @@
+import 'package:booknest/controllers/account_controller.dart';
+import 'package:booknest/controllers/review_controller.dart';
 import 'package:booknest/entities/models/book_model.dart';
 import 'package:booknest/widgets/background.dart';
 import 'package:booknest/widgets/success_dialog.dart';
@@ -19,9 +21,17 @@ class _AddReviewViewState extends State<AddReviewView> {
   final TextEditingController _commentController = TextEditingController();
   double _rating = 0;
   bool _showRatingError = false;
-  bool _showCommentError = false; // Controla el error del comentario
+  bool _showCommentError = false;
   bool _isSubmitting = false;
-  bool _hasSubmitted = false;
+  String? userId;
+
+  final ReviewController _reviewController = ReviewController();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserId();
+  }
 
   // Función que muestra el dialogo de éxito al añadir una nueva reseña
   void _showSuccessDialog() {
@@ -30,10 +40,16 @@ class _AddReviewViewState extends State<AddReviewView> {
       'Creación Exitosa',
       '¡Tu reseña ha sido creada con éxito!',
       () {
-        Navigator.pop(context); // Cierra el dialogo de éxito
-        Navigator.pop(context, true); // Regresa a la pantalla anterior
+        Navigator.pop(context, true);
       },
     );
+  }
+
+  Future<void> _loadUserId() async {
+    final id = await AccountController().getCurrentUserId();
+    setState(() {
+      userId = id;
+    });
   }
 
   @override
@@ -234,37 +250,40 @@ class _AddReviewViewState extends State<AddReviewView> {
                   onPressed: () async {
                     if (_isSubmitting) return;
 
-                    // Validar si el comentario es válido y si las estrellas están seleccionadas
                     final isCommentValid = _commentController.text.trim().isNotEmpty;
                     final isRatingValid = _rating > 0;
 
-                    // Si el comentario está vacío, mostrar el error
                     setState(() {
                       _showCommentError = !isCommentValid;
+                      _showRatingError = !isRatingValid;
                     });
 
-                    // Si no se ha seleccionado una valoración, mostrar el error
-                    if (!isRatingValid) {
-                      setState(() {
-                        _showRatingError = true;
-                      });
-                    }
-
-                    // Si el comentario y la valoración son válidos, procesar la reseña
                     if (isCommentValid && isRatingValid) {
                       setState(() {
                         _isSubmitting = true;
                       });
 
-                      await Future.delayed(const Duration(seconds: 1));
+                      final response = await _reviewController.addReview(
+                        _commentController.text.trim(),
+                        _rating.toInt(),
+                        userId ?? '',
+                        widget.book.id,
+                      );
 
                       setState(() {
                         _isSubmitting = false;
                       });
 
-                      _showSuccessDialog();
+                      if (response['success']) {
+                        _showSuccessDialog();
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(response['message'] ?? 'Error al guardar la reseña')),
+                        );
+                      }
                     }
                   },
+
                   child: _isSubmitting
                       ? const SizedBox(
                           height: 20,
