@@ -4,6 +4,7 @@ import 'package:booknest/entities/viewmodels/loan_view_model.dart';
 
 class LoanController extends BaseController{
 
+  // Método asíncrono para solicitar el préstamo de un libro
   Future<Map<String, dynamic>> requestLoan(Book book, String format) async {
 
     // Obtener el ID del usuario que ha solicitado el préstamo
@@ -30,5 +31,8 @@ class LoanController extends BaseController{
     return await loanService.createLoan(createLoanViewModel);
   }
 
-
+  // Método que obtiene las solicitudes de préstamos de un usuario
+  Future<List<Map<String, dynamic>>> getPendingLoansForUser(String userId) async {
+    return await loanService.getUserPendingLoans(userId);
+  }
 }

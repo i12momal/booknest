@@ -1,16 +1,31 @@
+import 'package:booknest/controllers/account_controller.dart';
+import 'package:booknest/controllers/loan_controller.dart';
+import 'package:booknest/views/notifications_view.dart';
 import 'package:flutter/material.dart';
 
 class Background extends StatelessWidget {
   final Widget child;
   final String title;
   final VoidCallback? onBack;
+  final bool showNotificationIcon;
 
   const Background({
     super.key,
     required this.child,
     required this.title,
     this.onBack,
+    this.showNotificationIcon = true,
   });
+
+  Future<int> _fetchNotificationCount() async {
+    // Simula obtener el ID del usuario
+    final userId = await AccountController().getCurrentUserId();
+    if (userId == null) return 0;
+
+    // Simula obtener las solicitudes pendientes del usuario
+    final response = await LoanController().getPendingLoansForUser(userId);
+    return response.length;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,6 +73,55 @@ class Background extends StatelessWidget {
                           onPressed: onBack,
                         )
                       : null,
+                  actions: showNotificationIcon
+                      ? [
+                          FutureBuilder<int>(
+                            future: _fetchNotificationCount(),
+                            builder: (context, snapshot) {
+                              final count = snapshot.data ?? 0;
+                              return Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.notifications_none),
+                                    color: Colors.white,
+                                    onPressed: () {
+                                      // Navega a la pantalla de notificaciones
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const NotificationsView(),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                  if (count > 0)
+                                    Positioned(
+                                      right: 6,
+                                      top: 8,
+                                      child: Container(
+                                        padding: const EdgeInsets.all(5),
+                                        decoration: const BoxDecoration(
+                                          color: Colors.red,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Text(
+                                          '$count',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              );
+                            },
+                          ),
+                        ]
+                      : [],
                 ),
               ),
             ),

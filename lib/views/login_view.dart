@@ -31,6 +31,7 @@ class _LoginViewState extends State<LoginView> {
       },
       child: Background(
         title: 'Iniciar Sesión',
+        showNotificationIcon: false,
         onBack: () {
           Navigator.pop(context);
         },

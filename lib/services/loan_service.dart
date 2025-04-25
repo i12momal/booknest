@@ -4,6 +4,7 @@ import 'package:booknest/services/base_service.dart';
 // Servicio con los métodos de negocio para la entidad Préstamo.
 class LoanService extends BaseService{
 
+  // Método asíncrono para solicitar el préstamo de un libro
   Future<Map<String, dynamic>> createLoan(CreateLoanViewModel createLoanViewModel) async {
     try {
       if (BaseService.client == null) {
@@ -77,5 +78,24 @@ class LoanService extends BaseService{
     }
   }
 
+  // Método asíncrono que obtiene las solicitudes de préstamos pendientes.
+  Future<List<Map<String, dynamic>>> getUserPendingLoans(String userId) async {
+    try {
+      if (BaseService.client == null) {
+        return [];
+      }
+
+      final response = await BaseService.client
+          .from('Loan')
+          .select()
+          .eq('ownerId', userId)
+          .eq('state', 'Pendiente').order('created_at', ascending: false);;
+
+      return response;
+    } catch (e) {
+      print('Error al obtener solicitudes pendientes: $e');
+      return [];
+    }
+  }
 
 }
