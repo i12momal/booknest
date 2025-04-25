@@ -5,6 +5,7 @@ import 'package:booknest/services/base_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:diacritic/diacritic.dart';
 
+// Servicio con los métodos de negocio para la entidad Libro.
 class BookService extends BaseService{
 
   /* Método asíncrono que permite añadir un nuevo libro.

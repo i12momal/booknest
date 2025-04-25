@@ -1,5 +1,6 @@
 import 'package:booknest/controllers/account_controller.dart';
 import 'package:booknest/controllers/book_controller.dart';
+import 'package:booknest/controllers/loan_controller.dart';
 import 'package:booknest/controllers/review_controller.dart';
 import 'package:booknest/controllers/user_controller.dart';
 import 'package:booknest/entities/models/book_model.dart';
@@ -9,6 +10,7 @@ import 'package:booknest/views/add_review_view.dart';
 import 'package:booknest/views/edit_book_view.dart';
 import 'package:booknest/widgets/background.dart';
 import 'package:booknest/widgets/review_item.dart';
+import 'package:booknest/widgets/success_dialog.dart';
 import 'package:booknest/widgets/tap_bubble_text.dart';
 import 'package:flutter/material.dart';
 
@@ -34,6 +36,26 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
     super.initState();
     _bookFuture = _controller.getBookById(widget.bookId);
     _currentUserFuture = AccountController().getCurrentUserId();
+  }
+
+  void _showSuccessDialog(BuildContext context) {
+    SuccessDialog.show(
+      context,
+      'Solicitud de Préstamo Exitosa', 
+      '¡Tu solicitud de préstamo ha sido enviada exitosamente!',
+      () {
+      },
+    );
+  }
+
+  void _showErrorDialog(BuildContext context, String message) {
+    SuccessDialog.show(
+      context,
+      'Error en la Solicitud',
+      message,
+      () {
+      },
+    );
   }
 
   @override
@@ -69,16 +91,35 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
               onBack: () => Navigator.pop(context),
               child: Column(
                 children: [
-                  Expanded(child: BookInfoTabs(book: book, isOwner: isOwner, reloadReviews: _shouldReloadReviews)),  // Aquí pasamos isOwner
+                  Expanded(child: BookInfoTabs(book: book, isOwner: isOwner, reloadReviews: _shouldReloadReviews)),
                   if (!isOwner)
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
                       child: SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: () {
-                            // Aquí puedes agregar tu lógica para solicitar el préstamo
+                          onPressed: () async {
+                            final formats = book.format.split(',').map((e) => e.trim()).toList();
+
+                            // 1. Mostrar popup de selección de formato
+                            String selectedFormat = formats.length == 1 
+                                ? formats.first 
+                                : await _showFormatDialog(context, formats);
+
+                            if (selectedFormat.isNotEmpty) {
+                              // 2. Enviar la solicitud de préstamo
+                              final response = await LoanController().requestLoan(book, selectedFormat);
+
+                              if (!context.mounted) return;
+                              // 3. Mostrar diálogo de éxito solo si la solicitud fue exitosa
+                              if (response['success']) {
+                                _showSuccessDialog(context);
+                              } else {
+                                _showErrorDialog(context, response['message']);
+                              }
+                            }
                           },
+
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFFAD0000),
                             padding: EdgeInsets.symmetric(
@@ -105,6 +146,23 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
       },
     );
   }
+}
+
+Future<String> _showFormatDialog(BuildContext context, List<String> formats) async {
+  return await showDialog<String>(
+    context: context,
+    builder: (BuildContext context) {
+      return SimpleDialog(
+        title: const Text("Seleccione un formato"),
+        children: formats.map((format) {
+          return SimpleDialogOption(
+            onPressed: () => Navigator.pop(context, format),
+            child: Text(format),
+          );
+        }).toList(),
+      );
+    },
+  ) ?? '';
 }
 
 
