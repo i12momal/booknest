@@ -24,7 +24,7 @@ class SuccessDialog extends StatelessWidget {
           child: const Text('Aceptar'),
           onPressed: () {
             onAccept();
-            Navigator.of(context).pop(); // Cierra el diálogo
+            Navigator.of(context).pop();
           },
         ),
       ],
