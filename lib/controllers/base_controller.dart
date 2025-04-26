@@ -4,6 +4,7 @@ import 'package:booknest/services/loan_service.dart';
 import 'package:booknest/services/review_service.dart';
 import 'package:booknest/services/user_service.dart';
 import 'package:booknest/services/book_service.dart';
+import 'package:booknest/services/notification_service.dart';
 
 abstract class BaseController {
   final AccountService accountService = AccountService();
@@ -12,6 +13,7 @@ abstract class BaseController {
   final BookService bookService = BookService();
   final ReviewService reviewService = ReviewService();
   final LoanService loanService = LoanService();
+  final NotificationService notificationService = NotificationService();
 
   BaseController();
 }

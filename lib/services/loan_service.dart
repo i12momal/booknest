@@ -64,6 +64,8 @@ class LoanService extends BaseService{
           .select()
           .single();
 
+      print("Respuesta del servicio Loan: $response");
+
       if (response != null) {
         return {
           'success': true,
@@ -95,6 +97,55 @@ class LoanService extends BaseService{
     } catch (e) {
       print('Error al obtener solicitudes pendientes: $e');
       return [];
+    }
+  }
+
+  // Método asíncrono que obtiene los datos de un libro.
+  Future<Map<String, dynamic>> getLoanById(int loanId) async {
+    try {
+      // Comprobamos si la conexión a Supabase está activa.
+      if (BaseService.client == null) {
+        return {'success': false, 'message': 'Error de conexión a la base de datos.'};
+      }
+
+      // Llamada a la base de datos para obtener los datos del préstamo.
+      final response = await BaseService.client
+          .from('Loan')
+          .select()
+          .eq('id', loanId)
+          .maybeSingle();
+
+      print("Respuesta de Supabase: $response");
+
+      // Verificamos si la respuesta contiene datos.
+      if (response != null && response.isNotEmpty) {
+        return {'success': true, 'message': 'Préstamo obtenido correctamente', 'data': response};
+      } else {
+        return {'success': false, 'message': 'No se ha encontrado el préstamo'};
+      }
+    } catch (ex) {
+      // Si ocurre alguna excepción, devolverla.
+      return {'success': false, 'message': ex.toString()};
+    }
+  }
+
+  Future<void> updateLoanState(int loanId, String newState) async {
+    try {
+      if (BaseService.client == null) {
+        return;
+      }
+
+      // Actualizar el estado del préstamo en la base de datos
+      final response = await BaseService.client
+          .from('Loan')
+          .update({'state': newState})
+          .eq('id', loanId);
+
+      if (response == null || response.isEmpty) {
+        print('No se pudo actualizar el préstamo');
+      }
+    } catch (e) {
+      print('Error al cambiar el estado del préstamo: $e');
     }
   }
 
