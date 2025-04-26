@@ -1,24 +1,59 @@
 import 'package:booknest/controllers/account_controller.dart';
 import 'package:booknest/controllers/book_controller.dart';
 import 'package:booknest/controllers/loan_controller.dart';
+import 'package:booknest/controllers/notification_controller.dart';
 import 'package:booknest/controllers/user_controller.dart';
 import 'package:booknest/widgets/background.dart';
 import 'package:flutter/material.dart';
 
-class NotificationsView extends StatelessWidget {
+class NotificationsView extends StatefulWidget {
   const NotificationsView({super.key});
+
+  @override
+  State<NotificationsView> createState() => _NotificationsViewState();
+}
+
+class _NotificationsViewState extends State<NotificationsView> {
+  late Future<List<Map<String, dynamic>>> _notificationsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _notificationsFuture = _loadNotifications();
+  }
+
+  Future<List<Map<String, dynamic>>> _loadNotifications() async {
+    final userId = await AccountController().getCurrentUserId();
+    if (userId == null) return [];
+
+    final loans = await LoanController().getPendingLoansForUser(userId);
+
+    // Cargar nombres de libros y usuarios aquí directamente
+    for (var loan in loans) {
+      final book = await BookController().getBookById(int.tryParse(loan['bookId'].toString()) ?? 0);
+      final user = await UserController().getUserById(loan['ownerId']);
+      loan['bookName'] = book?.title ?? 'Desconocido';
+      loan['userName'] = user?.name ?? 'Usuario desconocido';
+    }
+    return loans;
+  }
+
+  Future<void> _markAsRead(Map<String, dynamic> loan) async {
+    if (!(loan['read'] ?? false)) {
+      await NotificationController().markNotificationAsRead(loan['id']);
+      setState(() {
+        loan['read'] = true;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Background(
       title: 'Notificaciones',
       showNotificationIcon: false,
-      child: FutureBuilder<List<Map<String, dynamic>>>(  
-        future: AccountController().getCurrentUserId().then(
-          (userId) => userId != null
-              ? LoanController().getPendingLoansForUser(userId)
-              : Future.value([]),
-        ),
+      child: FutureBuilder<List<Map<String, dynamic>>>(
+        future: _notificationsFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -34,60 +69,38 @@ class NotificationsView extends StatelessWidget {
             itemCount: loans.length,
             itemBuilder: (context, index) {
               final loan = loans[index];
+              final isRead = loan['read'] ?? false;
 
-              // Obtener el nombre del libro y el nombre del usuario
-              final bookId = loan['bookId'];
-              final userId = loan['ownerId'];
-              final state = loan['state'];
-
-              // Aquí obtenemos el nombre del libro
-              Future<String> getBookName(int bookId) async {
-                final book = await BookController().getBookById(bookId);
-                return book?.title ?? 'Desconocido';
-              }
-
-              // Y aquí obtenemos el nombre del usuario que solicitó el préstamo
-              Future<String> getUserName(String userId) async {
-                final user = await UserController().getUserById(userId);
-                return user?.name ?? 'Usuario desconocido';
-              }
-
-              return FutureBuilder<Map<String, String>>(
-                future: Future.wait([
-                  getBookName(int.tryParse(bookId.toString()) ?? 0),
-                  getUserName(userId),
-                ]).then((values) => {
-                      'bookName': values[0],
-                      'userName': values[1],
-                    }),
-                builder: (context, userBookSnapshot) {
-                  if (userBookSnapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-
-                  final bookName = userBookSnapshot.data?['bookName'] ?? 'Desconocido';
-                  final userName = userBookSnapshot.data?['userName'] ?? 'Desconocido';
-
-                  return Container(
-                    margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-                    padding: const EdgeInsets.all(12.0),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: const Color(0xFF112363), width: 2),
-                      borderRadius: BorderRadius.circular(8),
-                      color: Colors.white,
+              return GestureDetector(
+                onTap: () => _markAsRead(loan),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                  padding: const EdgeInsets.all(12.0),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: isRead ? Colors.grey.withAlpha((255 * 0.5).toInt()) : const Color(0xFF112363),
+                      width: 2,
                     ),
+                    borderRadius: BorderRadius.circular(8),
+                    color: isRead
+                        ? Colors.grey.withAlpha((255 * 0.2).toInt())
+                        : Colors.white,
+                  ),
+                  child: Opacity(
+                    opacity: isRead ? 0.5 : 1.0,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Libro: $bookName',
+                          'Libro: ${loan['bookName']}',
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
                           ),
                         ),
                         const SizedBox(height: 8),
-                        Text('Solicitado por: $userName'),
+                        Text('Solicitado por: ${loan['userName']}'),
                         const SizedBox(height: 8),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -100,41 +113,42 @@ class NotificationsView extends StatelessWidget {
                               ),
                             ),
                             Text(
-                              '$state',
+                              '${loan['state']}',
                               style: TextStyle(
-                                color: _getStateColor(state),
+                                color: _getStateColor(loan['state']),
                                 fontWeight: FontWeight.bold,
                               ),
+                            ),
+                            Icon(
+                              isRead ? Icons.mark_email_read : Icons.mark_email_unread,
+                              color: isRead ? Colors.green : Colors.grey,
                             ),
                           ],
                         ),
                       ],
                     ),
-
-                  );
-                },
+                  ),
+                ),
               );
-
             },
           );
         },
       ),
     );
   }
-}
 
-
-Color _getStateColor(String state) {
-  switch (state.toLowerCase()) {
-    case 'pendiente':
-      return Colors.orange;
-    case 'rechazado':
-      return Colors.red;
-    case 'aceptado':
-      return Colors.green;
-    case 'devuelto':
-      return Colors.blue;
-    default:
-      return Colors.grey;
+  Color _getStateColor(String state) {
+    switch (state.toLowerCase()) {
+      case 'pendiente':
+        return Colors.orange;
+      case 'rechazado':
+        return Colors.red;
+      case 'aceptado':
+        return Colors.green;
+      case 'devuelto':
+        return Colors.blue;
+      default:
+        return Colors.grey;
+    }
   }
 }
