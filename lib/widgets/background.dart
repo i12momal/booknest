@@ -1,5 +1,6 @@
 import 'package:booknest/controllers/account_controller.dart';
 import 'package:booknest/controllers/loan_controller.dart';
+import 'package:booknest/controllers/notification_controller.dart';
 import 'package:booknest/views/notifications_view.dart';
 import 'package:flutter/material.dart';
 
@@ -23,7 +24,7 @@ class Background extends StatelessWidget {
     if (userId == null) return 0;
 
     // Simula obtener las solicitudes pendientes del usuario
-    final response = await LoanController().getPendingLoansForUser(userId);
+    final response = await NotificationController().getUnreadUserNotifications(userId);
     return response.length;
   }
 

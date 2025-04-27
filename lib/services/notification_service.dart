@@ -5,7 +5,7 @@ import 'package:booknest/services/base_service.dart';
 class NotificationService extends BaseService{
 
   // Marcar una notificación como leída
-  Future<void> markNotificationAsRead(int relatedId) async {
+  Future<void> markNotificationAsRead(int notificationId) async {
     try {
       if (BaseService.client == null) {
         return;
@@ -14,8 +14,7 @@ class NotificationService extends BaseService{
       final response = await BaseService.client
           .from('Notifications')
           .update({'read': true})
-          .eq('relatedId', relatedId)
-          .eq('type', 'Préstamo').select();
+          .eq('id', notificationId).select();
 
       if (response == null || response.isEmpty) {
         print('No se pudo actualizar la notificación');
@@ -77,9 +76,32 @@ class NotificationService extends BaseService{
           .select()
           .eq('userId', userId);
 
+      print("Notificaciones del usuario: $response ");
+
       return response;
     } catch (e) {
       print('Error al obtener las notificaciones del usuario: $e');
+      return [];
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getUnreadNotifications(String userId) async {
+    try {
+      if (BaseService.client == null) {
+        return [];
+      }
+
+      final response = await BaseService.client
+          .from('Notifications')
+          .select()
+          .eq('userId', userId)
+          .eq('read', 'FALSE');
+
+      print("Notificaciones no leídas del usuario: $response ");
+
+      return response;
+    } catch (e) {
+      print('Error al obtener las notificaciones no leídas del usuario: $e');
       return [];
     }
   }
