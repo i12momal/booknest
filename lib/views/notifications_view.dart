@@ -26,17 +26,30 @@ class _NotificationsViewState extends State<NotificationsView> {
     final userId = await AccountController().getCurrentUserId();
     if (userId == null) return [];
 
-    final loans = await LoanController().getPendingLoansForUser(userId);
+    final notifications = await NotificationController().getUserNotifications(userId);
 
-    // Cargar nombres de libros y usuarios aquí directamente
-    for (var loan in loans) {
-      final book = await BookController().getBookById(int.tryParse(loan['bookId'].toString()) ?? 0);
-      final user = await UserController().getUserById(loan['ownerId']);
-      loan['bookName'] = book?.title ?? 'Desconocido';
-      loan['userName'] = user?.name ?? 'Usuario desconocido';
+    for (var notification in notifications) {
+      if (notification["type"] == 'Préstamo') {
+        final loanResponse = await LoanController().getLoanById(notification['relatedId']);
+        print('Loan cargado: $loanResponse');
+        
+        if (loanResponse != null && loanResponse['success'] == true && loanResponse['data'] != null) {
+          final loan = loanResponse['data'];
+          final book = await BookController().getBookById(loan['bookId']);
+          final user = await UserController().getUserById(loan['ownerId']);
+          
+          notification['bookName'] = book?.title ?? 'Desconocido';
+          notification['userName'] = user?.name ?? 'Usuario desconocido';
+          notification['format'] = loan['format'] ?? 'Desconocido';
+          notification['state'] = loan['state'] ?? 'Desconocido';
+
+          print('Notificación final: $notification');
+        }
+      }
     }
-    return loans;
+    return notifications;
   }
+
 
   Future<void> _markAsRead(Map<String, dynamic> loan) async {
     if (!(loan['read'] ?? false)) {

@@ -56,6 +56,10 @@ class LoanController extends BaseController{
     return await loanService.getUserPendingLoans(userId);
   }
 
+  Future<Map<String, dynamic>> getLoanById(int loanId) async {
+    return await loanService.getLoanById(loanId);
+  }
+
   // Cambiar el estado del préstamo
   Future<void> updateLoanState(int loanId, String newState) async {
     final loan = await loanService.getLoanById(loanId);

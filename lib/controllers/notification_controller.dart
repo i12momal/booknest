@@ -5,8 +5,8 @@ import 'package:booknest/entities/viewmodels/notification_view_model.dart';
 class NotificationController extends BaseController{
 
   // Marcar una notificación como leída
-  Future<void> markNotificationAsRead(int loadId) async {
-    await notificationService.markNotificationAsRead(loadId);
+  Future<void> markNotificationAsRead(int notificationId) async {
+    await notificationService.markNotificationAsRead(notificationId);
   }
 
   // Crear una nueva notificación
@@ -33,5 +33,8 @@ class NotificationController extends BaseController{
     return await notificationService.getNotifications(userId);
   }
 
+  Future<List<Map<String, dynamic>>> getUnreadUserNotifications(String userId) async {
+    return await notificationService.getUnreadNotifications(userId);
+  }
 
 }
