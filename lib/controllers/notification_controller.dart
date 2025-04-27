@@ -33,6 +33,7 @@ class NotificationController extends BaseController{
     return await notificationService.getNotifications(userId);
   }
 
+  // Obtener las notificaciones no leídas del usuario
   Future<List<Map<String, dynamic>>> getUnreadUserNotifications(String userId) async {
     return await notificationService.getUnreadNotifications(userId);
   }

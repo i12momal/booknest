@@ -63,14 +63,14 @@ class LoanController extends BaseController{
   // Cambiar el estado del préstamo
   Future<void> updateLoanState(int loanId, String newState) async {
     final loan = await loanService.getLoanById(loanId);
-    final bookName = await bookService.getBookById(loan['bookId']);
-    final userId = loan['ownerId'];
+    //final bookName = await bookService.getBookById(loan['bookId']);
+    //final userId = loan['ownerId'];
 
     // Actualizar el estado del préstamo
     await loanService.updateLoanState(loanId, newState);
 
     // Crear la notificación
-    String message;
+    /*String message;
     switch (newState) {
       case 'Pendiente':
         message = 'Tu solicitud de préstamo para el libro "$bookName" está pendiente.';
@@ -89,7 +89,7 @@ class LoanController extends BaseController{
     }
 
     // Crear la notificación de estado
-    await NotificationController().createNotification(userId, 'loan', loanId, message);
+    await NotificationController().createNotification(userId, 'loan', loanId, message);*/
   }
 
 }
