@@ -85,6 +85,7 @@ class NotificationService extends BaseService{
     }
   }
 
+  // Obtener las notificaciones no leídas de un usuario
   Future<List<Map<String, dynamic>>> getUnreadNotifications(String userId) async {
     try {
       if (BaseService.client == null) {

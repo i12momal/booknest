@@ -1,10 +1,9 @@
 import 'package:booknest/controllers/account_controller.dart';
-import 'package:booknest/controllers/loan_controller.dart';
 import 'package:booknest/controllers/notification_controller.dart';
 import 'package:booknest/views/notifications_view.dart';
 import 'package:flutter/material.dart';
 
-class Background extends StatelessWidget {
+class Background extends StatefulWidget {
   final Widget child;
   final String title;
   final VoidCallback? onBack;
@@ -18,14 +17,38 @@ class Background extends StatelessWidget {
     this.showNotificationIcon = true,
   });
 
+  @override
+  State<Background> createState() => _BackgroundState();
+}
+
+class _BackgroundState extends State<Background> {
+  late Future<int> _notificationCount;
+
+  @override
+  void initState() {
+    super.initState();
+    _notificationCount = _fetchNotificationCount();
+  }
+
+  // Función para obtener el número de notificaciones no leídas
   Future<int> _fetchNotificationCount() async {
-    // Simula obtener el ID del usuario
     final userId = await AccountController().getCurrentUserId();
     if (userId == null) return 0;
 
-    // Simula obtener las solicitudes pendientes del usuario
     final response = await NotificationController().getUnreadUserNotifications(userId);
     return response.length;
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Aquí se escucha el evento de regreso de la pantalla
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Cuando regresamos a la pantalla, actualizamos el contador de notificaciones
+      setState(() {
+        _notificationCount = _fetchNotificationCount();
+      });
+    });
   }
 
   @override
@@ -57,7 +80,7 @@ class Background extends StatelessWidget {
                 ),
                 child: AppBar(
                   title: Text(
-                    title,
+                    widget.title,
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 20,
@@ -67,17 +90,20 @@ class Background extends StatelessWidget {
                   centerTitle: true,
                   backgroundColor: Colors.transparent,
                   elevation: 0,
-                  leading: onBack != null
+                  leading: widget.onBack != null
                       ? IconButton(
                           icon: const Icon(Icons.arrow_back),
                           color: Colors.white,
-                          onPressed: onBack,
+                          onPressed: () {
+                            widget.onBack?.call();  // Llama a la función de regreso si está definida
+                            Navigator.pop(context); // Vuelve atrás
+                          },
                         )
                       : null,
-                  actions: showNotificationIcon
+                  actions: widget.showNotificationIcon
                       ? [
                           FutureBuilder<int>(
-                            future: _fetchNotificationCount(),
+                            future: _notificationCount,
                             builder: (context, snapshot) {
                               final count = snapshot.data ?? 0;
                               return Stack(
@@ -136,7 +162,7 @@ class Background extends StatelessWidget {
                     bottomRight: Radius.circular(15),
                   ),
                 ),
-                child: child,
+                child: widget.child,
               ),
             ),
           ],

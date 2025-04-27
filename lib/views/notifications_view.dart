@@ -4,6 +4,7 @@ import 'package:booknest/controllers/loan_controller.dart';
 import 'package:booknest/controllers/notification_controller.dart';
 import 'package:booknest/controllers/user_controller.dart';
 import 'package:booknest/widgets/background.dart';
+import 'package:booknest/widgets/loan_state.dart';
 import 'package:flutter/material.dart';
 
 class NotificationsView extends StatefulWidget {
@@ -31,7 +32,6 @@ class _NotificationsViewState extends State<NotificationsView> {
     for (var notification in notifications) {
       if (notification["type"] == 'Préstamo') {
         final loanResponse = await LoanController().getLoanById(notification['relatedId']);
-        print('Loan cargado: $loanResponse');
         
         if (loanResponse != null && loanResponse['success'] == true && loanResponse['data'] != null) {
           final loan = loanResponse['data'];
@@ -42,6 +42,7 @@ class _NotificationsViewState extends State<NotificationsView> {
           notification['userName'] = user?.name ?? 'Usuario desconocido';
           notification['format'] = loan['format'] ?? 'Desconocido';
           notification['state'] = loan['state'] ?? 'Desconocido';
+          notification['loanId'] = loan['id'] ?? 0; 
 
           print('Notificación final: $notification');
         }
@@ -50,6 +51,13 @@ class _NotificationsViewState extends State<NotificationsView> {
     return notifications;
   }
 
+  Future<void> _updateLoanState(Map<String, dynamic> loan, String newState) async {
+    final loanId = loan['loanId'];
+    await LoanController().updateLoanState(loanId, newState);
+    setState(() {
+      loan['state'] = newState;
+    });
+  }
 
   Future<void> _markAsRead(Map<String, dynamic> loan) async {
     if (!(loan['read'] ?? false)) {
@@ -65,7 +73,7 @@ class _NotificationsViewState extends State<NotificationsView> {
     return Background(
       title: 'Notificaciones',
       showNotificationIcon: false,
-      child: FutureBuilder<List<Map<String, dynamic>>>(
+      child: FutureBuilder<List<Map<String, dynamic>>>( 
         future: _notificationsFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -125,13 +133,23 @@ class _NotificationsViewState extends State<NotificationsView> {
                                 fontSize: 14,
                               ),
                             ),
-                            Text(
-                              '${loan['state']}',
-                              style: TextStyle(
-                                color: _getStateColor(loan['state']),
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                            loan['state'] == 'Pendiente'
+                              ? LoanStateDropdown(
+                                  selectedState: loan['state'],
+                                  onChanged: (newState) {
+                                    if (newState != null && newState != loan['state']) {
+                                      print("préstamo a actualizar: $loan");
+                                      _updateLoanState(loan, newState);
+                                    }
+                                  },
+                                )
+                              : Text(
+                                  loan['state'],
+                                  style: TextStyle(
+                                    color: _getStateColor(loan['state']),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                             Icon(
                               isRead ? Icons.mark_email_read : Icons.mark_email_unread,
                               color: isRead ? Colors.green : Colors.grey,
@@ -158,8 +176,6 @@ class _NotificationsViewState extends State<NotificationsView> {
         return Colors.red;
       case 'aceptado':
         return Colors.green;
-      case 'devuelto':
-        return Colors.blue;
       default:
         return Colors.grey;
     }

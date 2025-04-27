@@ -135,14 +135,29 @@ class LoanService extends BaseService{
         return;
       }
 
-      // Actualizar el estado del préstamo en la base de datos
-      final response = await BaseService.client
-          .from('Loan')
-          .update({'state': newState})
-          .eq('id', loanId);
+      // Si el estado es 'Aceptado', se actualiza startDate y endDate
+      if (newState == 'Aceptado') {
+        final startDate = DateTime.now();
+        final endDate = startDate.add(const Duration(days: 30));
 
-      if (response == null || response.isEmpty) {
-        print('No se pudo actualizar el préstamo');
+        final response = await BaseService.client
+            .from('Loan')
+            .update({
+              'state': newState,
+              'startDate': startDate.toIso8601String(),
+              'endDate': endDate.toIso8601String(),
+            })
+            .eq('id', loanId)
+            .select();
+
+        print("Estado actualizado a 'Aceptado', startDate: $startDate, endDate: $endDate");
+      } else {
+        // Si no es 'Aceptado', solo se actualiza el estado
+        final response = await BaseService.client
+            .from('Loan')
+            .update({'state': newState})
+            .eq('id', loanId)
+            .select();
       }
     } catch (e) {
       print('Error al cambiar el estado del préstamo: $e');
