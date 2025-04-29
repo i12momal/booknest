@@ -72,6 +72,7 @@ class _NotificationsViewState extends State<NotificationsView> {
   Widget build(BuildContext context) {
     return Background(
       title: 'Notificaciones',
+      onBack: () => Navigator.pop(context),
       showNotificationIcon: false,
       child: FutureBuilder<List<Map<String, dynamic>>>( 
         future: _notificationsFuture,

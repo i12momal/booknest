@@ -8,6 +8,7 @@ class Background extends StatefulWidget {
   final String title;
   final VoidCallback? onBack;
   final bool showNotificationIcon;
+  final bool showRowIcon;
 
   const Background({
     super.key,
@@ -15,6 +16,7 @@ class Background extends StatefulWidget {
     required this.title,
     this.onBack,
     this.showNotificationIcon = true,
+    this.showRowIcon = true,
   });
 
   @override
@@ -30,7 +32,6 @@ class _BackgroundState extends State<Background> {
     _notificationCount = _fetchNotificationCount();
   }
 
-  // Función para obtener el número de notificaciones no leídas
   Future<int> _fetchNotificationCount() async {
     final userId = await AccountController().getCurrentUserId();
     if (userId == null) return 0;
@@ -42,9 +43,7 @@ class _BackgroundState extends State<Background> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Aquí se escucha el evento de regreso de la pantalla
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Cuando regresamos a la pantalla, actualizamos el contador de notificaciones
       setState(() {
         _notificationCount = _fetchNotificationCount();
       });
@@ -79,6 +78,7 @@ class _BackgroundState extends State<Background> {
                   ),
                 ),
                 child: AppBar(
+                  automaticallyImplyLeading: false,
                   title: Text(
                     widget.title,
                     style: const TextStyle(
@@ -90,13 +90,12 @@ class _BackgroundState extends State<Background> {
                   centerTitle: true,
                   backgroundColor: Colors.transparent,
                   elevation: 0,
-                  leading: widget.onBack != null
+                  leading: (widget.onBack != null && widget.showRowIcon)
                       ? IconButton(
                           icon: const Icon(Icons.arrow_back),
                           color: Colors.white,
                           onPressed: () {
-                            widget.onBack?.call();  // Llama a la función de regreso si está definida
-                            Navigator.pop(context); // Vuelve atrás
+                            widget.onBack?.call(); // Solo este
                           },
                         )
                       : null,
@@ -112,15 +111,17 @@ class _BackgroundState extends State<Background> {
                                   IconButton(
                                     icon: const Icon(Icons.notifications_none),
                                     color: Colors.white,
-                                    onPressed: () {
-                                      // Navega a la pantalla de notificaciones
-                                      Navigator.push(
+                                    onPressed: () async {
+                                      await Navigator.push(
                                         context,
                                         MaterialPageRoute(
                                           builder: (context) =>
                                               const NotificationsView(),
                                         ),
                                       );
+                                      setState(() {
+                                        _notificationCount = _fetchNotificationCount();
+                                      });
                                     },
                                   ),
                                   if (count > 0)
