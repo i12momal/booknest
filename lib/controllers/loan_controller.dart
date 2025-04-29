@@ -49,6 +49,10 @@ class LoanController extends BaseController{
     return response;
   }
 
+  // Método que obtiene los libros que han sido prestados a un usuario
+  Future<List<Map<String, dynamic>>> getLoansByHolder(String userId) async {
+    return await loanService.getLoansByHolder(userId);
+  }
 
 
   // Método que obtiene las solicitudes de préstamos de un usuario
@@ -92,4 +96,24 @@ class LoanController extends BaseController{
     await NotificationController().createNotification(userId, 'loan', loanId, message);*/
   }
 
+  Future<void> saveCurrentPageProgress(String userId, int bookId, int currentPage) async {
+    try {
+      final loan = await loanService.getLoanByUserAndBook(userId, bookId);
+      if (loan != null) {
+        final loanId = loan['id'];
+        await loanService.updateCurrentPage(loanId, currentPage);
+        print("Página guardada correctamente.");
+      } else {
+        print("No se encontró un préstamo activo para este usuario y libro.");
+      }
+    } catch (e) {
+      print("Error en LoanController.saveCurrentPageProgress: $e");
+    }
+  }
+
+
+  // Método para obtener el progreso de la página guardada
+  Future<int?> getSavedPageProgress(String userId, int bookId) async {
+    return await loanService.getSavedPageProgress(userId, bookId);
+  }
 }

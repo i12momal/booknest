@@ -164,4 +164,81 @@ class LoanService extends BaseService{
     }
   }
 
+  // Método que obtiene los libros que han sido prestados a un usuario
+  Future<List<Map<String, dynamic>>> getLoansByHolder(String userId) async {
+    try {
+      if (BaseService.client == null) return [];
+
+      final today = DateTime.now().toIso8601String();
+
+      final response = await BaseService.client!
+          .from('Loan')
+          .select()
+          .eq('currentHolderId', userId)
+          .eq('state', 'Aceptado')
+          .lte('startDate', today)
+          .gte('endDate', today);
+
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      print('Error al obtener préstamos activos: $e');
+      return [];
+    }
+  }
+
+
+  Future<Map<String, dynamic>?> getLoanByUserAndBook(String userId, int bookId) async {
+    try {
+      final today = DateTime.now().toIso8601String();
+      final response = await BaseService.client
+          .from('Loan')
+          .select()
+          .eq('currentHolderId', userId)
+          .eq('state', 'Aceptado')
+          .eq('bookId', bookId)
+          .lte('startDate', today)
+          .gte('endDate', today)
+          .maybeSingle();
+
+      print('userId: $userId');
+      print('response: $response');
+      return response;
+    } catch (e) {
+      print('Error en LoanService.getLoanByUserAndBook: $e');
+      return null;
+    }
+  }
+
+  Future<void> updateCurrentPage(int loanId, int currentPage) async {
+    try {
+      await BaseService.client.from('Loan').update({
+        'currentPage': currentPage,
+      }).eq('id', loanId);
+    } catch (e) {
+      print('Error en LoanService.updateCurrentPage: $e');
+    }
+  }
+
+  // Método para obtener el progreso guardado de una página
+  Future<int?> getSavedPageProgress(String userId, int bookId) async {
+    try {
+      // Llamada al servicio para consultar el progreso guardado
+      final response = await BaseService.client
+          .from('Loan') // Asumiendo que la tabla es 'Loan'
+          .select() // Seleccionar los campos
+          .eq('currentHolderId', userId) // Filtrar por userId
+          .eq('bookId', bookId) // Filtrar por bookId
+          .maybeSingle(); // Tomar un solo registro (si existe)
+
+      if (response != null) {
+        // Si se encuentra el progreso guardado, se asume que la respuesta tiene el campo 'currentPage'
+        return response['currentPage'];
+      } else {
+        return null; // No se encontró progreso guardado
+      }
+    } catch (e) {
+      print('Error en LoanService.getSavedPageProgress: $e');
+      return null; // Retorna null si hay un error
+    }
+  }
 }

@@ -1,11 +1,16 @@
+import 'package:booknest/controllers/account_controller.dart';
+import 'package:booknest/controllers/book_controller.dart';
+import 'package:booknest/controllers/loan_controller.dart';
 import 'package:booknest/controllers/user_controller.dart';
 import 'package:booknest/entities/models/category_model.dart';
 import 'package:booknest/entities/models/user_model.dart';
+import 'package:booknest/views/book_reader_view.dart';
 import 'package:booknest/views/category_view.dart';
 import 'package:booknest/views/edit_user_view.dart';
 import 'package:booknest/views/login_view.dart';
 import 'package:booknest/widgets/background.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class OwnerProfileView extends StatefulWidget {
   final String userId;
@@ -32,6 +37,40 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
     super.initState();
     _fetchUserData();
     _fetchUserCategoriesFromBooks();
+    _fetchActiveLoans();
+  }
+
+  List<Map<String, dynamic>> activeLoans = [];
+
+  Future<void> _fetchActiveLoans() async {
+    try {
+      final userId = await AccountController().getCurrentUserId();
+      if (userId == null) return;
+
+      final rawLoans = await LoanController().getLoansByHolder(userId);
+
+      // Buscar los libros por cada bookId
+      List<Map<String, dynamic>> loansWithBooks = [];
+
+      for (var loan in rawLoans) {
+        final bookId = loan['bookId'];
+        final book = await BookController().getBookById(bookId);
+
+        if (book != null) {
+          loansWithBooks.add({
+            'loan': loan,
+            'book': book,
+            'currentPage': loan['currentPage'],  // Aquí se agrega el campo `currentPage`
+          });
+        }
+      }
+
+      setState(() {
+        activeLoans = loansWithBooks;
+      });
+    } catch (e) {
+      print('Error fetching active loans: $e');
+    }
   }
 
   // Obtener categorías desde los libros
@@ -272,16 +311,86 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
             const SizedBox(height: 16),
             const Divider(thickness: 1, color: Color(0xFF112363)),
             SizedBox(
-              height: 150,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                children: const [
-                  _BookImage('assets/culpa_tuya.png'),
-                  _BookImage('assets/culpa_mia.png'),
-                  _BookImage('assets/culpa_nuestra.png'),
-                ],
-              ),
-            ),
+              height: 170,
+              child: activeLoans.isEmpty
+                  ? const Center(child: Text('No tienes libros prestados actualmente.'))
+                  : ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: activeLoans.length,
+                      itemBuilder: (context, index) {
+                        final book = activeLoans[index]['book'];
+                        final currentPage = activeLoans[index]['loan']['currentPage'] ?? 0;  // Recupera el `currentPage`
+
+                        return GestureDetector(
+                          onTap: () async {
+                            final url = book.file;
+                            if (url != null && url.isNotEmpty) {
+                              final uri = Uri.parse(url);
+                              if (await canLaunchUrl(uri)) {
+                                if (!context.mounted) return;
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => BookReaderView(
+                                      bookId: book.id,
+                                      url: book.file,
+                                      initialPage: currentPage,
+                                      userId: widget.userId,
+                                      bookTitle: book.title,
+                                    ),
+                                  ),
+                                ).then((returnedPage) {
+                                  if (returnedPage != null) {
+                                    print('Usuario cerró en página: $returnedPage');
+                                    // Aquí puedes guardar el `returnedPage` si es necesario
+                                    LoanController().saveCurrentPageProgress(
+                                      widget.userId,
+                                      book.id,
+                                      returnedPage,
+                                    );
+                                  }
+                                });
+
+                              } else {
+                                print('No se pudo abrir el archivo');
+                              }
+                            } else {
+                              print('El libro no tiene un archivo asociado');
+                            }
+                          },
+
+                          child: Padding(
+                            padding: const EdgeInsets.only(right: 12),
+                            child: Column(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.network(
+                                    book.cover,
+                                    width: 100,
+                                    height: 130,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                SizedBox(
+                                  width: 100,
+                                  child: Text(
+                                    book.title,
+                                    style: const TextStyle(fontSize: 12),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+            )
+
           ],
         ),
       ),

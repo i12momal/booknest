@@ -116,7 +116,7 @@ class GenreSelectionRegisterWidget extends StatelessWidget {
                           backgroundColor: const Color(0xFFAD0000),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(30),
-                            side: const BorderSide(color: Color.fromARGB(255, 112, 1, 1), width: 3),
+                            side: const BorderSide(color: Color(0xFF700101), width: 3),
                           ),
                           padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
                         ),
