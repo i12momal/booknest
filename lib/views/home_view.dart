@@ -35,6 +35,7 @@ class _HomeViewState extends State<HomeView> {
 
   List<Map<String, dynamic>> allLoadedBooks = [];
   List<Map<String, dynamic>> allCategoryBooks = []; 
+  List<Map<String, dynamic>> allBooksIncludingUnavailable = [];
 
   Future<void> _loadCategoriesAndBooks() async {
     final userId = Supabase.instance.client.auth.currentUser?.id;
@@ -53,6 +54,7 @@ class _HomeViewState extends State<HomeView> {
       final books = await _controller.loadBooksByUserCategories(categoryNames);
       
       final allBooks = await _controller.loadAllBooks();
+      final allBooksRaw = await _controller.loadAllBooks(includeUnavailable: true);
 
       // Filtrar los libros para excluir los del usuario actual
       final filteredBooks = allBooks.where((book) {
@@ -68,17 +70,18 @@ class _HomeViewState extends State<HomeView> {
         currentPage = 1;
         isLoading = false;
         allLoadedBooks = filteredBooks;
+        allBooksIncludingUnavailable = allBooksRaw;
       });
     }
   }
 
-   // Función de búsqueda de libros por título o autor
+  // Función de búsqueda de libros por título o autor
   Future<void> _searchBooks(String query) async {
     final normalizedQuery = _controller.normalize(query);
 
-    final filtered = allLoadedBooks.where((book) {
-      final title = _controller.normalize(book['title'] ?? '');
-      final author = _controller.normalize(book['author'] ?? '');
+    final filtered = allBooksIncludingUnavailable.where((book) {
+      final title = _controller.normalize(book['title']?.toString() ?? '');
+      final author = _controller.normalize(book['author']?.toString() ?? '');
       return title.contains(normalizedQuery) || author.contains(normalizedQuery);
     }).toList();
 
@@ -86,6 +89,7 @@ class _HomeViewState extends State<HomeView> {
       filteredBooks = query.isEmpty ? allLoadedBooks : filtered;
     });
   }
+
 
 
   int _calculateCrossAxisCount(BuildContext context) {
@@ -168,8 +172,11 @@ class _HomeViewState extends State<HomeView> {
   List<Map<String, dynamic>> get currentBooks {
     final start = (currentPage - 1) * booksPerPage;
     final end = (start + booksPerPage).clamp(0, filteredBooks.length);
+
+    if (start >= filteredBooks.length) return [];
     return filteredBooks.sublist(start, end);
   }
+
 
   int get totalPages => (filteredBooks.length / booksPerPage).ceil();
 
