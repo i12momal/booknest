@@ -9,6 +9,7 @@ import 'package:booknest/views/category_view.dart';
 import 'package:booknest/views/edit_user_view.dart';
 import 'package:booknest/views/login_view.dart';
 import 'package:booknest/widgets/background.dart';
+import 'package:booknest/widgets/success_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -39,6 +40,43 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
     _fetchUserCategoriesFromBooks();
     _fetchActiveLoans();
   }
+
+  void _returnBook(int loanId) async {
+    try {
+      // Llama al LoanController para cambiar el estado del préstamo
+      await LoanController().updateLoanStateToReturned(loanId);
+
+      // Después de actualizar, puedes recargar los préstamos activos
+      await _fetchActiveLoans();
+
+      // Notificar al usuario que el libro ha sido devuelto
+      _showSuccessDialog();
+    } catch (e) {
+      print('Error al devolver el libro: $e');
+      _showErrorDialog();
+    }
+  }
+
+  void _showSuccessDialog() {
+    SuccessDialog.show(
+      context,
+      'Devolución Exitosa', 
+      '¡Tu libro ha sido devuelto con éxito!',
+      () {
+      },
+    );
+  }
+
+  void _showErrorDialog() {
+    SuccessDialog.show(
+      context,
+      'Error en la devolución', 
+      'Ha ocurrido un error en la devolución del libro.',
+      () {
+      },
+    );
+  }
+
 
   List<Map<String, dynamic>> activeLoans = [];
 
@@ -86,6 +124,27 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
       });
     }
   }
+
+  Future<bool?> _showConfirmDialog(BuildContext context) async {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirmar devolución'),
+        content: const Text('¿Estás seguro de que quieres devolver este libro?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Devolver'),
+          ),
+        ],
+      ),
+    );
+  }
+
 
   Future<void> _fetchUserData() async {
     setState(() {
@@ -311,15 +370,17 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
             const SizedBox(height: 16),
             const Divider(thickness: 1, color: Color(0xFF112363)),
             SizedBox(
-              height: 170,
+              height: 250,
               child: activeLoans.isEmpty
                   ? const Center(child: Text('No tienes libros prestados actualmente.'))
                   : ListView.builder(
                       scrollDirection: Axis.horizontal,
                       itemCount: activeLoans.length,
                       itemBuilder: (context, index) {
+                        final loanData = activeLoans[index]['loan'];
                         final book = activeLoans[index]['book'];
-                        final currentPage = activeLoans[index]['loan']['currentPage'] ?? 0;  // Recupera el `currentPage`
+                        final currentPage = activeLoans[index]['loan']['currentPage'] ?? 0;
+                        final loanId = loanData['id'];
 
                         return GestureDetector(
                           onTap: () async {
@@ -374,7 +435,7 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
                                 ),
                                 const SizedBox(height: 4),
                                 SizedBox(
-                                  width: 100,
+                                  width: 150,
                                   child: Text(
                                     book.title,
                                     style: const TextStyle(fontSize: 12),
@@ -382,6 +443,32 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
                                     overflow: TextOverflow.ellipsis,
                                     textAlign: TextAlign.center,
                                   ),
+                                ),
+                                const SizedBox(height: 8),
+                                ElevatedButton(
+                                  onPressed: () async {
+                                    // Mostrar ventana de confirmación
+                                    bool? confirm = await _showConfirmDialog(context);
+                                    if (confirm == true) {
+                                      _returnBook(loanId); // Llamar a la función de devolución con el ID del préstamo
+                                    }
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFAD0000),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(30),
+                                    side: const BorderSide(color: Color(0xFF700101), width: 3),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 7),
+                                ),
+                                child: const Text(
+                                  "Devolver",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                                 ),
                               ],
                             ),
@@ -444,22 +531,6 @@ class _CategoryItem extends StatelessWidget {
             maxLines: 1,  // Asegurarnos que el texto no se extienda a más de una línea
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _BookImage extends StatelessWidget {
-  final String path;
-  const _BookImage(this.path);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: Image.asset(path, width: 100, fit: BoxFit.cover),
       ),
     );
   }
