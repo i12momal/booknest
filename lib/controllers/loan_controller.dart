@@ -116,4 +116,16 @@ class LoanController extends BaseController{
   Future<int?> getSavedPageProgress(String userId, int bookId) async {
     return await loanService.getSavedPageProgress(userId, bookId);
   }
+
+  // Método para devolver el libro
+  Future<void> updateLoanStateToReturned(int loanId) async {
+    try {
+      // Lógica para actualizar el estado del préstamo a "Devuelto"
+      await loanService.updateLoanState(loanId, 'Devuelto');
+    } catch (e) {
+      print('Error al actualizar el estado del préstamo: $e');
+      rethrow;
+    }
+  }
+  
 }

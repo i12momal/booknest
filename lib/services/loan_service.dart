@@ -151,8 +151,22 @@ class LoanService extends BaseService{
             .select();
 
         print("Estado actualizado a 'Aceptado', startDate: $startDate, endDate: $endDate");
-      } else {
-        // Si no es 'Aceptado', solo se actualiza el estado
+      // Si el estado es 'Devuelto', se actualiza endDate
+      } else if(newState == 'Devuelto'){
+          final endDate = DateTime.now();
+
+          final response = await BaseService.client
+              .from('Loan')
+              .update({
+                'state': newState,
+                'endDate': endDate.toIso8601String(),
+              })
+              .eq('id', loanId)
+              .select();
+
+          print("Estado actualizado a 'Devuelto', endDate: $endDate");
+      }else{
+        // Si no es 'Aceptado' ni 'Devuelto', solo se actualiza el estado
         final response = await BaseService.client
             .from('Loan')
             .update({'state': newState})
@@ -241,4 +255,5 @@ class LoanService extends BaseService{
       return null; // Retorna null si hay un error
     }
   }
+  
 }
