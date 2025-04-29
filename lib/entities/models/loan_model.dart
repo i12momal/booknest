@@ -8,6 +8,7 @@ class Loan{
   final String endDate;
   final String format;
   final String state;
+  final int? currentPage;
 
   Loan({
     required this.id,
@@ -17,7 +18,8 @@ class Loan{
     required this.startDate,
     required this.endDate,
     required this.format,
-    required this.state
+    required this.state,
+    this.currentPage
   });
 
     factory Loan.fromJson(Map<String, dynamic> json) {
@@ -30,6 +32,7 @@ class Loan{
         endDate: json['endDate'] ?? '',
         format: json['format'] ?? '',
         state: json['state'] ?? '',
+        currentPage: json['currentPage'] ?? 0,
       );
     }
 }
