@@ -44,8 +44,8 @@ class HomeController extends BaseController {
   }
 
   // Método que obtiene una lista con todos los libros existentes
-  Future<List<Map<String, dynamic>>> loadAllBooks() {
-    return bookService.getAllBooks();
+  Future<List<Map<String, dynamic>>> loadAllBooks({bool includeUnavailable = false}) {
+    return bookService.getAllBooks(includeUnavailable: includeUnavailable);
   }
 
   // Método para buscar libros por título o autor

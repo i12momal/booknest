@@ -151,6 +151,16 @@ class LoanService extends BaseService{
             .select();
 
         print("Estado actualizado a 'Aceptado', startDate: $startDate, endDate: $endDate");
+
+        // Actualizamos también el estado del libro en Book
+        if (response != null && response.isNotEmpty) {
+          int bookId = response.first['bookId'];
+          await BaseService.client
+              .from('Book')
+              .update({'state': 'No Disponible'})
+              .eq('id', bookId);
+        }
+
       // Si el estado es 'Devuelto', se actualiza endDate
       } else if(newState == 'Devuelto'){
           final endDate = DateTime.now();
@@ -165,6 +175,15 @@ class LoanService extends BaseService{
               .select();
 
           print("Estado actualizado a 'Devuelto', endDate: $endDate");
+
+          // Actualizamos también el estado del libro en Book
+          if (response != null && response.isNotEmpty) {
+            int bookId = response.first['bookId'];
+            await BaseService.client
+                .from('Book')
+                .update({'state': 'Disponible'})
+                .eq('id', bookId);
+          }
       }else{
         // Si no es 'Aceptado' ni 'Devuelto', solo se actualiza el estado
         final response = await BaseService.client
