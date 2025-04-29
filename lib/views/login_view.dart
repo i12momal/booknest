@@ -1,12 +1,10 @@
 import 'package:booknest/controllers/account_controller.dart';
-import 'package:booknest/views/add_book_view.dart';
 import 'package:booknest/views/home_view.dart';
 import 'package:flutter/material.dart';
 import 'package:booknest/views/register_view.dart';
 import 'package:booknest/views/reset_password_view.dart';
 import 'package:booknest/widgets/background.dart';
 import 'package:booknest/widgets/custom_text_field.dart';
-import "package:booknest/views/edit_book_view.dart";
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -161,6 +159,7 @@ class _LoginViewState extends State<LoginView> {
                             ),
                           ),
                           onPressed: () async {
+                            FocusScope.of(context).unfocus();
                             await _accountController.login(
                               _userNameController.text.trim(),
                               _passwordController.text.trim()
