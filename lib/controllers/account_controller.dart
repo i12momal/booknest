@@ -87,6 +87,8 @@ class AccountController extends BaseController{
       }
     }
 
+    final String pinRecuperacion = DateTime.now().millisecondsSinceEpoch.toString();
+
     // Creación del viewModel
     final registerUserViewModel = RegisterUserViewModel(
       name: name,
@@ -99,10 +101,53 @@ class AccountController extends BaseController{
       image: imageUrl,
       genres: genres,
       role: 'usuario',
+      pinRecuperacion: pinRecuperacion,
     );
     
     // Llamada al servicio para registrar al usuario
-    return await accountService.registerUser(registerUserViewModel);
+    final response = await accountService.registerUser(registerUserViewModel);
+    response['pinRecuperacion'] = pinRecuperacion;
+    return response;
+  }
+
+  // Método asíncrono para comprobar si el email y el pin proporcionados en la recuepración de contraseña son correctos
+  Future<void> verifyEmailAndPin(String email, String pin) async {
+    if (email.isEmpty || pin.isEmpty) {
+      errorMessage.value = 'Por favor ingrese todos los campos';
+
+      // Hacer que el mensaje desaparezca después de 5 segundos
+      Future.delayed(const Duration(seconds: 5), () {
+        errorMessage.value = '';
+      });
+
+      return;
+    }
+
+    errorMessage.value = ''; // Limpiar mensaje de error
+
+    final result = await accountService.verifyEmailAndPin(email, pin);
+
+    if (result['success']) {
+      errorMessage.value = '';
+    } else {
+      errorMessage.value = result['message'];
+
+      // Hacer que el mensaje desaparezca después de 5 segundos
+      Future.delayed(const Duration(seconds: 5), () {
+        errorMessage.value = '';
+      });
+    }
+  }
+
+  Future<bool> updatePassword(String email, String pin, String newPassword) async {
+    final result = await accountService.updatePassword(email, pin, newPassword);
+    if (!result['success']) {
+      errorMessage.value = result['message'];
+      Future.delayed(const Duration(seconds: 5), () {
+        errorMessage.value = '';
+      });
+    }
+    return result['success'];
   }
 
 

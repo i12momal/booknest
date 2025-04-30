@@ -1,4 +1,7 @@
+import 'package:booknest/controllers/account_controller.dart';
+import 'package:booknest/views/login_view.dart';
 import 'package:booknest/widgets/custom_text_field.dart';
+import 'package:booknest/widgets/success_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:booknest/widgets/background.dart';
 
@@ -11,7 +14,43 @@ class ResetPasswordView extends StatefulWidget {
 
 class _ResetPasswordViewViewState extends State<ResetPasswordView> {
   final _emailController = TextEditingController();
-  
+  final _pinController = TextEditingController();
+  final AccountController _accountController = AccountController();
+
+  bool _isVerified = false;
+  final _newPasswordController = TextEditingController();
+  final _repeatPasswordController = TextEditingController();
+
+  bool _isReadOnly = false;
+  bool _isLoading = false;
+  bool _isSubmitting = false;
+  String _passwordErrorMessage = '';
+
+  // Función que muestra el dialogo de éxito al recuperar la contraseña
+  void _showSuccessDialog() {
+    SuccessDialog.show(
+      context,
+      'Recuperación Exitosa', 
+      '¡Ha recuperado y actualizado su contraseña con éxito!',
+      () {
+        Navigator.pop(context);
+
+        // Redirigir a la pantalla de inicio de sesión después de que el usuario acepte
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const LoginView()));
+      },
+    );
+  }
+
+  // Función que muestra el dialogo de error al recuperar la contraseña
+  void _showErrorDialog() {
+    SuccessDialog.show(
+      context,
+      'Error en la Recuperación', 
+      'Se ha producido un error al intentar actualizar la contraseña.',
+      () { },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
@@ -23,6 +62,7 @@ class _ResetPasswordViewViewState extends State<ResetPasswordView> {
       },
       child: Background(
         title: 'Recuperación de Contraseña',
+        showNotificationIcon: false,
         onBack: () {
           Navigator.pop(context);
         },
@@ -66,15 +106,6 @@ class _ResetPasswordViewViewState extends State<ResetPasswordView> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
-                          'Introduzca su correo electrónico:',
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(height: screenHeight * 0.03),
-                        const Text(
                           'Correo Electrónico',
                           style: TextStyle(
                             color: Colors.black,
@@ -83,32 +114,216 @@ class _ResetPasswordViewViewState extends State<ResetPasswordView> {
                           ),
                         ),
                         SizedBox(height: screenHeight * 0.01),
-                        CustomTextField(icon: Icons.email, hint: '', controller: _emailController),
+                        CustomTextField(icon: Icons.email, hint: '', controller: _emailController, readOnly: _isReadOnly),
+
                         SizedBox(height: screenHeight * 0.02),
-                        Center(
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFAD0000),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30),
-                                side: const BorderSide(color: Colors.white, width: 3),
-                              ),
-                              padding: EdgeInsets.symmetric(
-                                horizontal: screenWidth * 0.1,
-                                vertical: screenHeight * 0.02,
-                              ),
-                            ),
-                            onPressed: () {},
-                            child: const Text(
-                              'Enviar',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                        const Text(
+                          'PIN de Recuperación',
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
+                        SizedBox(height: screenHeight * 0.01),
+                        CustomTextField(icon: Icons.pin, hint: '', controller: _pinController, readOnly: _isReadOnly),
+                        ValueListenableBuilder<String>(
+                          valueListenable: _accountController.errorMessage,
+                          builder: (context, value, child) {
+                            if (value.isEmpty) return const SizedBox.shrink();
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 8.0, bottom: 12.0),
+                              child: Text(
+                                value,
+                                style: const TextStyle(
+                                  color: Colors.red,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                        SizedBox(height: screenHeight * 0.02),
+
+                        if (!_isVerified)
+                          Center(
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFAD0000),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                  side: const BorderSide(color: Colors.white, width: 3),
+                                ),
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: screenWidth * 0.1,
+                                  vertical: screenHeight * 0.02,
+                                ),
+                              ),
+                              onPressed: _isLoading
+                                  ? null
+                                  : () async {
+                                      FocusScope.of(context).unfocus();
+
+                                      final email = _emailController.text.trim();
+                                      final pin = _pinController.text.trim();
+
+                                      setState(() {
+                                        _isLoading = true;
+                                      });
+
+                                      await _accountController.verifyEmailAndPin(email, pin);
+
+                                      if (_accountController.errorMessage.value.isEmpty) {
+                                        setState(() {
+                                          _isVerified = true;
+                                          _isReadOnly = true;
+                                        });
+                                      }
+
+                                      setState(() {
+                                        _isLoading = false;
+                                      });
+                                    },
+                              child: _isLoading
+                                  ? const SizedBox(
+                                      width: 24,
+                                      height: 24,
+                                      child: CircularProgressIndicator(
+                                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Text(
+                                      'Enviar',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                            ),
+                          ),
+
+
+                        if (_isVerified) ...[
+                          const Text(
+                            'Nueva Contraseña',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          CustomTextField(icon: Icons.visibility, hint: '', isPassword: true, controller: _newPasswordController),
+                          const SizedBox(height: 10),
+                          const Text(
+                            'Repetir Contraseña',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          CustomTextField(icon: Icons.visibility, hint: '', isPassword: true, controller: _repeatPasswordController),
+                           if (_passwordErrorMessage.isNotEmpty) ...[
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: Text(
+                                _passwordErrorMessage,
+                                style: const TextStyle(
+                                  color: Colors.red,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: 20),
+                          Center(
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFAD0000),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                  side: const BorderSide(color: Colors.white, width: 3),
+                                ),
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: screenWidth * 0.1,
+                                  vertical: screenHeight * 0.02,
+                                ),
+                              ),
+                              onPressed: _isSubmitting
+                                  ? null
+                                  : () async {
+                                      final newPass = _newPasswordController.text.trim();
+                                      final repeatPass = _repeatPasswordController.text.trim();
+
+                                        // Validar las contraseñas antes de proceder
+                                        if (newPass.isEmpty || repeatPass.isEmpty) {
+                                          setState(() {
+                                            _passwordErrorMessage = 'Por favor, ingrese ambas contraseñas';
+                                          });
+                                          return;
+                                        }
+
+                                        if (newPass != repeatPass) {
+                                          setState(() {
+                                            _passwordErrorMessage = 'Las contraseñas no coinciden';
+                                          });
+                                          return;
+                                        }
+
+                                        // Si las contraseñas son válidas, eliminamos el mensaje de error
+                                        setState(() {
+                                          _passwordErrorMessage = '';
+                                        });
+
+                                        setState(() {
+                                          _isSubmitting = true;
+                                        });
+
+                                      final email = _emailController.text.trim();
+                                      final pin = _pinController.text.trim();
+
+                                      setState(() {
+                                        _isSubmitting = true;
+                                      });
+
+                                      final success = await _accountController.updatePassword(email, pin, newPass);
+
+                                      setState(() {
+                                        _isSubmitting = false;
+                                      });
+
+                                      if (success && context.mounted) {
+                                        _showSuccessDialog();
+                                      } else {
+                                        _showErrorDialog();
+                                      }
+                                    },
+                              child: _isSubmitting
+                                  ? const SizedBox(
+                                      width: 24,
+                                      height: 24,
+                                      child: CircularProgressIndicator(
+                                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Text(
+                                      'Restablecer Contraseña',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                            ),
+                          ),
+
+                        ],
+
                       ],
                     ),
                   ),

@@ -5,9 +5,9 @@ import 'package:booknest/controllers/account_controller.dart';
 import 'package:booknest/controllers/categories_controller.dart';
 import 'package:booknest/widgets/background.dart';
 import 'package:booknest/widgets/page_navigation.dart';
-import 'package:booknest/widgets/success_dialog.dart';
 import 'package:booknest/widgets/genre_selection_register.dart';
 import 'package:booknest/widgets/personal_info_form.dart';
+import 'package:flutter/services.dart';
 
 // Vista para la acción de Registro de Usuario 
 class RegisterView extends StatefulWidget {
@@ -36,6 +36,7 @@ class _RegisterViewState extends State<RegisterView> {
   int _currentPage = 0;
 
   final isEditMode = false;
+  bool _isLoading = false;
   
   List<String> genres = [];
   List<String> selectedGenres = [];
@@ -109,36 +110,79 @@ class _RegisterViewState extends State<RegisterView> {
     final password = _passwordController.text.trim();
     final confirmPassword = _confirmPasswordController.text.trim();
 
+    setState(() {
+      _isLoading = true;
+    });
+
     final result = await _accountController.registerUser(
         name, userName, email, phoneNumber, address, password, confirmPassword, _imageFile, selectedGenres.join(", "));
 
     setState(() {
       _message = result['message'];
+      _isLoading = false;
     });
 
     if (result['success']) {
       setState(() {
         _message = '';
       });
-      _showSuccessDialog();
+
+      String recoveryPin = result['pinRecuperacion'];
+      _showSuccessDialog(recoveryPin);
     }
   }
 
   // Función que muestra el dialogo de éxito al registrar un usuario
-  void _showSuccessDialog() {
-    SuccessDialog.show(
-      context,
-      'Registro Exitoso', 
-      '¡Tu cuenta ha sido creada con éxito!',
-      () {
-        Navigator.pop(context);
-
-        // Redirigir a la pantalla de inicio de sesión después de que el usuario acepte
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const LoginView()),
-        );
-      },
+  void _showSuccessDialog(String pin) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Registro Exitoso'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('¡Tu cuenta ha sido creada con éxito!'),
+            const SizedBox(height: 12),
+            const Text('Tu PIN de recuperación es:'),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: SelectableText(
+                    pin,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.copy),
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: pin));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('PIN copiado al portapapeles')),
+                    );
+                  },
+                )
+              ],
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginView()),
+              );
+            },
+            child: const Text('Aceptar'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -151,6 +195,7 @@ class _RegisterViewState extends State<RegisterView> {
       },
       child: Background(
         title: 'Registro',
+        showNotificationIcon: false,
         onBack: prevPage,
         child: PageNavigation(
           pageController: _pageController,
@@ -200,6 +245,7 @@ class _RegisterViewState extends State<RegisterView> {
         });
       },
       onRegister: _registerUser,
+      isLoading: _isLoading,
     );
   }
 }

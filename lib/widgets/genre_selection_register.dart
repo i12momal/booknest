@@ -9,6 +9,7 @@ class GenreSelectionRegisterWidget extends StatelessWidget {
   final ValueChanged<String> onGenreSelected;
   final VoidCallback onRegister;
   final bool isEditMode;
+  final bool isLoading;
 
   const GenreSelectionRegisterWidget({
     super.key,
@@ -18,6 +19,7 @@ class GenreSelectionRegisterWidget extends StatelessWidget {
     required this.message,
     required this.onGenreSelected,
     required this.onRegister,
+    required this.isLoading
   });
 
   @override
@@ -111,7 +113,7 @@ class GenreSelectionRegisterWidget extends StatelessWidget {
                       ),
                       const SizedBox(height: 10),
                       ElevatedButton(
-                        onPressed: onRegister,
+                        onPressed: isLoading ?null : onRegister,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFAD0000),
                           shape: RoundedRectangleBorder(
@@ -120,14 +122,16 @@ class GenreSelectionRegisterWidget extends StatelessWidget {
                           ),
                           padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
                         ),
-                        child: const Text(
-                          "Registrarse",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                        child: isLoading 
+                            ? const CircularProgressIndicator(backgroundColor: Color(0xFFAD0000), color: Color(0xFFFFFFFF))
+                            : const Text(
+                                "Registrarse",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                       ),
                     ],
                   ),
@@ -136,7 +140,7 @@ class GenreSelectionRegisterWidget extends StatelessWidget {
                 Align(
                   alignment: Alignment.center,
                   child: ElevatedButton(
-                    onPressed: onRegister,
+                    onPressed: isLoading ? null : onRegister,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFAD0000),
                       shape: RoundedRectangleBorder(
@@ -145,14 +149,16 @@ class GenreSelectionRegisterWidget extends StatelessWidget {
                       ),
                       padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
                     ),
-                    child: const Text(
-                      "Guardar",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    child: isLoading 
+                        ? const CircularProgressIndicator(backgroundColor: Color(0xFFAD0000), color: Color(0xFFFFFFFF))
+                        : const Text(
+                            "Guardar",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                   ),
                 ),
               ]
