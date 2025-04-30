@@ -4,10 +4,12 @@ import 'package:booknest/controllers/loan_controller.dart';
 import 'package:booknest/controllers/review_controller.dart';
 import 'package:booknest/controllers/user_controller.dart';
 import 'package:booknest/entities/models/book_model.dart';
+import 'package:booknest/entities/models/loan_model.dart';
 import 'package:booknest/entities/models/review_model.dart';
 import 'package:booknest/entities/models/user_model.dart';
 import 'package:booknest/views/add_review_view.dart';
 import 'package:booknest/views/edit_book_view.dart';
+import 'package:booknest/views/user_profile_view.dart';
 import 'package:booknest/widgets/background.dart';
 import 'package:booknest/widgets/review_item.dart';
 import 'package:booknest/widgets/success_dialog.dart';
@@ -265,14 +267,12 @@ class _BookInfoTabsState extends State<BookInfoTabs> {
   @override
   void initState() {
     super.initState();
-    // Inicializamos las reseñas
     _reviewsFuture = fetchReviews();
   }
 
   @override
   void didUpdateWidget(covariant BookInfoTabs oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Si las reseñas necesitan recargarse
     if (widget.reloadReviews != oldWidget.reloadReviews && widget.reloadReviews) {
       setState(() {
         _reviewsFuture = fetchReviews();
@@ -281,8 +281,7 @@ class _BookInfoTabsState extends State<BookInfoTabs> {
   }
 
   Future<List<Review>> fetchReviews() async {
-    var response = await ReviewController().getReviews(widget.book.id);
-    return response;
+    return await ReviewController().getReviews(widget.book.id);
   }
 
   @override
@@ -306,11 +305,30 @@ class _BookInfoTabsState extends State<BookInfoTabs> {
           ),
           const SizedBox(height: 15),
           Expanded(
-            child: TabBarView(
-              children: [
-                _BookDetailsTab(book: widget.book),
-                _BookReviewsTab(book: widget.book, isOwner: widget.isOwner, reviewsFuture: _reviewsFuture),
-              ],
+            child: FutureBuilder<List<Review>>(
+              future: _reviewsFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return const Center(child: Text('Error al cargar las reseñas.'));
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return TabBarView(
+                    children: [
+                      _BookDetailsTab(book: widget.book),
+                      const Center(child: Text('No hay reseñas disponibles.')),
+                    ],
+                  );
+                }
+
+                final reviews = snapshot.data!;
+                return TabBarView(
+                  children: [
+                    _BookDetailsTab(book: widget.book),
+                    _BookReviewsTab(book: widget.book, isOwner: widget.isOwner, reviews: reviews),
+                  ],
+                );
+              },
             ),
           ),
         ],
@@ -318,6 +336,7 @@ class _BookInfoTabsState extends State<BookInfoTabs> {
     );
   }
 }
+
 
 
 
@@ -334,6 +353,144 @@ class _BookHeader extends StatelessWidget {
     required this.isOwner,
     required this.loanedFormats,
   });
+
+  void _showLoanInfoPopup(BuildContext context) async {
+    List<Map<String, dynamic>> loans = await LoanController().getLoansByBookId(book.id);
+
+    if (loans.isEmpty) return;
+
+    final PageController _pageController = PageController();
+    int currentPage = 0;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Dialog(
+              insetPadding: const EdgeInsets.all(16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: const BorderSide(color: Color(0xFF112363), width: 3), // Borde azul
+              ),
+              child: SizedBox(
+                width: 320,
+                height: 300,
+                child: Stack(
+                  children: [
+                    Column(
+                      children: [
+                        const SizedBox(height: 12),
+                        // Línea de progreso centrada y ajustada dentro del borde
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          child: Row(
+                            children: List.generate(
+                              loans.length,
+                              (index) => Expanded(
+                                child: Container(
+                                  height: 6,
+                                  margin: const EdgeInsets.symmetric(horizontal: 2),
+                                  decoration: BoxDecoration(
+                                    color: index <= currentPage
+                                        ? const Color(0xFF700101)
+                                        : Colors.grey.shade300,
+                                    borderRadius: BorderRadius.circular(3),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Expanded(
+                          child: PageView.builder(
+                            controller: _pageController,
+                            onPageChanged: (index) {
+                              setState(() {
+                                currentPage = index;
+                              });
+                            },
+                            itemCount: loans.length,
+                            itemBuilder: (context, index) {
+                              final loan = loans[index];
+                              final formattedStart = loan['startDate'].split('T').first;
+                              final formattedEnd = loan['endDate'].split('T').first;
+
+                              return Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: FutureBuilder<User?>(
+                                  future: isOwner
+                                      ? UserController().getUserById(loan['currentHolderId'].toString())
+                                      : Future.value(null),
+                                  builder: (context, userSnapshot) {
+                                    final borrowerName = isOwner
+                                        ? (userSnapshot.data?.userName ?? 'Desconocido')
+                                        : null;
+
+                                    return Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        if (isOwner) ...[
+                                          const Text(
+                                            "Prestado al usuario:",
+                                            style: TextStyle(fontWeight: FontWeight.bold),
+                                          ),
+                                           GestureDetector(
+                                            onTap: () {
+                                              // Si quieres redirigir al perfil del usuario cuando se hace clic en el userName
+                                              if (userSnapshot.hasData && userSnapshot.data != null) {
+                                                final userId = userSnapshot.data!.id;
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) => UserProfileView(userId: userId),
+                                                  ),
+                                                );
+                                              }
+                                            },
+                                          child: Text(borrowerName ?? 'Desconocido', style: const TextStyle(color: Color(0xFF112363), fontWeight: FontWeight.bold, decoration: TextDecoration.underline),),),
+                                          const SizedBox(height: 12),
+                                        ],
+                                        const Text("Formato:", style: TextStyle(fontWeight: FontWeight.bold)),
+                                        Text(loan['format']),
+                                        const SizedBox(height: 12),
+                                        const Text("Fecha de inicio del préstamo:", style: TextStyle(fontWeight: FontWeight.bold)),
+                                        Text(formattedStart),
+                                        const SizedBox(height: 12),
+                                        const Text("Fecha de finalización del préstamo:", style: TextStyle(fontWeight: FontWeight.bold)),
+                                        Text(formattedEnd),
+                                      ],
+                                    );
+                                  },
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    // Botón de cierre (X)
+                    Positioned(
+                      top: 4,
+                      right: 4,
+                      child: IconButton(
+                        icon: const Icon(Icons.close, size: 20, color: Color(0xFF112363)),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -356,7 +513,6 @@ class _BookHeader extends StatelessWidget {
       final formatCapitalized = disponibles.first[0].toUpperCase() + disponibles.first.substring(1);
       availabilityStatus = 'Disponible en formato $formatCapitalized';
     } else {
-      // Si hay más de uno disponible pero no todos, especificamos uno
       if (disponibles.contains('físico') && !disponibles.contains('digital')) {
         availabilityStatus = 'Disponible en formato Físico';
       } else if (disponibles.contains('digital') && !disponibles.contains('físico')) {
@@ -365,14 +521,6 @@ class _BookHeader extends StatelessWidget {
         availabilityStatus = 'Disponible';
       }
     }
-
-    debugPrint('--- DEBUG DISPONIBILIDAD ---');
-    debugPrint('book.format: ${book.format}');
-    debugPrint('loanedFormats: $loanedFormats');
-    debugPrint('formats: $formats');
-    debugPrint('disponibles: $disponibles');
-    debugPrint('availabilityStatus: $availabilityStatus');
-    debugPrint('----------------------------');
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -484,6 +632,7 @@ class _BookHeader extends StatelessWidget {
                         const Text("Prestado", style: TextStyle(fontSize: 12)),
                         const SizedBox(width: 12),
                         GestureDetector(
+                          onTap: () => _showLoanInfoPopup(context),
                           child: const Text(
                             "Información del préstamo",
                             style: TextStyle(
@@ -506,11 +655,6 @@ class _BookHeader extends StatelessWidget {
     );
   }
 }
-
-
-
-
-
 
 
 
@@ -587,177 +731,124 @@ class _BookDetailsTab extends StatelessWidget {
   }
 }
 
+
+
+
+
+
 class _BookReviewsTab extends StatefulWidget {
   final Book book;
   final bool isOwner;
-  final Future<List<Review>> reviewsFuture;
+  final List<Review> reviews;
 
-  const _BookReviewsTab({required this.book, required this.isOwner, required this.reviewsFuture});
+  const _BookReviewsTab({
+    required this.book,
+    required this.isOwner,
+    required this.reviews,
+  });
 
   @override
-  _BookReviewsTabState createState() => _BookReviewsTabState();
+  State<_BookReviewsTab> createState() => _BookReviewsTabState();
 }
 
 class _BookReviewsTabState extends State<_BookReviewsTab> {
-  late Future<List<Review>> _reviewsFuture;
   int _currentPage = 0;
   static const int _reviewsPerPage = 10;
 
   @override
-  void initState() {
-    super.initState();
-    _reviewsFuture = widget.reviewsFuture;
-  }
-
-  void _refreshReviews() {
-    setState(() {
-      _reviewsFuture = ReviewController().getReviews(widget.book.id);
-      _currentPage = 0;
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<Review>>(
-      future: _reviewsFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        } else if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
-        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return Column(
-            children: [
-              if (!widget.isOwner)
-                Align(
-                  alignment: Alignment.topRight,
-                  child: Padding(
-                    padding: const EdgeInsets.only(right: 16.0, top: 4.0),
-                    child: IconButton(
-                      icon: const Icon(Icons.add_circle_outline, color: Color(0xFF112363), size: 30),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => AddReviewView(book: widget.book),
-                          ),
-                        ).then((_) {
-                          _refreshReviews();
-                        });
-                      },
+    final reviews = widget.reviews;
+    final totalPages = (reviews.length / _reviewsPerPage).ceil();
+    final startIndex = _currentPage * _reviewsPerPage;
+    final endIndex = (startIndex + _reviewsPerPage) < reviews.length
+        ? (startIndex + _reviewsPerPage)
+        : reviews.length;
+
+    final currentReviews = reviews.sublist(startIndex, endIndex);
+
+    return Column(
+      children: [
+        if (!widget.isOwner)
+          Align(
+            alignment: Alignment.topRight,
+            child: Padding(
+              padding: const EdgeInsets.only(right: 16.0, top: 4.0),
+              child: IconButton(
+                icon: const Icon(Icons.add_circle_outline, color: Color(0xFF112363), size: 30),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => AddReviewView(book: widget.book),
                     ),
-                  ),
-                ),
-              const Expanded(
-                child: Center(
-                  child: Text(
-                    'No hay reseñas disponibles.',
-                    style: TextStyle(fontSize: 16, color: Colors.grey),
-                  ),
-                ),
+                  ).then((_) {
+                    setState(() {});
+                  });
+                },
+              ),
+            ),
+          ),
+        Flexible(
+          child: ListView.builder(
+            itemCount: currentReviews.length,
+            itemBuilder: (context, index) {
+              final review = currentReviews[index];
+
+              return FutureBuilder<User?>(
+                future: UserController().getUserById(review.userId.toString()),
+                builder: (context, userSnapshot) {
+                  if (userSnapshot.connectionState != ConnectionState.done) {
+                    return const SizedBox();
+                  }
+                  if (userSnapshot.hasError || !userSnapshot.hasData) {
+                    return const ListTile(title: Text('Usuario no disponible'));
+                  }
+
+                  final user = userSnapshot.data!;
+                  return ReviewItem(
+                    name: user.name,
+                    rating: review.rating,
+                    comment: review.comment,
+                    imageUrl: user.image ?? '',
+                  );
+                },
+              );
+            },
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: _currentPage > 0
+                    ? () {
+                        setState(() {
+                          _currentPage--;
+                        });
+                      }
+                    : null,
+              ),
+              Text(
+                'Página ${_currentPage + 1} de $totalPages',
+                style: const TextStyle(fontSize: 16),
+              ),
+              IconButton(
+                icon: const Icon(Icons.arrow_forward),
+                onPressed: _currentPage < totalPages - 1
+                    ? () {
+                        setState(() {
+                          _currentPage++;
+                        });
+                      }
+                    : null,
               ),
             ],
-          );
-        } else {
-          final reviews = snapshot.data!;
-          final totalPages = (reviews.length / _reviewsPerPage).ceil();
-          final startIndex = _currentPage * _reviewsPerPage;
-          final endIndex = (startIndex + _reviewsPerPage) < reviews.length
-              ? (startIndex + _reviewsPerPage)
-              : reviews.length;
-
-          final currentReviews = reviews.sublist(startIndex, endIndex);
-
-          return Column(
-            children: [
-              if (!widget.isOwner)
-                Align(
-                  alignment: Alignment.topRight,
-                  child: Padding(
-                    padding: const EdgeInsets.only(right: 16.0, top: 4.0),
-                    child: IconButton(
-                      icon: const Icon(Icons.add_circle_outline, color: Color(0xFF112363), size: 30),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => AddReviewView(book: widget.book),
-                          ),
-                        ).then((_) {
-                          _refreshReviews();
-                        });
-                      },
-                    ),
-                  ),
-                ),
-              Flexible(
-                child: ListView.builder(
-                  itemCount: currentReviews.length,
-                  itemBuilder: (context, index) {
-                    final review = currentReviews[index];
-                    return FutureBuilder<User?>(
-                      future: UserController().getUserById(review.userId.toString()),
-                      builder: (context, userSnapshot) {
-                        if (userSnapshot.connectionState == ConnectionState.waiting) {
-                          return const Center(child: CircularProgressIndicator());
-                        } else if (userSnapshot.hasError) {
-                          return Center(child: Text('Error: ${userSnapshot.error}'));
-                        } else if (!userSnapshot.hasData || userSnapshot.data == null) {
-                          return const Center(child: Text('Usuario no encontrado'));
-                        } else {
-                          var user = userSnapshot.data!;
-                          String userName = user.name;
-                          String imageUrl = user.image ?? '';
-
-                          return ReviewItem(
-                            name: userName,
-                            rating: review.rating,
-                            comment: review.comment,
-                            imageUrl: imageUrl,
-                          );
-                        }
-                      },
-                    );
-                  },
-                ),
-              ),
-              // Paginación
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.arrow_back),
-                      onPressed: _currentPage > 0
-                          ? () {
-                              setState(() {
-                                _currentPage--;
-                              });
-                            }
-                          : null,
-                    ),
-                    Text(
-                      'Página ${_currentPage + 1} de $totalPages',
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.arrow_forward),
-                      onPressed: _currentPage < totalPages - 1
-                          ? () {
-                              setState(() {
-                                _currentPage++;
-                              });
-                            }
-                          : null,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          );
-        }
-      },
+          ),
+        ),
+      ],
     );
   }
 }

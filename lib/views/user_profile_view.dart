@@ -165,26 +165,27 @@ class _UserProfileViewState extends State<UserProfileView> {
 
             // Contenedor con Scroll Horizontal para categorías
             SizedBox(
-              height: 200,  // Altura fija para el contenedor
-              child: Column(
-                children: [
-                  // Fila 1
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal, // Permitir scroll horizontal
-                    child: Wrap(
-                      spacing: 20,  // Espacio entre elementos
-                      runSpacing: 12,  // Espacio entre filas
-                      alignment: WrapAlignment.start,  // Alineación a la izquierda
-                      children: categories.sublist(0, (categories.length / 2).ceil()).map((category) {
+              height: categories.length > 4 ? 200 : 100,
+              child: categories.length > 4
+                  ? GridView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: categories.length,
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        mainAxisSpacing: 12,
+                        crossAxisSpacing: 20,
+                        childAspectRatio: 0.8,
+                      ),
+                      itemBuilder: (context, index) {
+                        final category = categories[index];
                         return GestureDetector(
                           onTap: () {
-                            // Navegar a CategoryView al tocar una categoría
                             Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (context) => CategoryView(
                                   categoryName: category.name,
-                                  categoryImageUrl: category.image ?? '', // URL de la imagen de la categoría
+                                  categoryImageUrl: category.image ?? '',
                                   userId: widget.userId,
                                 ),
                               ),
@@ -192,47 +193,42 @@ class _UserProfileViewState extends State<UserProfileView> {
                           },
                           child: _CategoryItem(
                             label: category.name,
-                            imageUrl: category.image,  // Imagen directamente desde el modelo
+                            imageUrl: category.image,
                           ),
                         );
-                      }).toList(),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  // Fila 2
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal, // Permitir scroll horizontal
-                    child: Wrap(
-                      spacing: 20,  // Espacio entre elementos
-                      runSpacing: 12,  // Espacio entre filas
-                      alignment: WrapAlignment.start,  // Alineación a la izquierda
-                      children: categories.sublist((categories.length / 2).ceil()).map((category) {
-                        return GestureDetector(
-                          onTap: () {
-                            // Navegar a CategoryView al tocar una categoría
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => CategoryView(
-                                  categoryName: category.name,
-                                  categoryImageUrl: category.image ?? '', // URL de la imagen de la categoría
-                                  userId: widget.userId,
-                                ),
+                      },
+                    )
+                  : SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: categories.map((category) {
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 20),
+                            child: GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => CategoryView(
+                                      categoryName: category.name,
+                                      categoryImageUrl: category.image ?? '',
+                                      userId: widget.userId,
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: _CategoryItem(
+                                label: category.name,
+                                imageUrl: category.image,
                               ),
-                            );
-                          },
-                          child: _CategoryItem(
-                            label: category.name,
-                            imageUrl: category.image,  // Imagen directamente desde el modelo
-                          ),
-                        );
-                      }).toList(),
+                            ),
+                          );
+                        }).toList(),
+                      ),
                     ),
-                  ),
-                ],
-              ),
             ),
+
+
           ],
         ),
       ),
