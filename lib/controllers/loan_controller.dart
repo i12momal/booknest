@@ -127,5 +127,30 @@ class LoanController extends BaseController{
       rethrow;
     }
   }
+
+
+
+  Future<List<String>> fetchAvailableFormats(int bookId, List<String> formats) async {
+    try {
+      // Llamamos al servicio para obtener los formatos disponibles
+      final availableFormats = await loanService.getAvailableFormats(bookId, formats);
+      return availableFormats;
+    } catch (e) {
+      print('Error en BookController.fetchAvailableFormats: $e');
+      return [];
+    }
+  }
+
+  Future<List<String>> fetchLoanedFormats(int bookId) async {
+    try {
+      return await loanService.getLoanedFormats(bookId);
+    } catch (e) {
+      print('Error en BookController.fetchLoanedFormats: $e');
+      return [];
+    }
+  }
+  
+
+
   
 }

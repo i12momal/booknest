@@ -274,5 +274,53 @@ class LoanService extends BaseService{
       return null; // Retorna null si hay un error
     }
   }
+
+
+
+  Future<List<String>> getAvailableFormats(int bookId, List<String> formats) async {
+    try {
+      // Obtener los préstamos con el estado 'Aceptado' y el 'bookId'
+      final loanData = await BaseService.client
+          .from('Loan')
+          .select('format')
+          .eq('bookId', bookId)
+          .eq('state', 'Aceptado');
+
+      // Filtramos los formatos prestados
+      final loanedFormats = (loanData as List).map((loan) => (loan['format'] as String).trim().toLowerCase()).toSet();
+
+      // Filtramos los formatos disponibles (aquellos que no están prestados)
+      final availableFormats = formats.where((f) => !loanedFormats.contains(f)).toList();
+
+      return availableFormats;
+    } catch (e) {
+      print('Error en getAvailableFormats: $e');
+      return [];
+    }
+  }
+
+  Future<List<String>> getLoanedFormats(int bookId) async {
+  try {
+    final loanData = await BaseService.client
+        .from('Loan')
+        .select('format')
+        .eq('bookId', bookId)
+        .eq('state', 'Aceptado');
+
+    // Normalizamos los formatos
+    final loanedFormats = (loanData as List)
+        .map((loan) => (loan['format'] as String).trim().toLowerCase())
+        .toList();
+
+    return loanedFormats;
+  } catch (e) {
+    print('Error en LoanService.getLoanedFormats: $e');
+    return [];
+  }
+}
+
+
+
+
   
 }

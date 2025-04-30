@@ -24,27 +24,29 @@ class BookDetailsOwnerView extends StatefulWidget {
   State<BookDetailsOwnerView> createState() => _BookDetailsOwnerViewState();
 }
 
-
 class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
   late Future<Book?> _bookFuture;
   late Future<String?> _currentUserFuture;
   final _controller = BookController();
+  final loancontroller = LoanController();
   final bool _shouldReloadReviews = false;
+
+  late Future<List<String>> _loanedFormatsFuture;
 
   @override
   void initState() {
     super.initState();
     _bookFuture = _controller.getBookById(widget.bookId);
     _currentUserFuture = AccountController().getCurrentUserId();
+    _loanedFormatsFuture = loancontroller.fetchLoanedFormats(widget.bookId);
   }
 
   void _showSuccessDialog(BuildContext context) {
     SuccessDialog.show(
       context,
-      'Solicitud de Préstamo Exitosa', 
+      'Solicitud de Préstamo Exitosa',
       '¡Tu solicitud de préstamo ha sido enviada exitosamente!',
-      () {
-      },
+      () {},
     );
   }
 
@@ -53,7 +55,23 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
       context,
       'Error en la Solicitud',
       message,
-      () {
+      () {},
+    );
+  }
+
+  Future<String?> _showFormatDialog(BuildContext context, List<String> formats) async {
+    return await showDialog<String>(
+      context: context,
+      builder: (BuildContext context) {
+        return SimpleDialog(
+          title: const Text("Seleccione un formato"),
+          children: formats.map((format) {
+            return SimpleDialogOption(
+              onPressed: () => Navigator.pop(context, format),
+              child: Text(format),
+            );
+          }).toList(),
+        );
       },
     );
   }
@@ -86,60 +104,95 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
             final currentUserId = userIdSnapshot.data;
             final isOwner = book.ownerId.toString() == currentUserId;
 
-            return Background(
-              title: 'Detalles del libro',
-              onBack: () => Navigator.pop(context),
-              child: Column(
-                children: [
-                  Expanded(child: BookInfoTabs(book: book, isOwner: isOwner, reloadReviews: _shouldReloadReviews)),
-                  if (!isOwner)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-                      child: SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: () async {
-                            final formats = book.format.split(',').map((e) => e.trim()).toList();
+            // FutureBuilder para obtener los formatos prestados
+            return FutureBuilder<List<String>>(
+              future: _loanedFormatsFuture, // Carga los formatos prestados
+              builder: (context, loanedSnapshot) {
+                if (loanedSnapshot.connectionState == ConnectionState.waiting) {
+                  return const Scaffold(body: Center(child: CircularProgressIndicator()));
+                } else if (loanedSnapshot.hasError || !loanedSnapshot.hasData) {
+                  return const Scaffold(body: Center(child: Text("Error cargando disponibilidad")));
+                }
 
-                            // 1. Mostrar popup de selección de formato
-                            String selectedFormat = formats.length == 1 
-                                ? formats.first 
-                                : await _showFormatDialog(context, formats);
+                final loanedFormats = loanedSnapshot.data!;
 
-                            if (selectedFormat.isNotEmpty) {
-                              // 2. Enviar la solicitud de préstamo
-                              final response = await LoanController().requestLoan(book, selectedFormat);
-
-                              if (!context.mounted) return;
-                              // 3. Mostrar diálogo de éxito solo si la solicitud fue exitosa
-                              if (response['success']) {
-                                _showSuccessDialog(context);
-                              } else {
-                                _showErrorDialog(context, response['message']);
-                              }
-                            }
-                          },
-
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFAD0000),
-                            padding: EdgeInsets.symmetric(
-                              horizontal: screenWidth * 0.1,
-                              vertical: screenHeight * 0.02,
-                            ),
-                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30),
-                              side: const BorderSide(color: Color(0xFF700101), width: 3),
-                            ),
-                          ),
-                          child: const Text(
-                            "Solicitar Préstamo",
-                            style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
-                          ),
+                return Background(
+                  title: 'Detalles del libro',
+                  onBack: () => Navigator.pop(context),
+                  child: Column(
+                    children: [
+                      
+                      _BookHeader(book: book, isOwner: isOwner, loanedFormats: loanedFormats),
+                      Expanded(
+                        child: BookInfoTabs(
+                          book: book,
+                          isOwner: isOwner,
+                          reloadReviews: _shouldReloadReviews,
                         ),
                       ),
-                    ),
-                ],
-              ),
+                      if (!isOwner)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: () async {
+                                // Obtener los formatos disponibles del libro (campo 'format' en la tabla Book)
+                                final formats = book.format.split(',').map((e) => e.trim()).toList();
+
+                                // 1. Filtrar los formatos disponibles (es decir, los que no están prestados)
+                                List<String> availableFormats = await loancontroller.fetchAvailableFormats(book.id, formats);
+
+                                if (availableFormats.isEmpty) {
+                                  _showErrorDialog(context, 'No hay formatos disponibles para préstamo.');
+                                  return;
+                                }
+
+                                // 2. Seleccionar el formato
+                                String? selectedFormat;
+                                if (availableFormats.length == 1) {
+                                  selectedFormat = availableFormats.first;
+                                } else {
+                                  selectedFormat = await _showFormatDialog(context, availableFormats);
+                                  if (selectedFormat == null || selectedFormat.isEmpty) {
+                                    _showErrorDialog(context, 'Debes seleccionar un formato válido.');
+                                    return;
+                                  }
+                                }
+
+                                // 3. Enviar la solicitud de préstamo
+                                final response = await loancontroller.requestLoan(book, selectedFormat);
+
+                                if (!context.mounted) return;
+
+                                if (response['success']) {
+                                  _showSuccessDialog(context);
+                                } else {
+                                  _showErrorDialog(context, response['message']);
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFAD0000),
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: screenWidth * 0.1,
+                                  vertical: screenHeight * 0.02,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                  side: const BorderSide(color: Color(0xFF700101), width: 3),
+                                ),
+                              ),
+                              child: const Text(
+                                "Solicitar Préstamo",
+                                style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                );
+              },
             );
           },
         );
@@ -148,22 +201,9 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
   }
 }
 
-Future<String> _showFormatDialog(BuildContext context, List<String> formats) async {
-  return await showDialog<String>(
-    context: context,
-    builder: (BuildContext context) {
-      return SimpleDialog(
-        title: const Text("Seleccione un formato"),
-        children: formats.map((format) {
-          return SimpleDialogOption(
-            onPressed: () => Navigator.pop(context, format),
-            child: Text(format),
-          );
-        }).toList(),
-      );
-    },
-  ) ?? '';
-}
+
+
+
 
 
 class BookInfoTabs extends StatefulWidget {
@@ -216,7 +256,6 @@ class _BookInfoTabsState extends State<BookInfoTabs> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 20),
-          _BookHeader(book: widget.book, isOwner: widget.isOwner),
           const SizedBox(height: 40),
           const TabBar(
             indicatorColor: Color(0xFF112363),
@@ -244,15 +283,59 @@ class _BookInfoTabsState extends State<BookInfoTabs> {
 }
 
 
+
+
+
+
 class _BookHeader extends StatelessWidget {
   final Book book;
   final bool isOwner;
+  final List<String> loanedFormats;
 
-  const _BookHeader({required this.book, required this.isOwner});
+  const _BookHeader({
+    required this.book,
+    required this.isOwner,
+    required this.loanedFormats,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final List<String> formats = book.format.split(',').map((e) => e.trim()).toList();
+    final List<String> formats = book.format
+        .split(',')
+        .map((f) => f.trim().toLowerCase())
+        .where((f) => f.isNotEmpty)
+        .toList();
+
+    final List<String> disponibles = formats
+        .where((format) => !loanedFormats.map((f) => f.toLowerCase()).contains(format))
+        .toList();
+
+    String availabilityStatus;
+    if (disponibles.isEmpty) {
+      availabilityStatus = 'Prestado';
+    } else if (disponibles.length == formats.length) {
+      availabilityStatus = 'Disponible';
+    } else if (disponibles.length == 1) {
+      final formatCapitalized = disponibles.first[0].toUpperCase() + disponibles.first.substring(1);
+      availabilityStatus = 'Disponible en formato $formatCapitalized';
+    } else {
+      // Si hay más de uno disponible pero no todos, especificamos uno
+      if (disponibles.contains('físico') && !disponibles.contains('digital')) {
+        availabilityStatus = 'Disponible en formato Físico';
+      } else if (disponibles.contains('digital') && !disponibles.contains('físico')) {
+        availabilityStatus = 'Disponible en formato Digital';
+      } else {
+        availabilityStatus = 'Disponible';
+      }
+    }
+
+    debugPrint('--- DEBUG DISPONIBILIDAD ---');
+    debugPrint('book.format: ${book.format}');
+    debugPrint('loanedFormats: $loanedFormats');
+    debugPrint('formats: $formats');
+    debugPrint('disponibles: $disponibles');
+    debugPrint('availabilityStatus: $availabilityStatus');
+    debugPrint('----------------------------');
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -266,7 +349,6 @@ class _BookHeader extends StatelessWidget {
             borderRadius: BorderRadius.circular(8),
             child: GestureDetector(
               onTap: () {
-                // Redirigir a la página de edición si es el propietario
                 if (isOwner) {
                   Navigator.push(
                     context,
@@ -288,7 +370,6 @@ class _BookHeader extends StatelessWidget {
           Expanded(
             child: GestureDetector(
               onTap: () {
-                // Redirigir a la página de edición si es el propietario
                 if (isOwner) {
                   Navigator.push(
                     context,
@@ -301,17 +382,23 @@ class _BookHeader extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  TapBubbleText(text: book.title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),),
-
+                  TapBubbleText(
+                    text: book.title,
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 4),
                   Row(
                     children: [
                       const Icon(Icons.person, size: 16, color: Colors.grey),
                       const SizedBox(width: 6),
-                      Expanded(child: TapBubbleText(text: book.author, style: const TextStyle(color: Colors.grey),),),
+                      Expanded(
+                        child: TapBubbleText(
+                          text: book.author,
+                          style: const TextStyle(color: Colors.grey),
+                        ),
+                      ),
                     ],
                   ),
-
                   const SizedBox(height: 4),
                   Row(
                     children: [
@@ -320,11 +407,10 @@ class _BookHeader extends StatelessWidget {
                       Text(book.isbn),
                     ],
                   ),
-
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      if (formats.contains("Físico"))
+                      if (formats.contains("físico"))
                         const Row(
                           children: [
                             Icon(Icons.book, size: 18),
@@ -332,9 +418,9 @@ class _BookHeader extends StatelessWidget {
                             Text("Físico"),
                           ],
                         ),
-                      if (formats.contains("Físico") && formats.contains("Digital"))
+                      if (formats.contains("físico") && formats.contains("digital"))
                         const SizedBox(width: 12),
-                      if (formats.contains("Digital"))
+                      if (formats.contains("digital"))
                         const Row(
                           children: [
                             Icon(Icons.tablet_android, size: 18),
@@ -344,39 +430,34 @@ class _BookHeader extends StatelessWidget {
                         ),
                     ],
                   ),
-
                   const SizedBox(height: 6),
                   Row(
                     children: [
-                      if (book.state.toLowerCase() == "disponible")
-                        const Row(
-                          children: [
-                            Icon(Icons.check_circle, color: Colors.green, size: 18),
-                            SizedBox(width: 4),
-                            Text("Disponible"),
-                          ],
-                        ),
-                      if (book.state.toLowerCase() == "no disponible")
-                        Row(
-                          children: [
-                            const Icon(Icons.cancel, color: Colors.red, size: 18),
-                            const SizedBox(width: 4),
-                            const Text("Prestado", style: TextStyle(fontSize: 12)),
-                            const SizedBox(width: 12),
-                            GestureDetector(
-                              //onTap: () => _showLoanDetailsPopup(context, book),
-                              child: const Text(
-                                "Información del préstamo",
-                                style: TextStyle(
-                                  color: Color(0xFF112363),
-                                  fontWeight: FontWeight.bold,
-                                  decoration: TextDecoration.underline,
-                                  fontSize: 10 
-                                ),
-                              ),
+                      if (availabilityStatus == 'Disponible') ...[
+                        const Icon(Icons.check_circle, color: Colors.green, size: 18),
+                        const SizedBox(width: 4),
+                        const Text("Disponible"),
+                      ] else if (availabilityStatus.startsWith('Disponible en formato')) ...[
+                        const Icon(Icons.check_circle, color: Colors.green, size: 18),
+                        const SizedBox(width: 4),
+                        Text(availabilityStatus),
+                      ] else if (availabilityStatus == 'Prestado') ...[
+                        const Icon(Icons.cancel, color: Colors.red, size: 18),
+                        const SizedBox(width: 4),
+                        const Text("Prestado", style: TextStyle(fontSize: 12)),
+                        const SizedBox(width: 12),
+                        GestureDetector(
+                          child: const Text(
+                            "Información del préstamo",
+                            style: TextStyle(
+                              color: Color(0xFF112363),
+                              fontWeight: FontWeight.bold,
+                              decoration: TextDecoration.underline,
+                              fontSize: 10,
                             ),
-                          ],
+                          ),
                         ),
+                      ]
                     ],
                   ),
                 ],
@@ -388,6 +469,18 @@ class _BookHeader extends StatelessWidget {
     );
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 class _BookDetailsTab extends StatelessWidget {
