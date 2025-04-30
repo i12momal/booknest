@@ -319,7 +319,21 @@ class LoanService extends BaseService{
 }
 
 
+  Future<List<Map<String, dynamic>>> getLoansByBookId(int bookId) async {
+    try {
+      if (BaseService.client == null) return [];
 
+      final response = await BaseService.client
+          .from('Loan')
+          .select()
+          .eq('bookId', bookId);
+
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      print('Error al obtener préstamos de un libro: $e');
+      return [];
+    }
+  }
 
   
 }
