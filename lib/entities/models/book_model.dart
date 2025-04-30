@@ -13,7 +13,6 @@ class Book{
   final String categories;
   final String state;
   final String ownerId;
-  final String currentHolderId;
 
   Book({
     required this.id,
@@ -29,7 +28,6 @@ class Book{
     required this.categories,
     required this.state,
     required this.ownerId,
-    required this.currentHolderId,
   });
 
     factory Book.fromJson(Map<String, dynamic> json) {
@@ -48,7 +46,6 @@ class Book{
         categories: json['categories'] ?? '',  // Aseguramos que sea un String
         state: json['state'] ?? '',
         ownerId: json['owner_id'] ?? '',
-        currentHolderId: json['currentHolderId'] ?? '',
       );
     }
 }

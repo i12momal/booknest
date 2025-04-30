@@ -12,7 +12,6 @@ class IndexBookViewModel{
   final String categories;
   final String state;
   final String ownerId;
-  final String currentHolderId;
 
   IndexBookViewModel({
     required this.title,
@@ -27,7 +26,6 @@ class IndexBookViewModel{
     required this.categories,
     required this.state,
     required this.ownerId,
-    required this.currentHolderId,
   });
 }
 
@@ -46,7 +44,6 @@ class CreateBookViewModel{
   final String categories;
   final String state;
   final String ownerId;
-  final String currentHolderId;
 
   CreateBookViewModel({
     required this.title,
@@ -61,7 +58,6 @@ class CreateBookViewModel{
     required this.categories,
     required this.state,
     required this.ownerId,
-    required this.currentHolderId,
   });
 }
 
@@ -81,7 +77,6 @@ class EditBookViewModel{
   final String categories;
   final String state;
   final String ownerId;
-  final String currentHolderId;
 
   EditBookViewModel({
     required this.id,
@@ -97,6 +92,5 @@ class EditBookViewModel{
     required this.categories,
     required this.state,
     required this.ownerId,
-    required this.currentHolderId,
   });
 }
