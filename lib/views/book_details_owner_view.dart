@@ -76,6 +76,40 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
     );
   }
 
+  String getAvailabilityStatus(Book book, List<String> loanedFormats) {
+    // Obtener los formatos del libro (en minúsculas y sin espacios extra)
+    final List<String> formats = book.format
+        .split(',')
+        .map((f) => f.trim().toLowerCase())
+        .where((f) => f.isNotEmpty)
+        .toList();
+
+    // Filtrar los formatos disponibles
+    final List<String> disponibles = formats
+        .where((format) => !loanedFormats.map((f) => f.toLowerCase()).contains(format))
+        .toList();
+
+    // Lógica para determinar el estado de disponibilidad
+    if (disponibles.isEmpty) {
+      return 'Prestado';  // Si no hay formatos disponibles, el libro está prestado
+    } else if (disponibles.length == formats.length) {
+      return 'Disponible';  // Si todos los formatos están disponibles
+    } else if (disponibles.length == 1) {
+      final formatCapitalized = disponibles.first[0].toUpperCase() + disponibles.first.substring(1);
+      return 'Disponible en formato $formatCapitalized';  // Si solo hay un formato disponible
+    } else {
+      // Si hay más de un formato disponible, especificar uno
+      if (disponibles.contains('físico') && !disponibles.contains('digital')) {
+        return 'Disponible en formato Físico';
+      } else if (disponibles.contains('digital') && !disponibles.contains('físico')) {
+        return 'Disponible en formato Digital';
+      } else {
+        return 'Disponible';  // Si hay más de un formato disponible (físico y digital)
+      }
+    }
+  }
+
+
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
@@ -116,6 +150,9 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
 
                 final loanedFormats = loanedSnapshot.data!;
 
+                // Usar la lógica de disponibilidad para obtener el estado
+                final availabilityStatus = getAvailabilityStatus(book, loanedFormats);
+
                 return Background(
                   title: 'Detalles del libro',
                   onBack: () => Navigator.pop(context),
@@ -130,7 +167,7 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
                           reloadReviews: _shouldReloadReviews,
                         ),
                       ),
-                      if (!isOwner)
+                      if (!isOwner && availabilityStatus != 'Prestado')
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
                           child: SizedBox(

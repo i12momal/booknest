@@ -11,12 +11,11 @@ class LoanService extends BaseService{
         return {'success': false, 'message': 'Error de conexión a la base de datos.'};
       }
 
-      // Buscar préstamos activos o pendientes para este libro y formato
+      // Buscar préstamos activos o pendientes para este libro (sin considerar el formato)
       final existingLoans = await BaseService.client
           .from('Loan')
           .select()
           .eq('bookId', createLoanViewModel.bookId)
-          .eq('format', createLoanViewModel.format)
           .or('state.eq.Pendiente,state.eq.Aceptado');
 
       if (existingLoans.isNotEmpty) {
