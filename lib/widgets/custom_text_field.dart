@@ -10,6 +10,7 @@ class CustomTextField extends StatefulWidget {
   final FocusNode? focusNode;
   final FocusNode? nextFocusNode;
   final VoidCallback? onEditingComplete;
+  final bool? readOnly;
 
   const CustomTextField({
     super.key,
@@ -22,6 +23,7 @@ class CustomTextField extends StatefulWidget {
     this.focusNode,
     this.nextFocusNode,
     this.onEditingComplete,
+    this.readOnly = false,
   });
 
   @override
@@ -39,14 +41,15 @@ class _CustomTextFieldState extends State<CustomTextField> {
       onChanged: widget.onChanged,
       focusNode: widget.focusNode,
       onEditingComplete: widget.onEditingComplete,
+      readOnly: widget.readOnly ?? false,
       decoration: InputDecoration(
         filled: true,
-        fillColor: Colors.white,
+        fillColor: widget.readOnly == true ? const Color.fromARGB(255, 219, 206, 206) : Colors.white,
         suffixIcon: widget.isPassword
             ? IconButton(
                 icon: Icon(
                   _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                  color: const Color.fromRGBO(184, 184, 184, 100),
+                  color: const Color.fromARGB(156, 168, 168, 168),
                 ),
                 onPressed: () {
                   setState(() {
@@ -54,7 +57,9 @@ class _CustomTextFieldState extends State<CustomTextField> {
                   });
                 },
               )
-            : Icon(widget.icon, color: const Color.fromRGBO(184, 184, 184, 100)),
+            : (widget.icon != null 
+                ? Icon(widget.icon, color: const Color.fromRGBO(184, 184, 184, 100)) 
+                : null),
         hintText: widget.hint,
         hintStyle: const TextStyle(
           color: Color.fromRGBO(164, 164, 164, 100),

@@ -304,6 +304,7 @@ class _EditUserViewState extends State<EditUserView> {
         });
       },
       onRegister: _updateUser,
+      isLoading: _isLoading,
     );
   }
 }

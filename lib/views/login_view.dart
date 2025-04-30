@@ -20,6 +20,8 @@ class _LoginViewState extends State<LoginView> {
   final _passwordController = TextEditingController();
   final AccountController _accountController = AccountController();
 
+  bool _isLoading = false;
+
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
@@ -160,7 +162,10 @@ class _LoginViewState extends State<LoginView> {
                               vertical: screenHeight * 0.02,
                             ),
                           ),
-                          onPressed: () async {
+                          onPressed: _isLoading ? null : () async {
+                            setState(() {
+                              _isLoading = true;
+                            });
                             FocusScope.of(context).unfocus();
                             await _accountController.login(
                               _userNameController.text.trim(),
@@ -183,15 +188,20 @@ class _LoginViewState extends State<LoginView> {
                                 );
                               }
                             } 
+                            setState(() {
+                              _isLoading = false;
+                            });
                           },
-                          child: const Text(
-                            'Iniciar Sesión',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                          child: _isLoading
+                              ? const CircularProgressIndicator(backgroundColor: Color(0xFFAD0000), color: Color(0xFFFFFFFF))
+                              : const Text(
+                                  'Iniciar Sesión',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                         ),
                       ),
                     ],

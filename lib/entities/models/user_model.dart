@@ -11,6 +11,7 @@ class User {
   final String? image;
   final List<String> genres;
   final String role;
+  final String pinRecuperacion;
 
 //All required fields from class User
   User(
@@ -26,6 +27,7 @@ class User {
     required this.image,
     required this.genres,
     required this.role,
+    required this.pinRecuperacion,
     }
   );
 
@@ -44,6 +46,7 @@ class User {
         ? json['genres'].split(', ')
         : List<String>.from(json['genres'] ?? []),
       role: json['role'],
+      pinRecuperacion: json['pinRecuperacion'],
     );
   }
 }
