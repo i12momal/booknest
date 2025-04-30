@@ -266,7 +266,6 @@ class _EditBookViewState extends State<EditBookView> {
         selectedGenres.join(", "),
         state,
         userId ?? '',
-        userId ?? '',
         coverImage, // Ahora pasas el archivo si está presente, o null si no
       );
 

@@ -356,7 +356,7 @@ class _BookHeader extends StatelessWidget {
                             Text("Disponible"),
                           ],
                         ),
-                      if (book.state.toLowerCase() == "prestado")
+                      if (book.state.toLowerCase() == "no disponible")
                         Row(
                           children: [
                             const Icon(Icons.cancel, color: Colors.red, size: 18),

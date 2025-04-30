@@ -66,8 +66,7 @@ class BookController extends BaseController{
       summary: summary,
       categories: categories,
       state: "Disponible",
-      ownerId: userId,
-      currentHolderId: userId
+      ownerId: userId
     );
     
     // Llamada al servicio para registrar al usuario
@@ -92,7 +91,7 @@ class BookController extends BaseController{
         - data (Opcional): Información del libro editado si la operación fue exitosa.
   */
   Future<Map<String, dynamic>> editBook(int id, String title, String author, String isbn, int pagesNumber, String language, String format, File? file, String summary,
-    String genres, String state, String ownerId, String currentHolderId, File? coverImage) async {
+    String genres, String state, String ownerId, File? coverImage) async {
     String? imageUrl;
     String? coverUrl;
 
@@ -193,8 +192,7 @@ class BookController extends BaseController{
       cover: coverUrl,
       summary: summary,
       state: state,
-      ownerId: ownerId,
-      currentHolderId: currentHolderId,
+      ownerId: ownerId
     );
 
     // Llamar al servicio para actualizar el libro
