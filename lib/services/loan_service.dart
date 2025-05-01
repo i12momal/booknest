@@ -154,10 +154,33 @@ class LoanService extends BaseService{
         // Actualizamos también el estado del libro en Book
         if (response != null && response.isNotEmpty) {
           int bookId = response.first['bookId'];
-          await BaseService.client
-              .from('Book')
-              .update({'state': 'No Disponible'})
-              .eq('id', bookId);
+          
+          // Obtener el formato del libro
+          final bookResponse = await BaseService.client.from('Book').select('format::text').eq('id', bookId).single();
+          
+          if (bookResponse != null && bookResponse['format'] != null) {
+            final rawFormat = bookResponse['format'];
+
+            List<String> bookFormats = rawFormat.toString().split(',').map((f) => f.trim().toLowerCase()).toList();
+
+            // Extraer los formatos en los que ya está prestado
+            List<String> loanFormats = await getLoanedFormats(bookId);
+ 
+            // Verificar cuántos formatos del libro están en préstamo aceptado
+            int matchedFormats = bookFormats.where((format) => loanFormats.contains(format)).length;
+
+            // Lógica de disponibilidad
+            String newState = 'Disponible';
+            if (matchedFormats == bookFormats.length) {
+              newState = 'No Disponible';
+            }
+            
+            // Actualizar el estado solo si es No Disponible
+            await BaseService.client
+                .from('Book')
+                .update({'state': newState})
+                .eq('id', bookId);
+          }
         }
 
       // Si el estado es 'Devuelto', se actualiza endDate
@@ -178,10 +201,11 @@ class LoanService extends BaseService{
           // Actualizamos también el estado del libro en Book
           if (response != null && response.isNotEmpty) {
             int bookId = response.first['bookId'];
+            String newState = 'Disponible';
             await BaseService.client
                 .from('Book')
-                .update({'state': 'Disponible'})
-                .eq('id', bookId);
+                .update({'state': newState})
+                .eq('id', bookId).select();
           }
       }else{
         // Si no es 'Aceptado' ni 'Devuelto', solo se actualiza el estado
@@ -299,24 +323,26 @@ class LoanService extends BaseService{
   }
 
   Future<List<String>> getLoanedFormats(int bookId) async {
-  try {
-    final loanData = await BaseService.client
-        .from('Loan')
-        .select('format')
-        .eq('bookId', bookId)
-        .eq('state', 'Aceptado');
+    try {
+      final loanData = await BaseService.client
+          .from('Loan')
+          .select('format')
+          .eq('bookId', bookId)
+          .eq('state', 'Aceptado');
 
-    // Normalizamos los formatos
-    final loanedFormats = (loanData as List)
-        .map((loan) => (loan['format'] as String).trim().toLowerCase())
-        .toList();
+      final loanedFormats = (loanData as List)
+          .map((loan) => loan['format'])
+          .where((f) => f != null)
+          .map((f) => f.toString().trim().toLowerCase())
+          .toList();
 
-    return loanedFormats;
-  } catch (e) {
-    print('Error en LoanService.getLoanedFormats: $e');
-    return [];
+      return loanedFormats;
+    } catch (e) {
+      print('Error en getLoanedFormats: $e');
+      return [];
+    }
   }
-}
+
 
 
   Future<List<Map<String, dynamic>>> getLoansByBookId(int bookId) async {
