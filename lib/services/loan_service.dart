@@ -11,7 +11,7 @@ class LoanService extends BaseService{
         return {'success': false, 'message': 'Error de conexión a la base de datos.'};
       }
 
-      // Buscar préstamos activos o pendientes para este libro (sin considerar el formato)
+      // Buscar préstamos activos o pendientes para este libro
       final existingLoans = await BaseService.client
           .from('Loan')
           .select()
@@ -22,8 +22,9 @@ class LoanService extends BaseService{
         for (final loan in existingLoans) {
           final existingUserId = loan['currentHolderId'];
           final loanState = loan['state'];
+          final existingFormat = loan['format'];
 
-          // Si el préstamo es del mismo usuario
+          // Si el préstamo es del mismo usuario, sin importar el formato
           if (existingUserId == createLoanViewModel.currentHolderId) {
             return {
               'success': false,
@@ -31,18 +32,22 @@ class LoanService extends BaseService{
             };
           }
 
-          // Si otro usuario ya tiene un préstamo pendiente o aceptado
-          if (loanState == 'Pendiente') {
-            return {
-              'success': false,
-              'message': 'Este libro está pendiente de préstamo a otro usuario.',
-            };
-          } else if (loanState == 'Aceptado') {
-            return {
-              'success': false,
-              'message': 'Este libro ya ha sido prestado a otro usuario.',
-            };
+          // Si el préstamo es de otro usuario y en el mismo formato
+          if (existingFormat == createLoanViewModel.format) {
+            if (loanState == 'Pendiente') {
+              return {
+                'success': false,
+                'message': 'Este libro está pendiente de préstamo a otro usuario en este formato.',
+              };
+            } else if (loanState == 'Aceptado') {
+              return {
+                'success': false,
+                'message': 'Este libro ya ha sido prestado a otro usuario en este formato.',
+              };
+            }
           }
+
+          // Otro usuario y otro formato => permitido
         }
       }
 
@@ -78,6 +83,7 @@ class LoanService extends BaseService{
       return {'success': false, 'message': ex.toString()};
     }
   }
+
 
   // Método asíncrono que obtiene las solicitudes de préstamos pendientes.
   Future<List<Map<String, dynamic>>> getUserPendingLoans(String userId) async {
@@ -202,10 +208,11 @@ class LoanService extends BaseService{
           if (response != null && response.isNotEmpty) {
             int bookId = response.first['bookId'];
             String newState = 'Disponible';
-            await BaseService.client
+            final resp = await BaseService.client
                 .from('Book')
                 .update({'state': newState})
-                .eq('id', bookId).select();
+                .eq('id', bookId);
+          print('responde: $resp');
           }
       }else{
         // Si no es 'Aceptado' ni 'Devuelto', solo se actualiza el estado

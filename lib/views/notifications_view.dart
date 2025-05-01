@@ -181,7 +181,7 @@ class _NotificationsViewState extends State<NotificationsView> {
                           ? () => setState(() => currentPage--)
                           : null,
                     ),
-                    Text('Página $currentPage de ${((allNotifications.length - 1) / notificationsPerPage).ceil()}'),
+                    Text('Página $currentPage de ${((allNotifications.length) / notificationsPerPage).ceil()}'),
                     IconButton(
                       icon: const Icon(Icons.arrow_forward),
                       onPressed: currentPage * notificationsPerPage < allNotifications.length
