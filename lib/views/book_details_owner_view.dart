@@ -11,6 +11,7 @@ import 'package:booknest/views/edit_book_view.dart';
 import 'package:booknest/views/edit_review_view.dart';
 import 'package:booknest/views/user_profile_view.dart';
 import 'package:booknest/widgets/background.dart';
+import 'package:booknest/widgets/favorite_icon.dart';
 import 'package:booknest/widgets/review_item.dart';
 import 'package:booknest/widgets/success_dialog.dart';
 import 'package:booknest/widgets/tap_bubble_text.dart';
@@ -727,48 +728,49 @@ class _BookHeader extends StatelessWidget {
                         ],
                       ),
                     ),
-                    if (isOwner)
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: GestureDetector(
-                          onTap: () {
-                            final parentContext = context;
-                            showDialog(
-                              context: parentContext,
-                              builder: (context) => AlertDialog(
-                                title: const Text('Eliminar libro'),
-                                content: const Text('¿Estás seguro de que quieres eliminar este libro?'),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.of(context).pop(),
-                                    child: const Text('Cancelar'),
+                    Positioned(
+                      bottom: -14,
+                      right: -14,
+                      child: isOwner
+                          ? GestureDetector(
+                              onTap: () {
+                                final parentContext = context;
+                                showDialog(
+                                  context: parentContext,
+                                  builder: (context) => AlertDialog(
+                                    title: const Text('Eliminar libro'),
+                                    content: const Text('¿Estás seguro de que quieres eliminar este libro?'),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.of(context).pop(),
+                                        child: const Text('Cancelar'),
+                                      ),
+                                      TextButton(
+                                        onPressed: () async {
+                                          Navigator.of(context).pop();
+                                          await BookController().deleteBook(book.id);
+                                          if (parentContext.mounted) {
+                                            SuccessDialog.show(
+                                              parentContext,
+                                              'Operación Exitosa',
+                                              'El libro ha sido eliminado correctamente',
+                                              () {
+                                                Navigator.of(parentContext).pop();
+                                                Navigator.of(parentContext).pop(book.id);
+                                              },
+                                            );
+                                          }
+                                        },
+                                        child: const Text('Eliminar', style: TextStyle(color: Colors.red)),
+                                      ),
+                                    ],
                                   ),
-                                  TextButton(
-                                    onPressed: () async {
-                                      Navigator.of(context).pop();
-                                      await BookController().deleteBook(book.id);
-                                      if (parentContext.mounted) {
-                                        SuccessDialog.show(
-                                          parentContext,
-                                          'Operación Exitosa',
-                                          'El libro ha sido eliminado correctamente',
-                                          () {
-                                            Navigator.of(parentContext).pop();
-                                            Navigator.of(parentContext).pop(book.id);
-                                          },
-                                        );
-                                      }
-                                    },
-                                    child: const Text('Eliminar', style: TextStyle(color: Colors.red)),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                          child: const Icon(Icons.delete, color: Colors.red),
-                        ),
-                      ),
+                                );
+                              },
+                              child: const Icon(Icons.delete, color: Colors.red),
+                            )
+                          : FavoriteIcon(book: book),
+                    ),
                   ],
                 ),
               ),
