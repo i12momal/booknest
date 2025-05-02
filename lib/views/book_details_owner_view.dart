@@ -361,7 +361,6 @@ class _BookInfoTabsState extends State<BookInfoTabs> {
 
   @override
   Widget build(BuildContext context) {
-    final isOwner = widget.book.ownerId == _userId;
 
     return DefaultTabController(
       length: 2,
@@ -887,6 +886,8 @@ class _BookReviewsTabState extends State<_BookReviewsTab> {
   List<Review> _reviews = [];
   bool _isLoading = true;
 
+  bool _showOnlyMyReviews = false;
+
   @override
   void initState() {
     super.initState();
@@ -903,7 +904,9 @@ class _BookReviewsTabState extends State<_BookReviewsTab> {
 
   @override
   Widget build(BuildContext context) {
-    final reviews = _reviews;
+    final reviews = _showOnlyMyReviews
+    ? _reviews.where((review) => review.userId == widget.currentUserId).toList()
+    : _reviews;
 
     final totalPages = (reviews.length / _reviewsPerPage).ceil();
     final startIndex = _currentPage * _reviewsPerPage;
@@ -916,27 +919,46 @@ class _BookReviewsTabState extends State<_BookReviewsTab> {
     return Column(
       children: [
         if (!widget.isOwner)
-          Align(
-            alignment: Alignment.topRight,
-            child: Padding(
-              padding: const EdgeInsets.only(right: 16.0, top: 4.0),
-              child: IconButton(
-                icon: const Icon(Icons.add_circle_outline, color: Color(0xFF112363), size: 30),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => AddReviewView(book: widget.book),
-                    ),
-                  ).then((result) {
-                    if (result == true) {
-                      _loadReviews();
-                    }
-                  });
-                },
-              ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                TextButton.icon(
+                  icon: Icon(
+                    _showOnlyMyReviews ? Icons.check_box : Icons.check_box_outline_blank,
+                    color: const Color(0xFF112363),
+                  ),
+                  label: const Text(
+                    'Mostrar mis reseñas',
+                    style: TextStyle(color: Color(0xFF112363)),
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _showOnlyMyReviews = !_showOnlyMyReviews;
+                      _currentPage = 0;
+                    });
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.add_circle_outline, color: Color(0xFF112363), size: 30),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => AddReviewView(book: widget.book),
+                      ),
+                    ).then((result) {
+                      if (result == true) {
+                        _loadReviews();
+                      }
+                    });
+                  },
+                ),
+              ],
             ),
           ),
+
 
         if (_isLoading)
           const Expanded(
