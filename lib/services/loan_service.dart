@@ -11,6 +11,16 @@ class LoanService extends BaseService{
         return {'success': false, 'message': 'Error de conexión a la base de datos.'};
       }
 
+      // Buscar préstamos activos o pendientes para este usuario
+      final numberLoans = await BaseService.client.from('Loan').select().eq('currentHolderId', createLoanViewModel.currentHolderId).or('state.eq.Pendiente,state.eq.Aceptado');
+
+      if(numberLoans.length == 3){
+        return {
+          'success': false,
+          'message': 'Ya dispones de tres solicitudes de préstamo Pendientes o Aceptadas.',
+        };
+      }
+
       // Buscar préstamos activos o pendientes para este libro
       final existingLoans = await BaseService.client
           .from('Loan')
@@ -368,5 +378,25 @@ class LoanService extends BaseService{
     }
   }
 
-  
+  Future<Map<String, dynamic>> cancelLoan(int bookId) async {
+    try {
+      final response = await BaseService.client
+          .from('Loan')
+          .delete()
+          .eq('bookId', bookId)
+          .eq('state', 'Pendiente').select();
+
+        print(response);
+
+      // Verifica si response contiene elementos eliminados
+      if (response.isNotEmpty) {
+        return {'success': true};
+      } else {
+        return {'success': false, 'message': 'No se pudo eliminar la solicitud o no existía'};
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Error al eliminar la solicitud'};
+    }
+  }
+
 }

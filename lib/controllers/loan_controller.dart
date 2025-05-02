@@ -154,5 +154,10 @@ class LoanController extends BaseController{
   Future<List<Map<String, dynamic>>> getLoansByBookId(int bookId) async {
     return await loanService.getLoansByBookId(bookId);
   }
+
+
+  Future<Map<String, dynamic>> cancelLoanRequest(int bookId) async {
+    return await loanService.cancelLoan(bookId);
+  }
   
 }

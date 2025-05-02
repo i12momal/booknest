@@ -4,7 +4,6 @@ import 'package:booknest/controllers/loan_controller.dart';
 import 'package:booknest/controllers/review_controller.dart';
 import 'package:booknest/controllers/user_controller.dart';
 import 'package:booknest/entities/models/book_model.dart';
-import 'package:booknest/entities/models/loan_model.dart';
 import 'package:booknest/entities/models/review_model.dart';
 import 'package:booknest/entities/models/user_model.dart';
 import 'package:booknest/views/add_review_view.dart';
@@ -34,6 +33,7 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
   final bool _shouldReloadReviews = false;
 
   late Future<List<String>> _loanedFormatsFuture;
+  bool _loanRequestSent = false;
 
   @override
   void initState() {
@@ -59,6 +59,46 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
       message,
       () {},
     );
+  }
+
+  void _confirmDeleteLoanRequest(BuildContext context, int bookId) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Eliminar Solicitud"),
+        content: const Text("¿Estás seguro de que deseas eliminar la solicitud de préstamo?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text("Cancelar"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text("Eliminar", style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      final response = await loancontroller.cancelLoanRequest(bookId);
+
+      if (!context.mounted) return;
+
+      if (response['success']) {
+        setState(() {
+          _loanRequestSent = false;
+        });
+         SuccessDialog.show(
+          context,
+          'Operación Exitosa',
+          '¡Tu solicitud de préstamo ha sido eliminada correctamente!',
+          () {},
+        );
+      } else {
+        _showErrorDialog(context, response['message']);
+      }
+    }
   }
 
   Future<String?> _showFormatDialog(BuildContext context, List<String> formats) async {
@@ -110,7 +150,7 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
       }
     }
   }
-
+  
 
   @override
   Widget build(BuildContext context) {
@@ -174,7 +214,28 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
                           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
                           child: SizedBox(
                             width: double.infinity,
-                            child: ElevatedButton(
+                            child:  _loanRequestSent
+                            ? ElevatedButton(
+                                onPressed: () {
+                                  _confirmDeleteLoanRequest(context, book.id);
+                                },
+                                style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFAD0000),
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: screenWidth * 0.1,
+                                  vertical: screenHeight * 0.02,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                  side: const BorderSide(color: Color(0xFF700101), width: 3),
+                                ),
+                              ),
+                              child: const Text(
+                                "Eliminar Solicitud de Préstamo",
+                                style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                              ),
+                              )
+                            : ElevatedButton(
                               onPressed: () async {
                                 // Obtener los formatos disponibles del libro (campo 'format' en la tabla Book)
                                 final formats = book.format.split(',').map((e) => e.trim()).toList();
@@ -205,6 +266,9 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
                                 if (!context.mounted) return;
 
                                 if (response['success']) {
+                                  setState(() {
+                                    _loanRequestSent = true;
+                                  });
                                   _showSuccessDialog(context);
                                 } else {
                                   _showErrorDialog(context, response['message']);
@@ -241,8 +305,7 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
 }
 
 
-
-
+  
 
 
 class BookInfoTabs extends StatefulWidget {
@@ -359,7 +422,7 @@ class _BookHeader extends StatelessWidget {
 
     if (loans.isEmpty) return;
 
-    final PageController _pageController = PageController();
+    final PageController pageController = PageController();
     int currentPage = 0;
 
     showDialog(
@@ -405,7 +468,7 @@ class _BookHeader extends StatelessWidget {
                         const SizedBox(height: 12),
                         Expanded(
                           child: PageView.builder(
-                            controller: _pageController,
+                            controller: pageController,
                             onPageChanged: (index) {
                               setState(() {
                                 currentPage = index;
