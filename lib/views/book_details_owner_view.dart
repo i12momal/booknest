@@ -553,19 +553,11 @@ class _BookHeader extends StatelessWidget {
     );
   }
 
-
-
   @override
   Widget build(BuildContext context) {
-    final List<String> formats = book.format
-        .split(',')
-        .map((f) => f.trim().toLowerCase())
-        .where((f) => f.isNotEmpty)
-        .toList();
+    final List<String> formats = book.format.split(',').map((f) => f.trim().toLowerCase()).where((f) => f.isNotEmpty).toList();
 
-    final List<String> disponibles = formats
-        .where((format) => !loanedFormats.map((f) => f.toLowerCase()).contains(format))
-        .toList();
+    final List<String> disponibles = formats.where((format) => !loanedFormats.map((f) => f.toLowerCase()).contains(format)).toList();
 
     String availabilityStatus;
     if (disponibles.isEmpty) {
@@ -585,139 +577,191 @@ class _BookHeader extends StatelessWidget {
       }
     }
 
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFF112363)),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: GestureDetector(
-              onTap: () {
-                if (isOwner) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => EditBookView(bookId: book.id),
-                    ),
-                  );
-                }
-              },
-              child: Image.network(
-                book.cover,
-                height: 140,
-                width: 90,
-                fit: BoxFit.cover,
-              ),
-            ),
+    return Stack(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            border: Border.all(color: const Color(0xFF112363)),
+            borderRadius: BorderRadius.circular(12),
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: GestureDetector(
-              onTap: () {
-                if (isOwner) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => EditBookView(bookId: book.id),
-                    ),
-                  );
-                }
-              },
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  TapBubbleText(
-                    text: book.title,
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          child: Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: GestureDetector(
+                  onTap: () {
+                    if (isOwner) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => EditBookView(bookId: book.id),
+                        ),
+                      );
+                    }
+                  },
+                  child: Image.network(
+                    book.cover,
+                    height: 140,
+                    width: 90,
+                    fit: BoxFit.cover,
                   ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(Icons.person, size: 16, color: Colors.grey),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: TapBubbleText(
-                          text: book.author,
-                          style: const TextStyle(color: Colors.grey),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Stack(
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        if (isOwner) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => EditBookView(bookId: book.id),
+                            ),
+                          );
+                        }
+                      },
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          TapBubbleText(
+                            text: book.title,
+                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              const Icon(Icons.person, size: 16, color: Colors.grey),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: TapBubbleText(
+                                  text: book.author,
+                                  style: const TextStyle(color: Colors.grey),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              const Icon(Icons.qr_code, size: 16, color: Colors.grey),
+                              const SizedBox(width: 6),
+                              Text(book.isbn),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              if (formats.contains("físico"))
+                                const Row(
+                                  children: [
+                                    Icon(Icons.book, size: 18),
+                                    SizedBox(width: 4),
+                                    Text("Físico"),
+                                  ],
+                                ),
+                              if (formats.contains("físico") && formats.contains("digital"))
+                                const SizedBox(width: 12),
+                              if (formats.contains("digital"))
+                                const Row(
+                                  children: [
+                                    Icon(Icons.tablet_android, size: 18),
+                                    SizedBox(width: 4),
+                                    Text("Digital"),
+                                  ],
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              if (availabilityStatus == 'Disponible') ...[
+                                const Icon(Icons.check_circle, color: Colors.green, size: 18),
+                                const SizedBox(width: 4),
+                                const Text("Disponible"),
+                              ] else if (availabilityStatus.startsWith('Disponible en formato')) ...[
+                                const Icon(Icons.check_circle, color: Colors.green, size: 18),
+                                const SizedBox(width: 4),
+                                Text(availabilityStatus),
+                              ] else if (availabilityStatus == 'Prestado') ...[
+                                const Icon(Icons.cancel, color: Colors.red, size: 18),
+                                const SizedBox(width: 4),
+                                const Text("Prestado", style: TextStyle(fontSize: 12)),
+                                const SizedBox(width: 12),
+                                GestureDetector(
+                                  onTap: () => _showLoanInfoPopup(context),
+                                  child: const Text(
+                                    "Información préstamo",
+                                    style: TextStyle(
+                                      color: Color(0xFF112363),
+                                      fontWeight: FontWeight.bold,
+                                      decoration: TextDecoration.underline,
+                                      fontSize: 10,
+                                    ),
+                                  ),
+                                ),
+                              ]
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (isOwner)
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: GestureDetector(
+                          onTap: () {
+                            final parentContext = context;
+                            showDialog(
+                              context: parentContext,
+                              builder: (context) => AlertDialog(
+                                title: const Text('Eliminar libro'),
+                                content: const Text('¿Estás seguro de que quieres eliminar este libro?'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.of(context).pop(),
+                                    child: const Text('Cancelar'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () async {
+                                      Navigator.of(context).pop();
+                                      await BookController().deleteBook(book.id);
+                                      if (parentContext.mounted) {
+                                        SuccessDialog.show(
+                                          parentContext,
+                                          'Operación Exitosa',
+                                          'El libro ha sido eliminado correctamente',
+                                          () {
+                                            Navigator.of(parentContext).pop();
+                                            Navigator.of(parentContext).pop(book.id);
+                                          },
+                                        );
+                                      }
+                                    },
+                                    child: const Text('Eliminar', style: TextStyle(color: Colors.red)),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                          child: const Icon(Icons.delete, color: Colors.red),
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(Icons.qr_code, size: 16, color: Colors.grey),
-                      const SizedBox(width: 6),
-                      Text(book.isbn),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      if (formats.contains("físico"))
-                        const Row(
-                          children: [
-                            Icon(Icons.book, size: 18),
-                            SizedBox(width: 4),
-                            Text("Físico"),
-                          ],
-                        ),
-                      if (formats.contains("físico") && formats.contains("digital"))
-                        const SizedBox(width: 12),
-                      if (formats.contains("digital"))
-                        const Row(
-                          children: [
-                            Icon(Icons.tablet_android, size: 18),
-                            SizedBox(width: 4),
-                            Text("Digital"),
-                          ],
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      if (availabilityStatus == 'Disponible') ...[
-                        const Icon(Icons.check_circle, color: Colors.green, size: 18),
-                        const SizedBox(width: 4),
-                        const Text("Disponible"),
-                      ] else if (availabilityStatus.startsWith('Disponible en formato')) ...[
-                        const Icon(Icons.check_circle, color: Colors.green, size: 18),
-                        const SizedBox(width: 4),
-                        Text(availabilityStatus),
-                      ] else if (availabilityStatus == 'Prestado') ...[
-                        const Icon(Icons.cancel, color: Colors.red, size: 18),
-                        const SizedBox(width: 4),
-                        const Text("Prestado", style: TextStyle(fontSize: 12)),
-                        const SizedBox(width: 12),
-                        GestureDetector(
-                          onTap: () => _showLoanInfoPopup(context),
-                          child: const Text(
-                            "Información del préstamo",
-                            style: TextStyle(
-                              color: Color(0xFF112363),
-                              fontWeight: FontWeight.bold,
-                              decoration: TextDecoration.underline,
-                              fontSize: 10,
-                            ),
-                          ),
-                        ),
-                      ]
-                    ],
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
+
   }
 }
+
 
 
 

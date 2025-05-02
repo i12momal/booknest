@@ -23,13 +23,12 @@ class CategoryView extends StatefulWidget {
 class _CategoryViewState extends State<CategoryView> {
   bool _isLoading = true;
   String _message = '';
+  List<Book> _allFilteredBooks = [];
   List<Book> _books = [];
   final BookController _bookController = BookController();
 
-  // Paginación
   int _currentPage = 1;
   final int _booksPerPage = 20;
-  int _totalBooks = 0;
 
   @override
   void initState() {
@@ -37,18 +36,17 @@ class _CategoryViewState extends State<CategoryView> {
     _fetchBooksByCategory();
   }
 
-  // Función para obtener los libros filtrados por categoría y paginados
   Future<void> _fetchBooksByCategory() async {
     try {
       final books = await _bookController.getUserBooksByCategory(widget.userId, widget.categoryName);
       final filteredBooks = books.where((book) {
-        List<String> bookCategories = book.categories.split(',').map((e) => e.trim()).toList();  // Elimina los espacios
+        final bookCategories = book.categories.split(',').map((e) => e.trim()).toList();
         return bookCategories.contains(widget.categoryName);
       }).toList();
 
       setState(() {
-        _totalBooks = filteredBooks.length;
-        _books = _paginateBooks(filteredBooks);
+        _allFilteredBooks = filteredBooks;
+        _books = _paginateBooks();
         _isLoading = false;
       });
     } catch (e) {
@@ -59,20 +57,34 @@ class _CategoryViewState extends State<CategoryView> {
     }
   }
 
-  // Función para dividir los libros en páginas
-  List<Book> _paginateBooks(List<Book> books) {
+  List<Book> _paginateBooks() {
     final start = (_currentPage - 1) * _booksPerPage;
-    final end = (start + _booksPerPage).clamp(0, books.length);
-    return books.sublist(start, end);
+    final end = (start + _booksPerPage).clamp(0, _allFilteredBooks.length);
+    return _allFilteredBooks.sublist(start, end);
   }
 
-  // Función para cambiar de página
   void _changePage(int page) {
     setState(() {
       _currentPage = page;
-      _books = _paginateBooks(_books);
+      _books = _paginateBooks();
     });
   }
+
+  void _removeBook(int bookId) {
+    setState(() {
+      // Eliminamos el libro de la lista de libros filtrados
+      _allFilteredBooks.removeWhere((b) => b.id == bookId);
+
+      // Ajustamos la paginación
+      if (_currentPage > _totalPages) {
+        _currentPage = _totalPages; // Si estamos en la última página y se eliminó un libro, ajustamos la página
+      }
+
+      _books = _paginateBooks();
+    });
+  }
+
+  int get _totalPages => (_allFilteredBooks.length / _booksPerPage).ceil().clamp(1, double.infinity).toInt();
 
   int _calculateCrossAxisCount(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -81,11 +93,6 @@ class _CategoryViewState extends State<CategoryView> {
     if (screenWidth >= 600) return 5;
     if (screenWidth >= 400) return 4;
     return 3;
-  }
-
-  // Función para calcular el número total de páginas
-  int get _totalPages {
-    return (_totalBooks / _booksPerPage).ceil();
   }
 
   @override
@@ -100,7 +107,6 @@ class _CategoryViewState extends State<CategoryView> {
               : Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Imagen de la categoría
                     Container(
                       height: 200,
                       width: double.infinity,
@@ -127,7 +133,6 @@ class _CategoryViewState extends State<CategoryView> {
                     ),
                     const Divider(thickness: 1, color: Color(0xFF112363)),
                     const SizedBox(height: 8),
-
                     Expanded(
                       child: _books.isEmpty
                           ? const Center(
@@ -148,14 +153,17 @@ class _CategoryViewState extends State<CategoryView> {
                               itemBuilder: (context, index) {
                                 final book = _books[index];
                                 return GestureDetector(
-                                  onTap: () {
-                                    // Navegar a la página de detalles del libro
-                                    Navigator.push(
+                                  onTap: () async {
+                                    final deletedBookId = await Navigator.push(
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) => BookDetailsOwnerView(bookId: book.id),
                                       ),
                                     );
+                                    if (deletedBookId != null && deletedBookId is int) {
+                                      // Eliminamos el libro de la lista local
+                                      _removeBook(deletedBookId);
+                                    }
                                   },
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -188,8 +196,6 @@ class _CategoryViewState extends State<CategoryView> {
                               },
                             ),
                     ),
-
-                    // Paginación
                     if (_totalPages > 1)
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8),

@@ -417,5 +417,32 @@ class BookService extends BaseService{
     }
   }
 
+  Future<Map<String, dynamic>> deleteBook(int bookId) async {
+    try {
+      // 1. Eliminar préstamos asociados
+      await BaseService.client
+          .from('Loan')
+          .delete()
+          .eq('bookId', bookId);
+
+      // 2. Eliminar el libro
+      final bookResponse = await BaseService.client
+          .from('Book')
+          .delete()
+          .eq('id', bookId)
+          .select();
+
+      if (bookResponse.isNotEmpty) {
+        return {'success': true};
+      } else {
+        return {
+          'success': false,
+          'message': 'Libro no encontrado o no se pudo eliminar'
+        };
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Error al eliminar el libro'};
+    }
+  }
 
 }

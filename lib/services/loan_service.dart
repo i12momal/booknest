@@ -386,8 +386,6 @@ class LoanService extends BaseService{
           .eq('bookId', bookId)
           .eq('state', 'Pendiente').select();
 
-        print(response);
-
       // Verifica si response contiene elementos eliminados
       if (response.isNotEmpty) {
         return {'success': true};

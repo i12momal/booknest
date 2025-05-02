@@ -246,4 +246,8 @@ class BookController extends BaseController{
     }
   }
 
+   Future<Map<String, dynamic>> deleteBook(int bookId) async {
+    return await bookService.deleteBook(bookId);
+  }
+
 }
