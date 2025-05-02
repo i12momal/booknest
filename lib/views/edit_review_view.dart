@@ -1,21 +1,23 @@
 import 'package:booknest/controllers/account_controller.dart';
 import 'package:booknest/controllers/review_controller.dart';
 import 'package:booknest/entities/models/book_model.dart';
+import 'package:booknest/entities/models/review_model.dart';
 import 'package:booknest/widgets/background.dart';
 import 'package:booknest/widgets/tap_bubble_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 
-class AddReviewView extends StatefulWidget {
+class EditReviewView extends StatefulWidget {
   final Book book;
+  final Review review;
 
-  const AddReviewView({super.key, required this.book});
+  const EditReviewView({super.key, required this.book, required this.review});
 
   @override
-  State<AddReviewView> createState() => _AddReviewViewState();
+  State<EditReviewView> createState() => _EditReviewViewState();
 }
 
-class _AddReviewViewState extends State<AddReviewView> {
+class _EditReviewViewState extends State<EditReviewView> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _commentController = TextEditingController();
   double _rating = 0;
@@ -30,34 +32,35 @@ class _AddReviewViewState extends State<AddReviewView> {
   void initState() {
     super.initState();
     _loadUserId();
+    _commentController.text = widget.review.comment;
+    _rating = widget.review.rating.toDouble();
   }
-
-  // Función que muestra el dialogo de éxito al añadir una nueva reseña
-  void _showSuccessDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Creación Exitosa'),
-        content: const Text('¡Tu reseña ha sido creada con éxito!'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context, true);
-            },
-            child: const Text('Aceptar'),
-          ),
-        ],
-      ),
-    );
-  }
-
 
   Future<void> _loadUserId() async {
     final id = await AccountController().getCurrentUserId();
     setState(() {
       userId = id;
     });
+  }
+
+  // Función que muestra el dialogo de éxito al editar la reseña
+  void _showSuccessDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edición Exitosa'),
+        content: const Text('¡Tu reseña ha sido editada con éxito!'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context); 
+              Navigator.pop(context, true); 
+            },
+            child: const Text('Aceptar'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -271,11 +274,10 @@ class _AddReviewViewState extends State<AddReviewView> {
                         _isSubmitting = true;
                       });
 
-                      final response = await _reviewController.addReview(
+                      final response = await _reviewController.updateReview(
+                        widget.review.id,
                         _commentController.text.trim(),
-                        _rating.toInt(),
-                        userId ?? '',
-                        widget.book.id,
+                        _rating.toInt()
                       );
 
                       setState(() {
@@ -291,7 +293,6 @@ class _AddReviewViewState extends State<AddReviewView> {
                       }
                     }
                   },
-
                   child: _isSubmitting
                       ? const SizedBox(
                           height: 20,
@@ -302,7 +303,7 @@ class _AddReviewViewState extends State<AddReviewView> {
                           ),
                         )
                       : const Text(
-                          'Añadir Reseña',
+                          'Guardar Cambios',
                           style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,

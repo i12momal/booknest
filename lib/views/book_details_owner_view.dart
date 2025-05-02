@@ -8,6 +8,7 @@ import 'package:booknest/entities/models/review_model.dart';
 import 'package:booknest/entities/models/user_model.dart';
 import 'package:booknest/views/add_review_view.dart';
 import 'package:booknest/views/edit_book_view.dart';
+import 'package:booknest/views/edit_review_view.dart';
 import 'package:booknest/views/user_profile_view.dart';
 import 'package:booknest/widgets/background.dart';
 import 'package:booknest/widgets/review_item.dart';
@@ -983,7 +984,7 @@ class _BookReviewsTabState extends State<_BookReviewsTab> {
                             comment: review.comment,
                             imageUrl: user.image ?? '',
                             isOwner: review.userId == widget.currentUserId,
-                            onEdit: () => _confirmDeleteReview(review), 
+                            onEdit: () => _editReview(review), 
                             onDelete: () => _confirmDeleteReview(review), 
                           )
 
@@ -1035,27 +1036,19 @@ class _BookReviewsTabState extends State<_BookReviewsTab> {
     );
   }
 
-  /*void _editReview(Review review) async {
-    final updatedReview = await Navigator.push(
+  void _editReview(Review review) async {
+    final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => AddReviewView(book: widget.book, review: review),
+        builder: (context) => EditReviewView(book: widget.book, review: review),
       ),
     );
 
-    if (updatedReview != null && updatedReview is Review) {
-      setState(() {
-        final index = widget.reviews.indexWhere((r) => r.id == updatedReview.id);
-        if (index != -1) {
-          widget.reviews[index] = updatedReview;
-        }
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Reseña actualizada')),
-      );
+    if (result == true) {
+      _loadReviews();
     }
-  }*/
+  }
+
 
   void _confirmDeleteReview(Review review) async {
     final confirm = await showDialog<bool>(

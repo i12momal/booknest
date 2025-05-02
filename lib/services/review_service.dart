@@ -90,4 +90,60 @@ class ReviewService extends BaseService {
     }
   }
 
+
+   Future<Map<String, dynamic>> updateReview(EditReviewViewModel editReviewViewModel) async {
+    try {
+      // Comprobamos si la conexión a Supabase está activa.
+      if (BaseService.client == null) {
+        return {'success': false, 'message': 'Error de conexión a la base de datos.'};
+      }
+
+      // Verificar que el libro existe
+      print("Verificando existencia de la reseña...");
+      final existingReview = await BaseService.client.from('Review').select().eq('id', editReviewViewModel.id).single();
+      if (existingReview == null) {
+        print("Error: Reseña no encontrada en la base de datos");
+        return {'success': false, 'message': 'Reseña no encontrada'};
+      }
+
+      // Preparar los datos para actualización
+      final Map<String, dynamic> updateData = {};
+
+      // Solo agregar campos que han cambiado
+      if (existingReview['comment'] != editReviewViewModel.comment) {
+        updateData['comment'] = editReviewViewModel.comment;
+      }
+      if (existingReview['rating'] != editReviewViewModel.rating) {
+        updateData['rating'] = editReviewViewModel.rating;
+      }
+
+      print("Datos a actualizar: $updateData");
+
+      // Si no hay cambios, retornar éxito sin actualizar
+      if (updateData.isEmpty) {
+        print("No hay cambios para actualizar");
+        return {'success': true, 'message': 'No hay cambios para actualizar', 'data': existingReview};
+      }
+
+      // Actualizar la reseña y obtener los datos actualizados en una sola operación
+      final response = await BaseService.client
+          .from('Review')
+          .update(updateData)
+          .eq('id', editReviewViewModel.id)
+          .select()
+          .single();
+
+      if (response != null) {
+        return {'success': true, 'message': 'Reseña actualizada exitosamente', 'data': response};
+      } else {
+        print("Error: No se pudo actualizar la reseña");
+        return {'success': false, 'message': 'Error al editar la información de la reseña'};
+      }
+    } catch (ex) {
+      print("Error en updateReview: $ex");
+      return {'success': false, 'message': ex.toString()};
+    }
+  }
+
+
 }

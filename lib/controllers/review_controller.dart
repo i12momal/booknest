@@ -50,4 +50,27 @@ class ReviewController extends BaseController {
     return await reviewService.deleteReview(reviewId);
   }
 
+  Future<Map<String, dynamic>> updateReview(int id, String comment, int rating) async {
+
+    // Crear viewModel con los datos editados
+    final editReviewViewModel = EditReviewViewModel(
+      id: id,
+      comment: comment,
+      rating: rating
+    );
+
+    // Llamar al servicio para actualizar la reseña
+    try {
+      print("Llamando al servicio para editar la reseña...");
+      return await reviewService.updateReview(editReviewViewModel);
+    } catch (e) {
+      print("Error al editar la reseña: $e");
+      return {
+        'success': false,
+        'message': 'Error al actualizar los datos de la reseña. Por favor, intente nuevamente.'
+      };
+    }
+  }
+
+
 }
