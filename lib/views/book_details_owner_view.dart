@@ -242,7 +242,7 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
 
                                 // 1. Filtrar los formatos disponibles (es decir, los que no están prestados)
                                 List<String> availableFormats = await loancontroller.fetchAvailableFormats(book.id, formats);
-
+                                if (!context.mounted) return;
                                 if (availableFormats.isEmpty) {
                                   _showErrorDialog(context, 'No hay formatos disponibles para préstamo.');
                                   return;
@@ -254,6 +254,7 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
                                   selectedFormat = availableFormats.first;
                                 } else {
                                   selectedFormat = await _showFormatDialog(context, availableFormats);
+                                  if (!context.mounted) return;
                                   if (selectedFormat == null || selectedFormat.isEmpty) {
                                     _showErrorDialog(context, 'Debes seleccionar un formato válido.');
                                     return;
@@ -326,11 +327,13 @@ class BookInfoTabs extends StatefulWidget {
 
 class _BookInfoTabsState extends State<BookInfoTabs> {
   late Future<List<Review>> _reviewsFuture;
+  String? _userId;
 
   @override
   void initState() {
     super.initState();
     _reviewsFuture = fetchReviews();
+    _loadUserId();
   }
 
   @override
@@ -339,8 +342,16 @@ class _BookInfoTabsState extends State<BookInfoTabs> {
     if (widget.reloadReviews != oldWidget.reloadReviews && widget.reloadReviews) {
       setState(() {
         _reviewsFuture = fetchReviews();
+        _loadUserId();
       });
     }
+  }
+
+  void _loadUserId() async {
+    final id = await AccountController().getCurrentUserId();
+    setState(() {
+      _userId = id;
+    });
   }
 
   Future<List<Review>> fetchReviews() async {
@@ -349,6 +360,8 @@ class _BookInfoTabsState extends State<BookInfoTabs> {
 
   @override
   Widget build(BuildContext context) {
+    final isOwner = widget.book.ownerId == _userId;
+
     return DefaultTabController(
       length: 2,
       child: Column(
@@ -375,20 +388,26 @@ class _BookInfoTabsState extends State<BookInfoTabs> {
                   return const Center(child: CircularProgressIndicator());
                 } else if (snapshot.hasError) {
                   return const Center(child: Text('Error al cargar las reseñas.'));
-                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return TabBarView(
-                    children: [
-                      _BookDetailsTab(book: widget.book),
-                      const Center(child: Text('No hay reseñas disponibles.')),
-                    ],
-                  );
                 }
 
-                final reviews = snapshot.data!;
+                final reviews = snapshot.data ?? [];
+
                 return TabBarView(
                   children: [
                     _BookDetailsTab(book: widget.book),
-                    _BookReviewsTab(book: widget.book, isOwner: widget.isOwner, reviews: reviews),
+                    Stack(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(top: 16),
+                          child: _BookReviewsTab(
+                            book: widget.book,
+                            isOwner: widget.isOwner,
+                            reviews: reviews,
+                            currentUserId: _userId ?? '',
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 );
               },
@@ -847,11 +866,13 @@ class _BookReviewsTab extends StatefulWidget {
   final Book book;
   final bool isOwner;
   final List<Review> reviews;
+  final String? currentUserId; 
 
   const _BookReviewsTab({
     required this.book,
     required this.isOwner,
     required this.reviews,
+    required this.currentUserId,
   });
 
   @override
@@ -862,9 +883,27 @@ class _BookReviewsTabState extends State<_BookReviewsTab> {
   int _currentPage = 0;
   static const int _reviewsPerPage = 10;
 
+  List<Review> _reviews = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadReviews();
+  }
+
+  Future<void> _loadReviews() async {
+    final newReviews = await ReviewController().getReviews(widget.book.id);
+    setState(() {
+      _reviews = newReviews;
+      _isLoading = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    final reviews = widget.reviews;
+    final reviews = _reviews;
+
     final totalPages = (reviews.length / _reviewsPerPage).ceil();
     final startIndex = _currentPage * _reviewsPerPage;
     final endIndex = (startIndex + _reviewsPerPage) < reviews.length
@@ -888,74 +927,167 @@ class _BookReviewsTabState extends State<_BookReviewsTab> {
                     MaterialPageRoute(
                       builder: (context) => AddReviewView(book: widget.book),
                     ),
-                  ).then((_) {
-                    setState(() {});
+                  ).then((result) {
+                    if (result == true) {
+                      _loadReviews();
+                    }
                   });
                 },
               ),
             ),
           ),
-        Flexible(
-          child: ListView.builder(
-            itemCount: currentReviews.length,
-            itemBuilder: (context, index) {
-              final review = currentReviews[index];
 
-              return FutureBuilder<User?>(
-                future: UserController().getUserById(review.userId.toString()),
-                builder: (context, userSnapshot) {
-                  if (userSnapshot.connectionState != ConnectionState.done) {
-                    return const SizedBox();
-                  }
-                  if (userSnapshot.hasError || !userSnapshot.hasData) {
-                    return const ListTile(title: Text('Usuario no disponible'));
-                  }
+        if (_isLoading)
+          const Expanded(
+            child: Center(
+              child: CircularProgressIndicator(),
+            ),
+          )
+        else if (reviews.isEmpty)
+          const Expanded(
+            child: Center(
+              child: Text(
+                'No hay reseñas disponibles.',
+                style: TextStyle(fontSize: 16, color: Colors.grey),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          )
+        else ...[
+          Flexible(
+            child: ListView.builder(
+              itemCount: currentReviews.length,
+              itemBuilder: (context, index) {
+                final review = currentReviews[index];
 
-                  final user = userSnapshot.data!;
-                  return ReviewItem(
-                    name: user.name,
-                    rating: review.rating,
-                    comment: review.comment,
-                    imageUrl: user.image ?? '',
-                  );
-                },
-              );
-            },
+                return FutureBuilder<User?>(
+                  future: UserController().getUserById(review.userId.toString()),
+                  builder: (context, userSnapshot) {
+                    if (userSnapshot.connectionState != ConnectionState.done) {
+                      return const SizedBox();
+                    }
+                    if (userSnapshot.hasError || !userSnapshot.hasData) {
+                      return const ListTile(title: Text('Usuario no disponible'));
+                    }
+
+                    final user = userSnapshot.data!;
+
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ReviewItem(
+                            name: user.name,
+                            rating: review.rating,
+                            comment: review.comment,
+                            imageUrl: user.image ?? '',
+                            isOwner: review.userId == widget.currentUserId,
+                            onEdit: () => _confirmDeleteReview(review), 
+                            onDelete: () => _confirmDeleteReview(review), 
+                          )
+
+                        ],
+                      ),
+                    );
+                  },
+                );
+
+              },
+            ),
           ),
-        ),
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: _currentPage > 0
-                    ? () {
-                        setState(() {
-                          _currentPage--;
-                        });
-                      }
-                    : null,
-              ),
-              Text(
-                'Página ${_currentPage + 1} de $totalPages',
-                style: const TextStyle(fontSize: 16),
-              ),
-              IconButton(
-                icon: const Icon(Icons.arrow_forward),
-                onPressed: _currentPage < totalPages - 1
-                    ? () {
-                        setState(() {
-                          _currentPage++;
-                        });
-                      }
-                    : null,
-              ),
-            ],
+
+          // Paginación
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: _currentPage > 0
+                      ? () {
+                          setState(() {
+                            _currentPage--;
+                          });
+                        }
+                      : null,
+                ),
+                Text(
+                  'Página ${_currentPage + 1} de $totalPages',
+                  style: const TextStyle(fontSize: 16),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.arrow_forward),
+                  onPressed: _currentPage < totalPages - 1
+                      ? () {
+                          setState(() {
+                            _currentPage++;
+                          });
+                        }
+                      : null,
+                ),
+              ],
+            ),
           ),
-        ),
+        ],
       ],
     );
+  }
+
+  /*void _editReview(Review review) async {
+    final updatedReview = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddReviewView(book: widget.book, review: review),
+      ),
+    );
+
+    if (updatedReview != null && updatedReview is Review) {
+      setState(() {
+        final index = widget.reviews.indexWhere((r) => r.id == updatedReview.id);
+        if (index != -1) {
+          widget.reviews[index] = updatedReview;
+        }
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Reseña actualizada')),
+      );
+    }
+  }*/
+
+  void _confirmDeleteReview(Review review) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Eliminar reseña'),
+        content: const Text('¿Estás seguro de que quieres eliminar esta reseña?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Eliminar')),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      try {
+        await ReviewController().deleteReview(review.id);
+        _loadReviews(); // Recargar la lista después de eliminar
+       SuccessDialog.show(
+        context,
+        'Operación Exitosa',
+        '¡La reseña ha sido eliminada correctamente!',
+        () {},
+      );
+      } catch (e) {
+        SuccessDialog.show(
+          context,
+          'Error en la Operación',
+          'Ha ocurrido un error al intentar eliminar la reseña',
+          () {},
+        );
+      }
+    }
   }
 }

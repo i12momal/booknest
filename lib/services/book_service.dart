@@ -419,9 +419,14 @@ class BookService extends BaseService{
 
   Future<Map<String, dynamic>> deleteBook(int bookId) async {
     try {
-      // 1. Eliminar préstamos asociados
+      // 1. Eliminar préstamos y reseñas asociadas
       await BaseService.client
           .from('Loan')
+          .delete()
+          .eq('bookId', bookId);
+
+      await BaseService.client
+          .from('Review')
           .delete()
           .eq('bookId', bookId);
 

@@ -35,15 +35,24 @@ class _AddReviewViewState extends State<AddReviewView> {
 
   // Función que muestra el dialogo de éxito al añadir una nueva reseña
   void _showSuccessDialog() {
-    SuccessDialog.show(
-      context,
-      'Creación Exitosa',
-      '¡Tu reseña ha sido creada con éxito!',
-      () {
-        Navigator.pop(context, true);
-      },
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Creación Exitosa'),
+        content: const Text('¡Tu reseña ha sido creada con éxito!'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pop(context, true);
+            },
+            child: const Text('Aceptar'),
+          ),
+        ],
+      ),
     );
   }
+
 
   Future<void> _loadUserId() async {
     final id = await AccountController().getCurrentUserId();

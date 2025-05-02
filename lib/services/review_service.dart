@@ -69,4 +69,25 @@ class ReviewService extends BaseService {
     }
   }
 
+  Future<Map<String, dynamic>> deleteReview(int reviewId) async {
+    try {
+      final reviewResponse = await BaseService.client
+          .from('Review')
+          .delete()
+          .eq('id', reviewId)
+          .select();
+
+      if (reviewResponse.isNotEmpty) {
+        return {'success': true};
+      } else {
+        return {
+          'success': false,
+          'message': 'Reseña no encontrada o no se pudo eliminar'
+        };
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Error al eliminar la reseña'};
+    }
+  }
+
 }

@@ -45,4 +45,9 @@ class ReviewController extends BaseController {
     return await reviewService.addReview(addReviewViewModel);
   }
 
+
+  Future<Map<String, dynamic>> deleteReview(int reviewId) async {
+    return await reviewService.deleteReview(reviewId);
+  }
+
 }
