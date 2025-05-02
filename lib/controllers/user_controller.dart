@@ -153,4 +153,41 @@ class UserController extends BaseController{
     }
   }
 
+  // Verificar si el libro está en los favoritos
+  Future<Map<String, dynamic>> isFavorite(int bookId) async {
+    try {
+      final response = await userService.getFavorites();
+      List<String> favorites = List<String>.from(response['favorites']);
+      return {
+        'isFavorite': favorites.contains(bookId.toString()),
+      };
+    } catch (error) {
+      print("Error al verificar favoritos: $error");
+      return {'isFavorite': false};
+    }
+  }
+
+  // Método para agregar a favoritos
+  Future<Map<String, dynamic>> addToFavorites(int bookId) async {
+    try {
+      // Llamamos al servicio para agregar el libro a favoritos
+      await userService.addToFavorites(bookId);
+      return {'success': true, 'message': 'Libro agregado a favoritos'};
+    } catch (error) {
+      return {'success': false, 'message': 'Error al agregar a favoritos: $error'};
+    }
+  }
+
+  // Método para eliminar de favoritos
+  Future<Map<String, dynamic>> removeFromFavorites(int bookId) async {
+    try {
+      // Llamamos al servicio para eliminar el libro de favoritos
+      await userService.removeFromFavorites(bookId);
+      return {'success': true, 'message': 'Libro eliminado de favoritos'};
+    } catch (error) {
+      return {'success': false, 'message': 'Error al eliminar de favoritos: $error'};
+    }
+  }
+
+
 }

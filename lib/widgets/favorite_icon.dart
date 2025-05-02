@@ -1,4 +1,4 @@
-import 'package:booknest/controllers/book_controller.dart';
+import 'package:booknest/controllers/user_controller.dart';
 import 'package:booknest/entities/models/book_model.dart';
 import 'package:flutter/material.dart';
 
@@ -14,17 +14,36 @@ class FavoriteIcon extends StatefulWidget {
 class _FavoriteIconState extends State<FavoriteIcon> {
   bool isFavorite = false;
 
+  @override
+  void initState() {
+    super.initState();
+    _checkIfFavorite();
+  }
+
+  // Verificar si el libro ya está en favoritos al iniciar
+  void _checkIfFavorite() async {
+    final result = await UserController().isFavorite(widget.book.id);
+    setState(() {
+      isFavorite = result['isFavorite'] ?? false;
+    });
+  }
+
   void toggleFavorite() async {
+    print("toggleFavorite ha sido llamado");
+    
     setState(() {
       isFavorite = !isFavorite;
     });
 
     if (isFavorite) {
-      //await BookController().addToFavorites(widget.book.id);
+      print("Agregando a favoritos");
+      await UserController().addToFavorites(widget.book.id);
     } else {
-      //await BookController().removeFromFavorites(widget.book.id);
+      print("Eliminando de favoritos");
+      await UserController().removeFromFavorites(widget.book.id);
     }
   }
+
 
   @override
   Widget build(BuildContext context) {

@@ -215,5 +215,116 @@ class UserService extends BaseService{
     }
   }
 
-  
+  // Obtener la lista de favoritos del usuario
+  Future<Map<String, dynamic>> getFavorites() async {
+    try {
+      final currentUser = BaseService.client.auth.currentUser;
+      if (currentUser == null) {
+        print("Usuario no autenticado");
+        return {'favorites': []};
+      }
+
+      final response = await BaseService.client
+          .from('User')
+          .select('favorites')
+          .eq('id', currentUser.id)
+          .single();
+
+      if (response != null && response['favorites'] != null) {
+        return {'favorites': response['favorites']};
+      } else {
+        return {'favorites': []};
+      }
+    } catch (error) {
+      print("Error al obtener favoritos: $error");
+      return {'favorites': []};
+    }
+  }
+
+  // Agregar un libro a los favoritos
+  Future<void> addToFavorites(int bookId) async {
+    try {
+      final currentUser = BaseService.client.auth.currentUser;
+      if (currentUser == null) {
+        print("Usuario no autenticado");
+        return;
+      }
+
+      // Obtener la lista actual de favoritos
+      final response = await BaseService.client
+          .from('User')
+          .select('favorites')
+          .eq('id', currentUser.id)
+          .single();
+
+      if (response != null) {
+        List<String> currentFavorites = List<String>.from(response['favorites'] ?? []);
+
+        print("Lista de favoritos actual: $currentFavorites");
+
+        // Agregar el nuevo favorito si no está ya en la lista
+        if (!currentFavorites.contains(bookId.toString())) {
+          currentFavorites.add(bookId.toString());
+          print("Nuevo favorito añadido: $bookId");
+
+          // Actualizar la lista de favoritos como un array de texto
+          final updateResponse = await BaseService.client
+              .from('User')
+              .update({'favorites': currentFavorites})
+              .eq('id', currentUser.id)
+              .select();
+
+          print("Respuesta de actualización: $updateResponse");
+          if (updateResponse != null) {
+            print("Libro agregado a favoritos correctamente.");
+          } else {
+            print("Error al actualizar la lista de favoritos.");
+          }
+        } else {
+          print("El libro ya está en favoritos.");
+        }
+      }
+    } catch (error) {
+      print("Error al agregar a favoritos: $error");
+    }
+  }
+
+
+
+  // Eliminar un libro de los favoritos
+  Future<void> removeFromFavorites(int bookId) async {
+    try {
+      final currentUser = BaseService.client.auth.currentUser;
+      if (currentUser == null) {
+        print("Usuario no autenticado");
+        return;
+      }
+
+      // Obtener la lista actual de favoritos
+      final response = await BaseService.client
+          .from('User')
+          .select('favorites')
+          .eq('id', currentUser.id)
+          .single();
+
+      if (response != null && response['favorites'] != null) {
+        List<String> currentFavorites = List<String>.from(response['favorites']);
+
+        // Eliminar el libro de la lista de favoritos
+        currentFavorites.remove(bookId.toString());
+
+        // Actualizar la lista de favoritos en la base de datos
+        await BaseService.client
+            .from('User')
+            .update({'favorites': currentFavorites})
+            .eq('id', currentUser.id);
+
+        print("Libro eliminado de favoritos.");
+      }
+    } catch (error) {
+      print("Error al eliminar de favoritos: $error");
+      throw Exception('Error al eliminar de favoritos: $error');
+    }
+  }
+
 }

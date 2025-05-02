@@ -8,6 +8,7 @@ class IndexUserViewModel {
   final String address;
   final String password;
   final String? image;
+  final List<String> favorites;
 
 //All required fields from class User
   IndexUserViewModel(
@@ -19,7 +20,8 @@ class IndexUserViewModel {
     required this.phoneNumber,
     required this.address,
     required this.password,
-    required this.image,
+    this.image,
+    this.favorites = const [],
     }
   );
 }
@@ -34,6 +36,7 @@ class CreateUserViewModel {
   final String password;
   final String? image;
   final String role;
+  final List<String> favorites;
 
 //All required fields from class User
   CreateUserViewModel(
@@ -46,6 +49,7 @@ class CreateUserViewModel {
     required this.password,
     required this.image,
     required this.role,
+    this.favorites = const [],
     }
   );
 }
@@ -63,6 +67,7 @@ class EditUserViewModel {
   final String? image;
   final String genres;
   final String role;
+  final List<String> favorites;
 
 //All required fields from class User
   EditUserViewModel(
@@ -78,6 +83,7 @@ class EditUserViewModel {
     required this.image,
     required this.genres,
     required this.role,
+    this.favorites = const [],
     }
   );
 }
