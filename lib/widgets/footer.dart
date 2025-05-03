@@ -25,7 +25,7 @@ class Footer extends StatelessWidget {
         type: BottomNavigationBarType.fixed,
         currentIndex: selectedIndex,
         onTap: onItemTapped,
-        selectedItemColor: const Color(0xFF700101),
+        selectedItemColor: Colors.white,
         unselectedItemColor: Colors.white,
         elevation: 0,
         showSelectedLabels: false,
