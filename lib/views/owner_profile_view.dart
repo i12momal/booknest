@@ -7,8 +7,11 @@ import 'package:booknest/entities/models/user_model.dart';
 import 'package:booknest/views/book_reader_view.dart';
 import 'package:booknest/views/category_view.dart';
 import 'package:booknest/views/edit_user_view.dart';
+import 'package:booknest/views/home_view.dart';
 import 'package:booknest/views/login_view.dart';
+import 'package:booknest/views/user_profile_view.dart';
 import 'package:booknest/widgets/background.dart';
+import 'package:booknest/widgets/footer.dart';
 import 'package:booknest/widgets/success_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -188,300 +191,350 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return Center(
-        child: Container(
-          color: Colors.white,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Image.asset('assets/gifs/cargando.gif', height: 500, width: 500),
-              const SizedBox(height: 10),
-              const Text(
-                'Cargando...',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Color(0xFF112363)),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
+    return FutureBuilder<String?>(
+      future: AccountController().getCurrentUserId(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
 
+        if (!snapshot.hasData || snapshot.data == null) {
+          return const Scaffold(
+            body: Center(child: Text('Error al obtener el usuario')),
+          );
+        }
 
-    if (_message.isNotEmpty) {
-      return Center(child: Text(_message));
-    }
+        final currentUserId = snapshot.data!;
 
-    return Background(
-      title: 'Mi Perfil',
-      onBack: () => Navigator.pop(context),
-      child: SingleChildScrollView(
-        child: Column(
-          children: [
-            const SizedBox(height: 40),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                CircleAvatar(
-                  radius: 50,
-                  backgroundColor: Colors.black12,
-                  backgroundImage: currentImageUrl != null && currentImageUrl!.isNotEmpty
-                      ? NetworkImage(currentImageUrl!)
-                      : const AssetImage('assets/images/default.png') as ImageProvider,
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => EditUserView(userId: widget.userId),
-                        ),
-                      );
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: const Color(0xFF112363)),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _nameController.text,
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 1,
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Icon(Icons.email, size: 16),
-                              const SizedBox(width: 4),
-                              Expanded(
-                                child: Text(_emailController.text, overflow: TextOverflow.ellipsis, maxLines: 1),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Icon(Icons.phone, size: 16),
-                              const SizedBox(width: 4),
-                              Expanded(
-                                child: Text(
-                                  _phoneNumberController.text,
-                                  softWrap: false,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
+        if (_isLoading) {
+          return Scaffold(
+            body: Center(
+              child: Container(
+                color: Colors.white,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Image.asset('assets/gifs/cargando.gif', height: 500, width: 500),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'Cargando...',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Color(0xFF112363)),
                     ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
-            const SizedBox(height: 50),
-            const Text('Mi Biblioteca', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            const SizedBox(height: 16),
-            const Divider(thickness: 1, color: Color(0xFF112363)),
+          );
+        }
 
-            // Contenedor con Scroll Horizontal para categorías
-            SizedBox(
-              height: categories.length > 4 ? 200 : 100,
-              child: categories.length > 4
-                  ? GridView.builder(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: categories.length,
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        mainAxisSpacing: 12,
-                        crossAxisSpacing: 20,
-                        childAspectRatio: 0.8,
+        if (_message.isNotEmpty) {
+          return Center(child: Text(_message));
+        }
+
+
+        return Scaffold(
+          body: Background(
+            title: 'Mi Perfil',
+            onBack: () => Navigator.pop(context),
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  const SizedBox(height: 40),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      CircleAvatar(
+                        radius: 50,
+                        backgroundColor: Colors.black12,
+                        backgroundImage: currentImageUrl != null && currentImageUrl!.isNotEmpty
+                            ? NetworkImage(currentImageUrl!)
+                            : const AssetImage('assets/images/default.png') as ImageProvider,
                       ),
-                      itemBuilder: (context, index) {
-                        final category = categories[index];
-                        return GestureDetector(
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: GestureDetector(
                           onTap: () {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => CategoryView(
-                                  categoryName: category.name,
-                                  categoryImageUrl: category.image ?? '',
-                                  userId: widget.userId,
-                                ),
+                                builder: (context) => EditUserView(userId: widget.userId),
                               ),
                             );
                           },
-                          child: _CategoryItem(
-                            label: category.name,
-                            imageUrl: category.image,
-                          ),
-                        );
-                      },
-                    )
-                  : SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: categories.map((category) {
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 20),
-                            child: GestureDetector(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => CategoryView(
-                                      categoryName: category.name,
-                                      categoryImageUrl: category.image ?? '',
-                                      userId: widget.userId,
-                                    ),
-                                  ),
-                                );
-                              },
-                              child: _CategoryItem(
-                                label: category.name,
-                                imageUrl: category.image,
-                              ),
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: const Color(0xFF112363)),
+                              borderRadius: BorderRadius.circular(8),
                             ),
-                          );
-                        }).toList(),
-                      ),
-                    ),
-            ),
-
-
-            const SizedBox(height: 20),
-            const Text('Prestados', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            const SizedBox(height: 16),
-            const Divider(thickness: 1, color: Color(0xFF112363)),
-            SizedBox(
-              height: 250,
-              child: activeLoans.isEmpty
-                  ? const Center(child: Text('No tienes libros prestados actualmente.'))
-                  : ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: activeLoans.length,
-                      itemBuilder: (context, index) {
-                        final loanData = activeLoans[index]['loan'];
-                        final book = activeLoans[index]['book'];
-                        final currentPage = activeLoans[index]['loan']['currentPage'] ?? 0;
-                        final loanId = loanData['id'];
-
-                        return GestureDetector(
-                          onTap: () async {
-                            final url = book.file;
-                            if (url != null && url.isNotEmpty) {
-                              final uri = Uri.parse(url);
-                              if (await canLaunchUrl(uri)) {
-                                if (!context.mounted) return;
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => BookReaderView(
-                                      bookId: book.id,
-                                      url: book.file,
-                                      initialPage: currentPage,
-                                      userId: widget.userId,
-                                      bookTitle: book.title,
-                                    ),
-                                  ),
-                                ).then((returnedPage) {
-                                  if (returnedPage != null) {
-                                    print('Usuario cerró en página: $returnedPage');
-                                    // Aquí puedes guardar el `returnedPage` si es necesario
-                                    LoanController().saveCurrentPageProgress(
-                                      widget.userId,
-                                      book.id,
-                                      returnedPage,
-                                    );
-                                  }
-                                });
-
-                              } else {
-                                print('No se pudo abrir el archivo');
-                              }
-                            } else {
-                              print('El libro no tiene un archivo asociado');
-                            }
-                          },
-
-                          child: Padding(
-                            padding: const EdgeInsets.only(right: 12),
                             child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: Image.network(
-                                    book.cover,
-                                    width: 100,
-                                    height: 130,
-                                    fit: BoxFit.cover,
-                                  ),
+                                Text(
+                                  _nameController.text,
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
                                 ),
                                 const SizedBox(height: 4),
-                                SizedBox(
-                                  width: 150,
-                                  child: Text(
-                                    book.title,
-                                    style: const TextStyle(fontSize: 12),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    textAlign: TextAlign.center,
-                                  ),
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Icon(Icons.email, size: 16),
+                                    const SizedBox(width: 4),
+                                    Expanded(
+                                      child: Text(
+                                        _emailController.text,
+                                        overflow: TextOverflow.ellipsis,
+                                        maxLines: 1,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(height: 8),
-                                ElevatedButton(
-                                  onPressed: () async {
-                                    // Mostrar ventana de confirmación
-                                    bool? confirm = await _showConfirmDialog(context);
-                                    if (confirm == true) {
-                                      _returnBook(loanId); // Llamar a la función de devolución con el ID del préstamo
-                                    }
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFFAD0000),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(30),
-                                    side: const BorderSide(color: Color(0xFF700101), width: 3),
-                                  ),
-                                  padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 7),
-                                ),
-                                child: const Text(
-                                  "Devolver",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Icon(Icons.phone, size: 16),
+                                    const SizedBox(width: 4),
+                                    Expanded(
+                                      child: Text(
+                                        _phoneNumberController.text,
+                                        softWrap: false,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
                           ),
-                        );
-                      },
-                    ),
-            )
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 50),
+                  const Text('Mi Biblioteca', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  const SizedBox(height: 16),
+                  const Divider(thickness: 1, color: Color(0xFF112363)),
 
-          ],
-        ),
-      ),
+                  SizedBox(
+                    height: categories.length > 4 ? 200 : 100,
+                    child: categories.length > 4
+                        ? GridView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: categories.length,
+                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              mainAxisSpacing: 12,
+                              crossAxisSpacing: 20,
+                              childAspectRatio: 0.8,
+                            ),
+                            itemBuilder: (context, index) {
+                              final category = categories[index];
+                              return GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => CategoryView(
+                                        categoryName: category.name,
+                                        categoryImageUrl: category.image ?? '',
+                                        userId: widget.userId,
+                                      ),
+                                    ),
+                                  );
+                                },
+                                child: _CategoryItem(label: category.name, imageUrl: category.image),
+                              );
+                            },
+                          )
+                        : SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: categories.map((category) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(right: 20),
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => CategoryView(
+                                            categoryName: category.name,
+                                            categoryImageUrl: category.image ?? '',
+                                            userId: widget.userId,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    child: _CategoryItem(label: category.name, imageUrl: category.image),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                  ),
+
+                  const SizedBox(height: 20),
+                  const Text('Prestados', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  const SizedBox(height: 16),
+                  const Divider(thickness: 1, color: Color(0xFF112363)),
+                  SizedBox(
+                    height: 250,
+                    child: activeLoans.isEmpty
+                        ? const Center(child: Text('No tienes libros prestados actualmente.'))
+                        : ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: activeLoans.length,
+                            itemBuilder: (context, index) {
+                              final loanData = activeLoans[index]['loan'];
+                              final book = activeLoans[index]['book'];
+                              final currentPage = loanData['currentPage'] ?? 0;
+                              final loanId = loanData['id'];
+
+                              return GestureDetector(
+                                onTap: () async {
+                                  final url = book.file;
+                                  if (url != null && url.isNotEmpty) {
+                                    final uri = Uri.parse(url);
+                                    if (await canLaunchUrl(uri)) {
+                                      if (!context.mounted) return;
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => BookReaderView(
+                                            bookId: book.id,
+                                            url: book.file,
+                                            initialPage: currentPage,
+                                            userId: widget.userId,
+                                            bookTitle: book.title,
+                                          ),
+                                        ),
+                                      ).then((returnedPage) {
+                                        if (returnedPage != null) {
+                                          LoanController().saveCurrentPageProgress(
+                                            widget.userId,
+                                            book.id,
+                                            returnedPage,
+                                          );
+                                        }
+                                      });
+                                    } else {
+                                      print('No se pudo abrir el archivo');
+                                    }
+                                  } else {
+                                    print('El libro no tiene un archivo asociado');
+                                  }
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.only(right: 12),
+                                  child: Column(
+                                    children: [
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: Image.network(
+                                          book.cover,
+                                          width: 100,
+                                          height: 130,
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      SizedBox(
+                                        width: 150,
+                                        child: Text(
+                                          book.title,
+                                          style: const TextStyle(fontSize: 12),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      ElevatedButton(
+                                        onPressed: () async {
+                                          bool? confirm = await _showConfirmDialog(context);
+                                          if (confirm == true) {
+                                            _returnBook(loanId);
+                                          }
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: const Color(0xFFAD0000),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(30),
+                                            side: const BorderSide(color: Color(0xFF700101), width: 3),
+                                          ),
+                                          padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 7),
+                                        ),
+                                        child: const Text(
+                                          "Devolver",
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          bottomNavigationBar: Footer(
+            selectedIndex: 0, 
+            onItemTapped: (index) {
+              switch (index) {
+                case 0:
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const HomeView()),
+                  );
+                  break;
+                case 1:
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const HomeView()),
+                  );
+                  break;
+                case 2:
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const HomeView()),
+                  );
+                  break;
+                case 3:
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const HomeView()),
+                  );
+                  break;
+                case 4:
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => UserProfileView(userId: widget.userId)),
+                  );
+                  break;
+              }
+            },
+          ),
+        );
+      },
     );
   }
 }
 
 class _CategoryItem extends StatelessWidget {
   final String label;
-  final String? imageUrl;  // URL de la imagen para la categoría
+  final String? imageUrl;
 
   const _CategoryItem({
     required this.label,

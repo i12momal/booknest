@@ -1,7 +1,11 @@
+import 'package:booknest/controllers/account_controller.dart';
 import 'package:booknest/controllers/book_controller.dart';
 import 'package:booknest/entities/models/book_model.dart';
 import 'package:booknest/views/book_details_owner_view.dart';
+import 'package:booknest/views/home_view.dart';
+import 'package:booknest/views/user_profile_view.dart';
 import 'package:booknest/widgets/background.dart';
+import 'package:booknest/widgets/footer.dart';
 import 'package:flutter/material.dart';
 
 class CategoryView extends StatefulWidget {
@@ -97,137 +101,193 @@ class _CategoryViewState extends State<CategoryView> {
 
   @override
   Widget build(BuildContext context) {
-    return Background(
-      title: widget.categoryName,
-      onBack: () => Navigator.pop(context),
-      child: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _message.isNotEmpty
-              ? Center(child: Text(_message))
-              : Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      height: 200,
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        image: DecorationImage(
-                          image: NetworkImage(widget.categoryImageUrl),
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 25),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 12),
-                      child: Center(
-                        child: Text(
-                          'Libros en esta categoría',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF112363),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const Divider(thickness: 1, color: Color(0xFF112363)),
-                    const SizedBox(height: 8),
-                    Expanded(
-                      child: _books.isEmpty
-                          ? const Center(
-                              child: Text(
-                                "No se encontraron libros.",
-                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+    return FutureBuilder<String?>(
+      future: AccountController().getCurrentUserId(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        } else if (snapshot.hasError || !snapshot.hasData || snapshot.data == null) {
+          return const Scaffold(
+            body: Center(child: Text("Error al cargar el usuario")),
+          );
+        }
+
+        final currentUserId = snapshot.data!;
+
+        return Scaffold(
+          body: Background(
+            title: widget.categoryName,
+            onBack: () => Navigator.pop(context),
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _message.isNotEmpty
+                    ? Center(child: Text(_message))
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            height: 200,
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              image: DecorationImage(
+                                image: NetworkImage(widget.categoryImageUrl),
+                                fit: BoxFit.contain,
                               ),
-                            )
-                          : GridView.builder(
-                              padding: const EdgeInsets.symmetric(horizontal: 12),
-                              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: _calculateCrossAxisCount(context),
-                                crossAxisSpacing: 8,
-                                mainAxisSpacing: 8,
-                                childAspectRatio: 0.5,
-                              ),
-                              itemCount: _books.length,
-                              itemBuilder: (context, index) {
-                                final book = _books[index];
-                                return GestureDetector(
-                                  onTap: () async {
-                                    final deletedBookId = await Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => BookDetailsOwnerView(bookId: book.id),
-                                      ),
-                                    );
-                                    if (deletedBookId != null && deletedBookId is int) {
-                                      // Eliminamos el libro de la lista local
-                                      _removeBook(deletedBookId);
-                                    }
-                                  },
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      ClipRRect(
-                                        borderRadius: BorderRadius.circular(8),
-                                        child: AspectRatio(
-                                          aspectRatio: 0.7,
-                                          child: Image.network(
-                                            book.cover,
-                                            fit: BoxFit.cover,
-                                            errorBuilder: (context, error, stackTrace) =>
-                                                const Icon(Icons.broken_image),
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 6),
-                                      Text(
-                                        book.title,
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
                             ),
-                    ),
-                    if (_totalPages > 1)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: List.generate(_totalPages, (index) {
-                            final pageNum = index + 1;
-                            return GestureDetector(
-                              onTap: () => _changePage(pageNum),
-                              child: Container(
-                                margin: const EdgeInsets.symmetric(horizontal: 4),
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: _currentPage == pageNum
-                                      ? const Color(0xFF112363)
-                                      : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Text(
-                                  '$pageNum',
-                                  style: TextStyle(
-                                    color: _currentPage == pageNum ? Colors.white : Colors.black,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                          ),
+                          const SizedBox(height: 25),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 12),
+                            child: Center(
+                              child: Text(
+                                'Libros en esta categoría',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF112363),
                                 ),
                               ),
-                            );
-                          }),
-                        ),
+                            ),
+                          ),
+                          const Divider(thickness: 1, color: Color(0xFF112363)),
+                          const SizedBox(height: 8),
+                          Expanded(
+                            child: _books.isEmpty
+                                ? const Center(
+                                    child: Text(
+                                      "No se encontraron libros.",
+                                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                                    ),
+                                  )
+                                : GridView.builder(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: _calculateCrossAxisCount(context),
+                                      crossAxisSpacing: 8,
+                                      mainAxisSpacing: 8,
+                                      childAspectRatio: 0.5,
+                                    ),
+                                    itemCount: _books.length,
+                                    itemBuilder: (context, index) {
+                                      final book = _books[index];
+                                      return GestureDetector(
+                                        onTap: () async {
+                                          final deletedBookId = await Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => BookDetailsOwnerView(bookId: book.id),
+                                            ),
+                                          );
+                                          if (deletedBookId != null && deletedBookId is int) {
+                                            // Eliminamos el libro de la lista local
+                                            _removeBook(deletedBookId);
+                                          }
+                                        },
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            ClipRRect(
+                                              borderRadius: BorderRadius.circular(8),
+                                              child: AspectRatio(
+                                                aspectRatio: 0.7,
+                                                child: Image.network(
+                                                  book.cover,
+                                                  fit: BoxFit.cover,
+                                                  errorBuilder: (context, error, stackTrace) =>
+                                                      const Icon(Icons.broken_image),
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(height: 6),
+                                            Text(
+                                              book.title,
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  ),
+                          ),
+                          if (_totalPages > 1)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: List.generate(_totalPages, (index) {
+                                  final pageNum = index + 1;
+                                  return GestureDetector(
+                                    onTap: () => _changePage(pageNum),
+                                    child: Container(
+                                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                      decoration: BoxDecoration(
+                                        color: _currentPage == pageNum
+                                            ? const Color(0xFF112363)
+                                            : Colors.transparent,
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Text(
+                                        '$pageNum',
+                                        style: TextStyle(
+                                          color: _currentPage == pageNum ? Colors.white : Colors.black,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }),
+                              ),
+                            ),
+                        ],
                       ),
-                  ],
-                ),
+          ),
+          bottomNavigationBar: Footer(
+            selectedIndex: 0,
+            onItemTapped: (index) {
+              switch (index) {
+                case 0:
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const HomeView()),
+                  );
+                  break;
+                case 1:
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const HomeView()),
+                  );
+                  break;
+                case 2:
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const HomeView()),
+                  );
+                  break;
+                case 3:
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const HomeView()),
+                  );
+                  break;
+                  case 4:
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => UserProfileView(userId: currentUserId!)),
+                  );
+                  break;
+              }
+            },
+          ),
+        );
+      },
     );
   }
 }

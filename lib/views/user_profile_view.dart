@@ -1,9 +1,12 @@
+import 'package:booknest/controllers/account_controller.dart';
 import 'package:booknest/controllers/user_controller.dart';
 import 'package:booknest/entities/models/category_model.dart';
 import 'package:booknest/entities/models/user_model.dart';
 import 'package:booknest/views/category_view.dart';
+import 'package:booknest/views/home_view.dart';
 import 'package:booknest/views/login_view.dart';
 import 'package:booknest/widgets/background.dart';
+import 'package:booknest/widgets/footer.dart';
 import 'package:booknest/widgets/tap_bubble_text.dart';
 import 'package:flutter/material.dart';
 
@@ -89,149 +92,206 @@ class _UserProfileViewState extends State<UserProfileView> {
     }
   }
 
-  @override
+ @override
   Widget build(BuildContext context) {
-    if (_isLoading) return const Center(child: CircularProgressIndicator());
-    if (_message.isNotEmpty) return Center(child: Text(_message));
+    return FutureBuilder<String?>(
+      future: AccountController().getCurrentUserId(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        }
 
-    return Background(
-      title: 'Mi Perfil',
-      onBack: () => Navigator.pop(context),
-      child: SingleChildScrollView(
-        child: Column(
-          children: [
-            const SizedBox(height: 40),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                CircleAvatar(
-                  radius: 50,
-                  backgroundColor: Colors.black12,
-                  backgroundImage: currentImageUrl != null && currentImageUrl!.isNotEmpty
-                      ? NetworkImage(currentImageUrl!)
-                      : const AssetImage('assets/images/default.png') as ImageProvider,
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: GestureDetector(
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: const Color(0xFF112363)),
-                        borderRadius: BorderRadius.circular(8),
+        if (snapshot.hasError || !snapshot.hasData || snapshot.data == null) {
+          return const Scaffold(body: Center(child: Text("Error al cargar el usuario")));
+        }
+
+        final currentUserId = snapshot.data!;
+
+        if (_isLoading) {
+          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        }
+
+        if (_message.isNotEmpty) {
+          return Scaffold(body: Center(child: Text(_message)));
+        }
+
+        return Scaffold(
+          body: Background(
+            title: 'Mi Perfil',
+            onBack: () => Navigator.pop(context),
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  const SizedBox(height: 40),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      CircleAvatar(
+                        radius: 50,
+                        backgroundColor: Colors.black12,
+                        backgroundImage: currentImageUrl != null && currentImageUrl!.isNotEmpty
+                            ? NetworkImage(currentImageUrl!)
+                            : const AssetImage('assets/images/default.png') as ImageProvider,
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          TapBubbleText(
-                            text: _nameController.text,
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Icon(Icons.email, size: 16),
-                              const SizedBox(width: 4),
-                              Expanded(child: TapBubbleText(text: _emailController.text)),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Icon(Icons.phone, size: 16),
-                              const SizedBox(width: 4),
-                              Expanded(
-                                child: Text(
-                                  _phoneNumberController.text,
-                                  softWrap: false,
-                                  overflow: TextOverflow.ellipsis,
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: GestureDetector(
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: const Color(0xFF112363)),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                TapBubbleText(
+                                  text: _nameController.text,
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                                 ),
-                              ),
-                            ],
+                                const SizedBox(height: 4),
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Icon(Icons.email, size: 16),
+                                    const SizedBox(width: 4),
+                                    Expanded(child: TapBubbleText(text: _emailController.text)),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Icon(Icons.phone, size: 16),
+                                    const SizedBox(width: 4),
+                                    Expanded(
+                                      child: Text(
+                                        _phoneNumberController.text,
+                                        softWrap: false,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
-                        ],
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 50),
-            const Text('Biblioteca', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            const SizedBox(height: 16),
-            const Divider(thickness: 1, color: Color(0xFF112363)),
+                  const SizedBox(height: 50),
+                  const Text('Biblioteca', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  const SizedBox(height: 16),
+                  const Divider(thickness: 1, color: Color(0xFF112363)),
 
-            // Contenedor con Scroll Horizontal para categorías
-            SizedBox(
-              height: categories.length > 4 ? 200 : 100,
-              child: categories.length > 4
-                  ? GridView.builder(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: categories.length,
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        mainAxisSpacing: 12,
-                        crossAxisSpacing: 20,
-                        childAspectRatio: 0.8,
-                      ),
-                      itemBuilder: (context, index) {
-                        final category = categories[index];
-                        return GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => CategoryView(
-                                  categoryName: category.name,
-                                  categoryImageUrl: category.image ?? '',
-                                  userId: widget.userId,
+                  // Contenedor con Scroll Horizontal para categorías
+                  SizedBox(
+                    height: categories.length > 4 ? 200 : 100,
+                    child: categories.length > 4
+                        ? GridView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: categories.length,
+                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              mainAxisSpacing: 12,
+                              crossAxisSpacing: 20,
+                              childAspectRatio: 0.8,
+                            ),
+                            itemBuilder: (context, index) {
+                              final category = categories[index];
+                              return GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => CategoryView(
+                                        categoryName: category.name,
+                                        categoryImageUrl: category.image ?? '',
+                                        userId: widget.userId,
+                                      ),
+                                    ),
+                                  );
+                                },
+                                child: _CategoryItem(
+                                  label: category.name,
+                                  imageUrl: category.image,
                                 ),
-                              ),
-                            );
-                          },
-                          child: _CategoryItem(
-                            label: category.name,
-                            imageUrl: category.image,
-                          ),
-                        );
-                      },
-                    )
-                  : SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: categories.map((category) {
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 20),
-                            child: GestureDetector(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => CategoryView(
-                                      categoryName: category.name,
-                                      categoryImageUrl: category.image ?? '',
-                                      userId: widget.userId,
+                              );
+                            },
+                          )
+                        : SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: categories.map((category) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(right: 20),
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => CategoryView(
+                                            categoryName: category.name,
+                                            categoryImageUrl: category.image ?? '',
+                                            userId: widget.userId,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    child: _CategoryItem(
+                                      label: category.name,
+                                      imageUrl: category.image,
                                     ),
                                   ),
                                 );
-                              },
-                              child: _CategoryItem(
-                                label: category.name,
-                                imageUrl: category.image,
-                              ),
+                              }).toList(),
                             ),
-                          );
-                        }).toList(),
-                      ),
-                    ),
+                          ),
+                  ),
+                ],
+              ),
             ),
-
-
-          ],
-        ),
-      ),
+          ),
+          bottomNavigationBar: Footer(
+            selectedIndex: 0, 
+            onItemTapped: (index) {
+              switch (index) {
+                case 0:
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const HomeView()),
+                  );
+                  break;
+                case 1:
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const HomeView()),
+                  );
+                  break;
+                case 2:
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const HomeView()),
+                  );
+                  break;
+                case 3:
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const HomeView()),
+                  );
+                  break;
+                case 4:
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => UserProfileView(userId: widget.userId)),
+                  );
+                  break;
+              }
+            },
+          ),
+        );
+      },
     );
   }
 }
