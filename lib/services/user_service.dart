@@ -1,3 +1,4 @@
+import 'package:booknest/entities/models/user_model.dart';
 import 'package:booknest/entities/viewmodels/user_view_model.dart';
 import 'package:booknest/services/base_service.dart';
 
@@ -325,6 +326,47 @@ class UserService extends BaseService{
       print("Error al eliminar de favoritos: $error");
       throw Exception('Error al eliminar de favoritos: $error');
     }
+  }
+
+
+  Future<User?> getCurrentUserById(String? userId) async {
+    if (BaseService.client == null || userId == null) {
+      return null;
+    }
+
+    try {
+      final response = await BaseService.client
+          .from("User")
+          .select()
+          .eq("id", userId)
+          .single();
+
+      if (response != null) {
+        return User.fromJson(response);
+      }
+    } catch (e) {
+      print('Error al obtener el usuario: $e');
+    }
+
+    return null;
+  }
+
+
+  Future<List<Map<String, dynamic>>> searchUsers(String query) async {
+    // Creamos el filtro compuesto para búsqueda por nombre o nombre de usuario
+    final filters = [
+      "name.ilike.%$query%",
+      "userName.ilike.%$query%",
+    ].join(',');
+
+    // Realizamos la consulta a la base de datos usando Supabase
+    final List<dynamic> response = await BaseService.client
+        .from('User')
+        .select()
+        .or(filters);
+
+    // Devolvemos los resultados como una lista de mapas
+    return response.map((e) => Map<String, dynamic>.from(e)).toList();
   }
 
 }

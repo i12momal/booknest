@@ -1,6 +1,8 @@
+import 'package:booknest/controllers/account_controller.dart';
+import 'package:booknest/controllers/user_controller.dart';
 import 'package:flutter/material.dart';
 
-class Footer extends StatelessWidget {
+class Footer extends StatefulWidget {
   final int selectedIndex;
   final ValueChanged<int> onItemTapped;
 
@@ -9,6 +11,34 @@ class Footer extends StatelessWidget {
     required this.selectedIndex,
     required this.onItemTapped,
   });
+
+  @override
+  State<Footer> createState() => _FooterState();
+}
+
+class _FooterState extends State<Footer> {
+  String? _userImageUrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserImage();
+  }
+
+  Future<void> _loadUserImage() async {
+    try {
+      final userId = await AccountController().getCurrentUserId();
+      final user = await UserController().getCurrentUserById(userId);
+      if (user != null && user.image != null && user.image!.isNotEmpty) {
+        setState(() {
+          _userImageUrl = user.image!;
+        });
+      }
+    } catch (e) {
+      print("Error al obtener imagen del usuario: $e");
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -23,32 +53,38 @@ class Footer extends StatelessWidget {
       child: BottomNavigationBar(
         backgroundColor: Colors.transparent,
         type: BottomNavigationBarType.fixed,
-        currentIndex: selectedIndex,
-        onTap: onItemTapped,
+        currentIndex: widget.selectedIndex,
+        onTap: widget.onItemTapped,
         selectedItemColor: Colors.white,
         unselectedItemColor: Colors.white,
         elevation: 0,
         showSelectedLabels: false,
         showUnselectedLabels: false,
-        items: const [
-          BottomNavigationBarItem(
+        items: [
+          const BottomNavigationBarItem(
             icon: Icon(Icons.home),
             label: '',
           ),
-          BottomNavigationBarItem(
+          const BottomNavigationBarItem(
             icon: Icon(Icons.person_search),
             label: '',
           ),
-          BottomNavigationBarItem(
+          const BottomNavigationBarItem(
             icon: Icon(Icons.location_on),
             label: '',
           ),
-          BottomNavigationBarItem(
+          const BottomNavigationBarItem(
             icon: Icon(Icons.favorite_outlined),
             label: '',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.account_circle_sharp),
+            icon: CircleAvatar(
+              radius: 12,
+              backgroundImage: _userImageUrl != null && _userImageUrl!.isNotEmpty
+                  ? NetworkImage(_userImageUrl!)
+                  : const AssetImage('assets/images/default.png') as ImageProvider,
+              backgroundColor: Colors.transparent,
+            ),
             label: '',
           ),
         ],

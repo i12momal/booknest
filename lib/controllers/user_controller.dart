@@ -190,4 +190,15 @@ class UserController extends BaseController{
   }
 
 
+  Future<User?> getCurrentUserById(String? userId) async {
+    final result = await userService.getCurrentUserById(userId);
+    return result;
+  }
+
+
+  Future<List<Map<String, dynamic>>> searchUsers(String query) async {
+    return await userService.searchUsers(query);
+  }
+
+
 }

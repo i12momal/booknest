@@ -353,8 +353,8 @@ class BookService extends BaseService{
   Future<List<Map<String, dynamic>>> searchBooksByTitleOrAuthor(String query) async {
     // Creamos el filtro compuesto para búsqueda por título o autor
     final filters = [
-      "title.ilike.%$query%", // Buscar por título
-      "author.ilike.%$query%", // Buscar por autor
+      "title.ilike.%$query%",
+      "author.ilike.%$query%",
     ].join(',');
 
     // Realizamos la consulta a la base de datos usando Supabase

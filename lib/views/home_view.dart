@@ -2,6 +2,7 @@ import 'package:booknest/controllers/account_controller.dart';
 import 'package:booknest/controllers/categories_controller.dart';
 import 'package:booknest/views/book_details_owner_view.dart';
 import 'package:booknest/views/user_profile_view.dart';
+import 'package:booknest/views/user_search_view.dart';
 import 'package:booknest/widgets/category_selection_popup.dart';
 import 'package:booknest/widgets/footer.dart';
 import 'package:flutter/material.dart';
@@ -435,7 +436,7 @@ class _HomeViewState extends State<HomeView> {
               case 1:
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const HomeView()),
+                  MaterialPageRoute(builder: (context) => const UserSearchView()),
                 );
                 break;
               case 2:
