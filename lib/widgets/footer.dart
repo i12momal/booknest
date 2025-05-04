@@ -1,5 +1,6 @@
 import 'package:booknest/controllers/account_controller.dart';
 import 'package:booknest/controllers/user_controller.dart';
+import 'package:booknest/main.dart';
 import 'package:flutter/material.dart';
 
 class Footer extends StatefulWidget {
@@ -41,6 +42,37 @@ class _FooterState extends State<Footer> {
     }
   }
 
+  // Función para mostrar el popup de confirmación para cerrar sesión
+  void _confirmLogout(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Cerrar sesión'),
+        content: const Text('¿Estás seguro de que quieres cerrar sesión?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Cerrar sesión'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await AccountController().logout();
+      if (context.mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const MyApp()), 
+          (route) => false,
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -79,12 +111,17 @@ class _FooterState extends State<Footer> {
             label: '',
           ),
           BottomNavigationBarItem(
-            icon: CircleAvatar(
-              radius: 12,
-              backgroundImage: _userImageUrl != null && _userImageUrl!.isNotEmpty
-                  ? NetworkImage(_userImageUrl!)
-                  : const AssetImage('assets/images/default.png') as ImageProvider,
-              backgroundColor: Colors.transparent,
+            icon: GestureDetector(
+              onLongPress: () {
+                _confirmLogout(context);
+              },
+              child: CircleAvatar(
+                radius: 12,
+                backgroundImage: _userImageUrl != null && _userImageUrl!.isNotEmpty
+                    ? NetworkImage(_userImageUrl!)
+                    : const AssetImage('assets/images/default.png') as ImageProvider,
+                backgroundColor: Colors.transparent,
+              ),
             ),
             label: '',
           ),

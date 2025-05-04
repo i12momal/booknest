@@ -220,7 +220,7 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
 
         return Scaffold(
           body: Background(
-            showExitIcon: true,
+            showExitIcon: false,
             showRowIcon: false,
             title: 'Mi Perfil',
             child: SingleChildScrollView(

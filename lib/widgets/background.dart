@@ -94,7 +94,6 @@ class _BackgroundState extends State<Background> {
 
   @override
   Widget build(BuildContext context) {
-    print('showExitIcon: ${widget.showExitIcon}');
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
