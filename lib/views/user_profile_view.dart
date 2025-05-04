@@ -3,8 +3,11 @@ import 'package:booknest/controllers/user_controller.dart';
 import 'package:booknest/entities/models/category_model.dart';
 import 'package:booknest/entities/models/user_model.dart';
 import 'package:booknest/views/category_view.dart';
+import 'package:booknest/views/favorites_view.dart';
 import 'package:booknest/views/home_view.dart';
 import 'package:booknest/views/login_view.dart';
+import 'package:booknest/views/owner_profile_view.dart';
+import 'package:booknest/views/user_search_view.dart';
 import 'package:booknest/widgets/background.dart';
 import 'package:booknest/widgets/footer.dart';
 import 'package:booknest/widgets/tap_bubble_text.dart';
@@ -20,9 +23,12 @@ class UserProfileView extends StatefulWidget {
 
 class _UserProfileViewState extends State<UserProfileView> {
   final _nameController = TextEditingController();
+  final _userNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneNumberController = TextEditingController();
   String? currentImageUrl;
+
+  String? _currentUserId;
 
   List<Category> categories = [];
   bool _isLoading = false;
@@ -63,6 +69,7 @@ class _UserProfileViewState extends State<UserProfileView> {
       if (userData != null) {
         setState(() {
           _nameController.text = userData.name;
+          _userNameController.text = userData.userName;
           _emailController.text = userData.email;
           _phoneNumberController.text = userData.phoneNumber.toString();
           currentImageUrl = userData.image ?? '';
@@ -105,8 +112,6 @@ class _UserProfileViewState extends State<UserProfileView> {
           return const Scaffold(body: Center(child: Text("Error al cargar el usuario")));
         }
 
-        final currentUserId = snapshot.data!;
-
         if (_isLoading) {
           return const Scaffold(body: Center(child: CircularProgressIndicator()));
         }
@@ -115,9 +120,11 @@ class _UserProfileViewState extends State<UserProfileView> {
           return Scaffold(body: Center(child: Text(_message)));
         }
 
+        _currentUserId = snapshot.data;
+
         return Scaffold(
           body: Background(
-            title: 'Mi Perfil',
+            title: _userNameController.text,
             onBack: () => Navigator.pop(context),
             child: SingleChildScrollView(
               child: Column(
@@ -207,7 +214,7 @@ class _UserProfileViewState extends State<UserProfileView> {
                                     MaterialPageRoute(
                                       builder: (context) => CategoryView(
                                         categoryName: category.name,
-                                        categoryImageUrl: category.image ?? '',
+                                        categoryImageUrl: category.image,
                                         userId: widget.userId,
                                       ),
                                     ),
@@ -233,7 +240,7 @@ class _UserProfileViewState extends State<UserProfileView> {
                                         MaterialPageRoute(
                                           builder: (context) => CategoryView(
                                             categoryName: category.name,
-                                            categoryImageUrl: category.image ?? '',
+                                            categoryImageUrl: category.image,
                                             userId: widget.userId,
                                           ),
                                         ),
@@ -266,7 +273,7 @@ class _UserProfileViewState extends State<UserProfileView> {
                 case 1:
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const HomeView()),
+                    MaterialPageRoute(builder: (context) => const UserSearchView()),
                   );
                   break;
                 case 2:
@@ -278,13 +285,13 @@ class _UserProfileViewState extends State<UserProfileView> {
                 case 3:
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const HomeView()),
+                    MaterialPageRoute(builder: (context) => const FavoritesView()),
                   );
                   break;
                 case 4:
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => UserProfileView(userId: widget.userId)),
+                    MaterialPageRoute(builder: (context) => OwnerProfileView(userId: _currentUserId!)),
                   );
                   break;
               }

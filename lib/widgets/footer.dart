@@ -30,15 +30,16 @@ class _FooterState extends State<Footer> {
       final userId = await AccountController().getCurrentUserId();
       final user = await UserController().getCurrentUserById(userId);
       if (user != null && user.image != null && user.image!.isNotEmpty) {
-        setState(() {
-          _userImageUrl = user.image!;
-        });
+        if (mounted) {
+          setState(() {
+            _userImageUrl = user.image!;
+          });
+        }
       }
     } catch (e) {
       print("Error al obtener imagen del usuario: $e");
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -90,5 +91,10 @@ class _FooterState extends State<Footer> {
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 }

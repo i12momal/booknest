@@ -1,3 +1,4 @@
+import 'package:booknest/entities/models/user_session.dart';
 import "package:booknest/entities/viewmodels/account_view_model.dart";
 import 'package:flutter/material.dart';
 import "base_controller.dart";
@@ -196,4 +197,18 @@ class AccountController extends BaseController{
     final result = await accountService.getCurrentUserId();
     return result;
   }
+
+  Future<void> logout() async {
+    final result = await accountService.logoutUser();
+
+    if (result['success']) {
+      // Limpiar datos locales de sesión
+      await UserSession.clearSession();
+
+      print("Logout exitoso, userId limpiado");
+    } else {
+      print("Fallo en logout: ${result['message']}");
+    }
+  }
+
 }

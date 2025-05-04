@@ -7,9 +7,10 @@ import 'package:booknest/entities/models/user_model.dart';
 import 'package:booknest/views/book_reader_view.dart';
 import 'package:booknest/views/category_view.dart';
 import 'package:booknest/views/edit_user_view.dart';
+import 'package:booknest/views/favorites_view.dart';
 import 'package:booknest/views/home_view.dart';
 import 'package:booknest/views/login_view.dart';
-import 'package:booknest/views/user_profile_view.dart';
+import 'package:booknest/views/user_search_view.dart';
 import 'package:booknest/widgets/background.dart';
 import 'package:booknest/widgets/footer.dart';
 import 'package:booknest/widgets/success_dialog.dart';
@@ -36,6 +37,8 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
 
   final UserController _userController = UserController();
 
+  List<Map<String, dynamic>> activeLoans = [];
+
   @override
   void initState() {
     super.initState();
@@ -44,44 +47,62 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
     _fetchActiveLoans();
   }
 
-  void _returnBook(int loanId) async {
+  Future<void> _fetchUserData() async {
+    setState(() {
+      _isLoading = true;
+      _message = '';
+    });
+
     try {
-      // Llama al LoanController para cambiar el estado del préstamo
-      await LoanController().updateLoanStateToReturned(loanId);
-
-      // Después de actualizar, puedes recargar los préstamos activos
-      await _fetchActiveLoans();
-
-      // Notificar al usuario que el libro ha sido devuelto
-      _showSuccessDialog();
+      final User? userData = await _userController.getUserById(widget.userId);
+      
+      if (userData != null) {
+        setState(() {
+          _nameController.text = userData.name;
+          _emailController.text = userData.email;
+          _phoneNumberController.text = userData.phoneNumber.toString();
+          currentImageUrl = userData.image ?? '';
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _message = 'No se encontró la información del usuario. Por favor, intente nuevamente.';
+          _isLoading = false;
+        });
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) {
+            Navigator.pushReplacement(
+                context, MaterialPageRoute(builder: (context) => const LoginView()));
+          }
+        });
+      }
     } catch (e) {
-      print('Error al devolver el libro: $e');
-      _showErrorDialog();
+      setState(() {
+        _message = 'Error al cargar los datos del usuario. Por favor, intente nuevamente.';
+        _isLoading = false;
+      });
+      Future.delayed(const Duration(seconds: 2), () {
+        if (mounted) {
+          Navigator.pushReplacement(
+              context, MaterialPageRoute(builder: (context) => const LoginView()));
+        }
+      });
     }
   }
 
-  void _showSuccessDialog() {
-    SuccessDialog.show(
-      context,
-      'Devolución Exitosa', 
-      '¡Tu libro ha sido devuelto con éxito!',
-      () {
-      },
-    );
+  void _fetchUserCategoriesFromBooks() async {
+    try {
+      final categoriesFromBooks =
+          await _userController.getCategoriesFromBooks(widget.userId);
+      setState(() {
+        categories = categoriesFromBooks;
+      });
+    } catch (e) {
+      setState(() {
+        _message = 'Error al cargar las categorías de los libros.';
+      });
+    }
   }
-
-  void _showErrorDialog() {
-    SuccessDialog.show(
-      context,
-      'Error en la devolución', 
-      'Ha ocurrido un error en la devolución del libro.',
-      () {
-      },
-    );
-  }
-
-
-  List<Map<String, dynamic>> activeLoans = [];
 
   Future<void> _fetchActiveLoans() async {
     try {
@@ -90,7 +111,6 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
 
       final rawLoans = await LoanController().getLoansByHolder(userId);
 
-      // Buscar los libros por cada bookId
       List<Map<String, dynamic>> loansWithBooks = [];
 
       for (var loan in rawLoans) {
@@ -101,7 +121,7 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
           loansWithBooks.add({
             'loan': loan,
             'book': book,
-            'currentPage': loan['currentPage'],  // Aquí se agrega el campo `currentPage`
+            'currentPage': loan['currentPage'],
           });
         }
       }
@@ -114,18 +134,33 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
     }
   }
 
-  // Obtener categorías desde los libros
-  void _fetchUserCategoriesFromBooks() async {
+  void _returnBook(int loanId) async {
     try {
-      final categoriesFromBooks = await _userController.getCategoriesFromBooks(widget.userId);
-      setState(() {
-        categories = categoriesFromBooks;
-      });
+      await LoanController().updateLoanStateToReturned(loanId);
+      await _fetchActiveLoans();
+      _showSuccessDialog();
     } catch (e) {
-      setState(() {
-        _message = 'Error al cargar las categorías de los libros.';
-      });
+      print('Error al devolver el libro: $e');
+      _showErrorDialog();
     }
+  }
+
+  void _showSuccessDialog() {
+    SuccessDialog.show(
+      context,
+      'Devolución Exitosa',
+      '¡Tu libro ha sido devuelto con éxito!',
+      () {},
+    );
+  }
+
+  void _showErrorDialog() {
+    SuccessDialog.show(
+      context,
+      'Error en la devolución',
+      'Ha ocurrido un error en la devolución del libro.',
+      () {},
+    );
   }
 
   Future<bool?> _showConfirmDialog(BuildContext context) async {
@@ -148,96 +183,46 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
     );
   }
 
-
-  Future<void> _fetchUserData() async {
-    setState(() {
-      _isLoading = true;
-      _message = '';
-    });
-
-    try {
-      final User? userData = await _userController.getUserById(widget.userId);
-      if (userData != null) {
-        setState(() {
-          _nameController.text = userData.name;
-          _emailController.text = userData.email;
-          _phoneNumberController.text = userData.phoneNumber.toString();
-          currentImageUrl = userData.image ?? '';
-          _isLoading = false;
-        });
-      } else {
-        setState(() {
-          _message = 'No se encontró la información del usuario. Por favor, intente nuevamente.';
-          _isLoading = false;
-        });
-        Future.delayed(const Duration(seconds: 2), () {
-          if (mounted) {
-            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const LoginView()));
-          }
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _message = 'Error al cargar los datos del usuario. Por favor, intente nuevamente.';
-        _isLoading = false;
-      });
-      Future.delayed(const Duration(seconds: 2), () {
-        if (mounted) {
-          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const LoginView()));
-        }
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<String?>(
-      future: AccountController().getCurrentUserId(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
-
-        if (!snapshot.hasData || snapshot.data == null) {
-          return const Scaffold(
-            body: Center(child: Text('Error al obtener el usuario')),
-          );
-        }
-
-        final currentUserId = snapshot.data!;
-
         if (_isLoading) {
-          return Scaffold(
+          return const Scaffold(
+            backgroundColor: Colors.white,
             body: Center(
-              child: Container(
-                color: Colors.white,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Image.asset('assets/gifs/cargando.gif', height: 500, width: 500),
-                    const SizedBox(height: 10),
-                    const Text(
-                      'Cargando...',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Color(0xFF112363)),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    height: 100,
+                    width: 100,
+                    child: CircularProgressIndicator(color: Color(0xFF112363)),
+                  ),
+                  SizedBox(height: 20),
+                  Text(
+                    'Cargando...',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF112363),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           );
         }
 
         if (_message.isNotEmpty) {
-          return Center(child: Text(_message));
+          return Scaffold(
+            body: Center(child: Text(_message)),
+          );
         }
-
 
         return Scaffold(
           body: Background(
+            showExitIcon: true,
+            showRowIcon: false,
             title: 'Mi Perfil',
-            onBack: () => Navigator.pop(context),
             child: SingleChildScrollView(
               child: Column(
                 children: [
@@ -280,7 +265,6 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
                                 ),
                                 const SizedBox(height: 4),
                                 Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     const Icon(Icons.email, size: 16),
                                     const SizedBox(width: 4),
@@ -295,7 +279,6 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
                                 ),
                                 const SizedBox(height: 4),
                                 Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     const Icon(Icons.phone, size: 16),
                                     const SizedBox(width: 4),
@@ -319,7 +302,6 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
                   const Text('Mi Biblioteca', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   const SizedBox(height: 16),
                   const Divider(thickness: 1, color: Color(0xFF112363)),
-
                   SizedBox(
                     height: categories.length > 4 ? 200 : 100,
                     child: categories.length > 4
@@ -341,7 +323,7 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
                                     MaterialPageRoute(
                                       builder: (context) => CategoryView(
                                         categoryName: category.name,
-                                        categoryImageUrl: category.image ?? '',
+                                        categoryImageUrl: category.image,
                                         userId: widget.userId,
                                       ),
                                     ),
@@ -364,7 +346,7 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
                                         MaterialPageRoute(
                                           builder: (context) => CategoryView(
                                             categoryName: category.name,
-                                            categoryImageUrl: category.image ?? '',
+                                            categoryImageUrl: category.image,
                                             userId: widget.userId,
                                           ),
                                         ),
@@ -377,7 +359,6 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
                             ),
                           ),
                   ),
-
                   const SizedBox(height: 20),
                   const Text('Prestados', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   const SizedBox(height: 16),
@@ -490,47 +471,32 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
             ),
           ),
           bottomNavigationBar: Footer(
-            selectedIndex: 0, 
+            selectedIndex: 0,
             onItemTapped: (index) {
               switch (index) {
                 case 0:
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const HomeView()),
-                  );
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const HomeView()));
                   break;
                 case 1:
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const HomeView()),
-                  );
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const UserSearchView()));
                   break;
                 case 2:
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const HomeView()),
-                  );
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const HomeView()));
                   break;
                 case 3:
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const HomeView()),
-                  );
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const FavoritesView()));
                   break;
                 case 4:
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => UserProfileView(userId: widget.userId)),
-                  );
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (context) => OwnerProfileView(userId: widget.userId)));
                   break;
               }
             },
           ),
         );
-      },
-    );
   }
 }
+
 
 class _CategoryItem extends StatelessWidget {
   final String label;

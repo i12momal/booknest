@@ -2,8 +2,11 @@ import 'package:booknest/controllers/account_controller.dart';
 import 'package:booknest/controllers/book_controller.dart';
 import 'package:booknest/entities/models/book_model.dart';
 import 'package:booknest/views/book_details_owner_view.dart';
+import 'package:booknest/views/favorites_view.dart';
 import 'package:booknest/views/home_view.dart';
+import 'package:booknest/views/owner_profile_view.dart';
 import 'package:booknest/views/user_profile_view.dart';
+import 'package:booknest/views/user_search_view.dart';
 import 'package:booknest/widgets/background.dart';
 import 'package:booknest/widgets/footer.dart';
 import 'package:flutter/material.dart';
@@ -250,7 +253,7 @@ class _CategoryViewState extends State<CategoryView> {
                       ),
           ),
           bottomNavigationBar: Footer(
-            selectedIndex: 0,
+            selectedIndex: 0, 
             onItemTapped: (index) {
               switch (index) {
                 case 0:
@@ -262,7 +265,7 @@ class _CategoryViewState extends State<CategoryView> {
                 case 1:
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const HomeView()),
+                    MaterialPageRoute(builder: (context) => const UserSearchView()),
                   );
                   break;
                 case 2:
@@ -274,13 +277,13 @@ class _CategoryViewState extends State<CategoryView> {
                 case 3:
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const HomeView()),
+                    MaterialPageRoute(builder: (context) => const FavoritesView()),
                   );
                   break;
-                  case 4:
+                case 4:
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => UserProfileView(userId: currentUserId!)),
+                    MaterialPageRoute(builder: (context) => OwnerProfileView(userId: currentUserId)),
                   );
                   break;
               }

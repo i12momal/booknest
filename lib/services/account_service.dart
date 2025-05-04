@@ -371,4 +371,21 @@ class AccountService extends BaseService {
     final currentUser = BaseService.client.auth.currentUser;
     return currentUser?.id;
   }
+
+  Future<Map<String, dynamic>> logoutUser() async {
+    try {
+      // Cerrar sesión en Supabase Auth
+      await BaseService.client.auth.signOut();
+      print("Sesión cerrada en Supabase Auth");
+
+      return {'success': true, 'message': 'Sesión cerrada correctamente'};
+    } catch (e) {
+      print("Error en logoutUser: $e");
+      return {
+        'success': false,
+        'message': 'No se pudo cerrar sesión. Intenta de nuevo.'
+      };
+    }
+  }
+
 }

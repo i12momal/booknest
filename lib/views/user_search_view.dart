@@ -1,5 +1,7 @@
 import 'package:booknest/controllers/account_controller.dart';
+import 'package:booknest/views/favorites_view.dart';
 import 'package:booknest/views/home_view.dart';
+import 'package:booknest/views/owner_profile_view.dart';
 import 'package:booknest/views/user_profile_view.dart';
 import 'package:booknest/widgets/background.dart';
 import 'package:booknest/widgets/footer.dart';
@@ -19,7 +21,7 @@ class _UserSearchViewState extends State<UserSearchView> {
   List<Map<String, dynamic>> filteredUsers = [];
   bool isLoading = false;
   bool hasSearched = false;
-  String? userId; // Asumiendo que se cargará luego para el Footer
+  String? userId;
 
   @override
   void initState() {
@@ -74,13 +76,13 @@ class _UserSearchViewState extends State<UserSearchView> {
               case 3:
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const HomeView()),
+                  MaterialPageRoute(builder: (context) => const FavoritesView()),
                 );
                 break;
               case 4:
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => UserProfileView(userId: userId!)),
+                  MaterialPageRoute(builder: (context) => OwnerProfileView(userId: userId!)),
                 );
                 break;
             }

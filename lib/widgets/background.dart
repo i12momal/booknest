@@ -1,5 +1,6 @@
 import 'package:booknest/controllers/account_controller.dart';
 import 'package:booknest/controllers/notification_controller.dart';
+import 'package:booknest/main.dart';
 import 'package:booknest/views/notifications_view.dart';
 import 'package:flutter/material.dart';
 
@@ -9,6 +10,7 @@ class Background extends StatefulWidget {
   final VoidCallback? onBack;
   final bool showNotificationIcon;
   final bool showRowIcon;
+  final bool showExitIcon;
 
   const Background({
     super.key,
@@ -17,6 +19,7 @@ class Background extends StatefulWidget {
     this.onBack,
     this.showNotificationIcon = true,
     this.showRowIcon = true,
+    this.showExitIcon = false,
   });
 
   @override
@@ -37,21 +40,61 @@ class _BackgroundState extends State<Background> {
     if (userId == null) return 0;
 
     final response = await NotificationController().getUnreadUserNotifications(userId);
+    
+    if (mounted) {
+      setState(() {
+        _notificationCount = Future.value(response.length);
+      });
+    }
+
     return response.length;
+  }
+
+  void _confirmLogout(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Cerrar sesión'),
+        content: const Text('¿Estás seguro de que quieres cerrar sesión?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Cerrar sesión'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await AccountController().logout();
+      if (context.mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const MyApp()), 
+          (route) => false,
+        );
+      }
+    }
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      setState(() {
-        _notificationCount = _fetchNotificationCount();
-      });
+      if (mounted) {
+        setState(() {
+          _notificationCount = _fetchNotificationCount();
+        });
+      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    print('showExitIcon: ${widget.showExitIcon}');
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -90,15 +133,19 @@ class _BackgroundState extends State<Background> {
                   centerTitle: true,
                   backgroundColor: Colors.transparent,
                   elevation: 0,
-                  leading: (widget.onBack != null && widget.showRowIcon)
-                      ? IconButton(
-                          icon: const Icon(Icons.arrow_back),
-                          color: Colors.white,
-                          onPressed: () {
-                            widget.onBack?.call(); // Solo este
-                          },
-                        )
-                      : null,
+                  leading: widget.showExitIcon
+                    ? IconButton(
+                        icon: const Icon(Icons.logout_sharp),
+                        color: Colors.white,
+                        onPressed: () => _confirmLogout(context),
+                      )
+                    : (widget.onBack != null && widget.showRowIcon)
+                        ? IconButton(
+                            icon: const Icon(Icons.arrow_back),
+                            color: Colors.white,
+                            onPressed: () => widget.onBack?.call(),
+                          )
+                        : null,
                   actions: widget.showNotificationIcon
                       ? [
                           FutureBuilder<int>(

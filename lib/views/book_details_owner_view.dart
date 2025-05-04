@@ -10,8 +10,11 @@ import 'package:booknest/views/add_book_view.dart';
 import 'package:booknest/views/add_review_view.dart';
 import 'package:booknest/views/edit_book_view.dart';
 import 'package:booknest/views/edit_review_view.dart';
+import 'package:booknest/views/favorites_view.dart';
 import 'package:booknest/views/home_view.dart';
+import 'package:booknest/views/owner_profile_view.dart';
 import 'package:booknest/views/user_profile_view.dart';
+import 'package:booknest/views/user_search_view.dart';
 import 'package:booknest/widgets/background.dart';
 import 'package:booknest/widgets/favorite_icon.dart';
 import 'package:booknest/widgets/footer.dart';
@@ -301,7 +304,7 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
                     ),
                   ),
                   bottomNavigationBar: Footer(
-                    selectedIndex: 0,
+                    selectedIndex: 0, 
                     onItemTapped: (index) {
                       switch (index) {
                         case 0:
@@ -313,7 +316,7 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
                         case 1:
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => const HomeView()),
+                            MaterialPageRoute(builder: (context) => const UserSearchView()),
                           );
                           break;
                         case 2:
@@ -325,13 +328,13 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
                         case 3:
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => const HomeView()),
+                            MaterialPageRoute(builder: (context) => const FavoritesView()),
                           );
                           break;
-                          case 4:
+                        case 4:
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => UserProfileView(userId: currentUserId!)),
+                            MaterialPageRoute(builder: (context) => OwnerProfileView(userId: currentUserId!)),
                           );
                           break;
                       }

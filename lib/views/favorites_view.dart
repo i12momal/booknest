@@ -3,6 +3,7 @@ import 'package:booknest/controllers/book_controller.dart';
 import 'package:booknest/controllers/user_controller.dart';
 import 'package:booknest/views/book_details_owner_view.dart';
 import 'package:booknest/views/home_view.dart';
+import 'package:booknest/views/owner_profile_view.dart';
 import 'package:booknest/views/user_profile_view.dart';
 import 'package:booknest/views/user_search_view.dart';
 import 'package:booknest/widgets/background.dart';
@@ -248,27 +249,42 @@ class _FavoritesViewState extends State<FavoritesView> {
         ),
       ),
       bottomNavigationBar: Footer(
-        selectedIndex: 3,
-        onItemTapped: (index) {
-          switch (index) {
-            case 0:
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const HomeView()));
-              break;
-            case 1:
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const UserSearchView()));
-              break;
-            case 2:
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const HomeView()));
-              break;
-            case 3:
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const FavoritesView()));
-              break;
-            case 4:
-              Navigator.push(context, MaterialPageRoute(builder: (context) => UserProfileView(userId: userId!)));
-              break;
-          }
-        },
-      ),
+          selectedIndex: 0, 
+          onItemTapped: (index) {
+            switch (index) {
+              case 0:
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const HomeView()),
+                );
+                break;
+              case 1:
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const UserSearchView()),
+                );
+                break;
+              case 2:
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const HomeView()),
+                );
+                break;
+              case 3:
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const FavoritesView()),
+                );
+                break;
+              case 4:
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => OwnerProfileView(userId: userId!)),
+                );
+                break;
+            }
+          },
+        ),
     );
   }
 
