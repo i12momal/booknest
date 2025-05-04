@@ -1,3 +1,4 @@
+import 'package:booknest/entities/models/book_model.dart';
 import 'package:booknest/entities/models/user_model.dart';
 import 'package:booknest/entities/viewmodels/user_view_model.dart';
 import 'package:booknest/services/base_service.dart';
@@ -216,7 +217,7 @@ class UserService extends BaseService{
     }
   }
 
-  // Obtener la lista de favoritos del usuario
+  // Obtener la lista de libros favoritos del usuario
   Future<Map<String, dynamic>> getFavorites() async {
     try {
       final currentUser = BaseService.client.auth.currentUser;
@@ -368,5 +369,4 @@ class UserService extends BaseService{
     // Devolvemos los resultados como una lista de mapas
     return response.map((e) => Map<String, dynamic>.from(e)).toList();
   }
-
 }

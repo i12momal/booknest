@@ -1,6 +1,7 @@
 import 'package:booknest/controllers/account_controller.dart';
 import 'package:booknest/controllers/categories_controller.dart';
 import 'package:booknest/views/book_details_owner_view.dart';
+import 'package:booknest/views/favorites_view.dart';
 import 'package:booknest/views/user_profile_view.dart';
 import 'package:booknest/views/user_search_view.dart';
 import 'package:booknest/widgets/category_selection_popup.dart';
@@ -50,7 +51,7 @@ class _HomeViewState extends State<HomeView> {
         isLoading = true;
       });
 
-      await Future.delayed(const Duration(milliseconds: 1515));
+      //await Future.delayed(const Duration(milliseconds: 1515));
 
       final userCategories = await _controller.loadUserGenres(userId);
       final categoryNames = userCategories.map((c) => c['name'].toString()).toList();
@@ -205,18 +206,30 @@ class _HomeViewState extends State<HomeView> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if(isLoading)...[
-                Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Image.asset('assets/gifs/cargando.gif', height: 500, width: 500),
-                      const SizedBox(height: 10),
-                      const Text(
-                        'Cargando...',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Color(0xFF112363)),
-                      ),
-                    ],
+              if (isLoading)...[
+                const Expanded(
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                          height: 100,
+                          width: 100,
+                          child: CircularProgressIndicator(
+                            color: Color(0xFF112363),
+                          ),
+                        ),
+                        SizedBox(height: 20),
+                        Text(
+                          'Cargando...',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: Color(0xFF112363),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 )
               ]else...[ 
@@ -448,7 +461,7 @@ class _HomeViewState extends State<HomeView> {
               case 3:
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const HomeView()),
+                  MaterialPageRoute(builder: (context) => const FavoritesView()),
                 );
                 break;
               case 4:

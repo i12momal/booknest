@@ -450,4 +450,20 @@ class BookService extends BaseService{
     }
   }
 
+
+  Future<List<Map<String, dynamic>>> fetchAllBooks() async {
+    try {
+      final response = await Supabase.instance.client.from('Book').select();
+
+      if (response != null && response is List) {
+        return response.map((e) => Map<String, dynamic>.from(e)).toList();
+      } else {
+        return [];
+      }
+    } catch (e) {
+      print('Error al obtener libros: $e');
+      return [];
+    }
+  }
+
 }

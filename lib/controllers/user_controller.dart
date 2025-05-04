@@ -200,5 +200,9 @@ class UserController extends BaseController{
     return await userService.searchUsers(query);
   }
 
+  // Obtener los libros favoritos del usuario
+  Future<Map<String, dynamic>> getFavorites() async {
+    return await userService.getFavorites();
+  }
 
 }

@@ -246,8 +246,11 @@ class BookController extends BaseController{
     }
   }
 
-   Future<Map<String, dynamic>> deleteBook(int bookId) async {
+  Future<Map<String, dynamic>> deleteBook(int bookId) async {
     return await bookService.deleteBook(bookId);
   }
 
+  Future<List<Map<String, dynamic>>> fetchAllBooks() async {
+    return bookService.fetchAllBooks();
+  }
 }
