@@ -48,7 +48,7 @@ class _FooterState extends State<Footer> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Cerrar sesión'),
-        content: const Text('¿Estás seguro de que quieres cerrar sesión?'),
+        content: const Text('¿Estás seguro de que quieres cerrar la sesión de tu cuenta?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),

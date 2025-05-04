@@ -376,6 +376,8 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
                               final currentPage = loanData['currentPage'] ?? 0;
                               final loanId = loanData['id'];
 
+                              final formattedEnd = loanData['endDate'].split('T').first;
+
                               return GestureDetector(
                                 onTap: () async {
                                   final url = book.file;
@@ -428,9 +430,27 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
                                         width: 150,
                                         child: Text(
                                           book.title,
-                                          style: const TextStyle(fontSize: 12),
+                                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      SizedBox(
+                                        width: 150,
+                                        child: Text(
+                                          "Formato: " + loanData['format'],
+                                          style: const TextStyle(fontSize: 10),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      SizedBox(
+                                        width: 150,
+                                        child: Text(
+                                          "Vencimiento: " + formattedEnd,
+                                          style: const TextStyle(fontSize: 10),
                                           textAlign: TextAlign.center,
                                         ),
                                       ),
