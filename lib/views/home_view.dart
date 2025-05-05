@@ -3,7 +3,6 @@ import 'package:booknest/controllers/categories_controller.dart';
 import 'package:booknest/views/book_details_owner_view.dart';
 import 'package:booknest/views/favorites_view.dart';
 import 'package:booknest/views/owner_profile_view.dart';
-import 'package:booknest/views/user_profile_view.dart';
 import 'package:booknest/views/user_search_view.dart';
 import 'package:booknest/widgets/category_selection_popup.dart';
 import 'package:booknest/widgets/footer.dart';
@@ -195,286 +194,291 @@ class _HomeViewState extends State<HomeView> {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        FocusScope.of(context).unfocus();
+    return WillPopScope(
+      onWillPop: () async {
+        return false;
       },
-      child: Scaffold(
-        body: Background(
-          title: 'BookNest',
-          onBack: null,
-          showRowIcon: false,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (isLoading)...[
-                const Expanded(
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        SizedBox(
-                          height: 100,
-                          width: 100,
-                          child: CircularProgressIndicator(
-                            color: Color(0xFF112363),
-                          ),
-                        ),
-                        SizedBox(height: 20),
-                        Text(
-                          'Cargando...',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                            color: Color(0xFF112363),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                )
-              ]else...[ 
-                // Buscador
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      hintText: 'Buscar por Título o Autor',
-                      prefixIcon: const Icon(Icons.search),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(20),
-                        borderSide: const BorderSide(color: Color(0xFF112363), width: 2),
-                      ),
-                    ),
-                    onChanged: (query) {
-                      _searchBooks(query);
-                    },
-                  ),
-                ),
-              
-                // Categorías
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Row(
-                    children: [
-                      const Text("Categorías", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
-                      const Spacer(),
-                      IconButton(
-                        icon: const Icon(Icons.add_circle_outline),
-                        onPressed: () {
-                          _showCategorySelectionPopup(context);
-                        },
-                      )
-                    ],
-                  ),
-                ),
-                SizedBox(
-                  height: 100,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: categories.length,
-                    itemBuilder: (context, index) {
-                      final category = categories[index];
-                      final isSelected = selectedCategory == category['name'];
-
-                      return GestureDetector(
-                        onTap: () => _toggleCategory(category['name']),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          margin: const EdgeInsets.symmetric(horizontal: 8),
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: isSelected ? Colors.grey.withAlpha((0.1 * 255).toInt()) : Colors.transparent,
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: isSelected
-                                ? [
-                                    BoxShadow(
-                                      color: Colors.grey.withAlpha((0.1 * 255).toInt()),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 4),
-                                    )
-                                  ]
-                                : [],
-                          ),
-                          child: Column(
-                            children: [
-                              Transform.scale(
-                                scale: isSelected ? 1.1 : 1.0,
-                                child: Container(
-                                  width: 50,
-                                  height: 50,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: isSelected ? Colors.grey : const Color(0xFF112363),
-                                      width: 2,
-                                    ),
-                                  ),
-                                  child: ClipOval(
-                                    child: Image.network(
-                                      category['image'],
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                category['name'],
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-
-                const SizedBox(height: 25),
-
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8),
-                  child: Text("Libros relacionados", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
-                ),
-                const Divider(thickness: 1, color: Color(0xFF112363)),
-
-                // Lista de libros
-                Expanded(
-                  child: filteredBooks.isEmpty
-                  ? const Center(
-                      child: Text(
-                        "No se encontraron libros.",
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                      ),
-                    )
-                  : GridView.builder(
-                    itemCount: currentBooks.length,
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: _calculateCrossAxisCount(context),
-                      crossAxisSpacing: 8,
-                      mainAxisSpacing: 8,
-                      childAspectRatio: 0.5,
-                    ),
-                    itemBuilder: (context, index) {
-                      final book = currentBooks[index];
-                      return GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => BookDetailsOwnerView(bookId: book['id']),
-                          ),
-                        );
-                      },
+      child: GestureDetector(
+        onTap: () {
+          FocusScope.of(context).unfocus();
+        },
+        child: Scaffold(
+          body: Background(
+            title: 'BookNest',
+            onBack: null,
+            showRowIcon: false,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (isLoading)...[
+                  const Expanded(
+                    child: Center(
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: AspectRatio(
-                              aspectRatio: 0.7,
-                              child: Image.network(
-                                book['cover'],
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) =>
-                                    const Icon(Icons.broken_image),
-                              ),
+                          SizedBox(
+                            height: 100,
+                            width: 100,
+                            child: CircularProgressIndicator(
+                              color: Color(0xFF112363),
                             ),
                           ),
-                          const SizedBox(height: 6),
+                          SizedBox(height: 20),
                           Text(
-                            book['title'] ?? 'Sin título',
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                            'Cargando...',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: Color(0xFF112363),
+                            ),
                           ),
                         ],
                       ),
-                    );
-                    }
+                    ),
+                  )
+                ]else...[ 
+                  // Buscador
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        hintText: 'Buscar por Título o Autor',
+                        prefixIcon: const Icon(Icons.search),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(20),
+                          borderSide: const BorderSide(color: Color(0xFF112363), width: 2),
+                        ),
+                      ),
+                      onChanged: (query) {
+                        _searchBooks(query);
+                      },
+                    ),
                   ),
-                ),
+                
+                  // Categorías
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      children: [
+                        const Text("Categorías", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+                        const Spacer(),
+                        IconButton(
+                          icon: const Icon(Icons.add_circle_outline),
+                          onPressed: () {
+                            _showCategorySelectionPopup(context);
+                          },
+                        )
+                      ],
+                    ),
+                  ),
+                  SizedBox(
+                    height: 100,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: categories.length,
+                      itemBuilder: (context, index) {
+                        final category = categories[index];
+                        final isSelected = selectedCategory == category['name'];
 
-                // Paginación
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(totalPages, (index) {
-                      final pageNum = index + 1;
-                      return GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            currentPage = pageNum;
-                          });
-                        },
-                        child: Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 4),
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: currentPage == pageNum ? const Color(0xFF112363) : Colors.transparent,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            '$pageNum',
-                            style: TextStyle(
-                              color: currentPage == pageNum ? Colors.white : Colors.black,
-                              fontWeight: FontWeight.bold,
+                        return GestureDetector(
+                          onTap: () => _toggleCategory(category['name']),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            margin: const EdgeInsets.symmetric(horizontal: 8),
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: isSelected ? Colors.grey.withAlpha((0.1 * 255).toInt()) : Colors.transparent,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: isSelected
+                                  ? [
+                                      BoxShadow(
+                                        color: Colors.grey.withAlpha((0.1 * 255).toInt()),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 4),
+                                      )
+                                    ]
+                                  : [],
+                            ),
+                            child: Column(
+                              children: [
+                                Transform.scale(
+                                  scale: isSelected ? 1.1 : 1.0,
+                                  child: Container(
+                                    width: 50,
+                                    height: 50,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: isSelected ? Colors.grey : const Color(0xFF112363),
+                                        width: 2,
+                                      ),
+                                    ),
+                                    child: ClipOval(
+                                      child: Image.network(
+                                        category['image'],
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  category['name'],
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
+                        );
+                      },
+                    ),
+                  ),
+
+                  const SizedBox(height: 25),
+
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: Text("Libros relacionados", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+                  ),
+                  const Divider(thickness: 1, color: Color(0xFF112363)),
+
+                  // Lista de libros
+                  Expanded(
+                    child: filteredBooks.isEmpty
+                    ? const Center(
+                        child: Text(
+                          "No se encontraron libros.",
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                        ),
+                      )
+                    : GridView.builder(
+                      itemCount: currentBooks.length,
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: _calculateCrossAxisCount(context),
+                        crossAxisSpacing: 8,
+                        mainAxisSpacing: 8,
+                        childAspectRatio: 0.5,
+                      ),
+                      itemBuilder: (context, index) {
+                        final book = currentBooks[index];
+                        return GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => BookDetailsOwnerView(bookId: book['id']),
+                            ),
+                          );
+                        },
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: AspectRatio(
+                                aspectRatio: 0.7,
+                                child: Image.network(
+                                  book['cover'],
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      const Icon(Icons.broken_image),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              book['title'] ?? 'Sin título',
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                            ),
+                          ],
                         ),
                       );
-                    }),
+                      }
+                    ),
                   ),
-                ),
+
+                  // Paginación
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(totalPages, (index) {
+                        final pageNum = index + 1;
+                        return GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              currentPage = pageNum;
+                            });
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 4),
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: currentPage == pageNum ? const Color(0xFF112363) : Colors.transparent,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              '$pageNum',
+                              style: TextStyle(
+                                color: currentPage == pageNum ? Colors.white : Colors.black,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                  ),
+                ],
               ],
-            ],
+            ),
+          ),
+          bottomNavigationBar: Footer(
+            selectedIndex: 0, 
+            onItemTapped: (index) {
+              switch (index) {
+                case 0:
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const HomeView()),
+                  );
+                  break;
+                case 1:
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const UserSearchView()),
+                  );
+                  break;
+                case 2:
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const HomeView()),
+                  );
+                  break;
+                case 3:
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const FavoritesView()),
+                  );
+                  break;
+                case 4:
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => OwnerProfileView(userId: userId!)),
+                  );
+                  break;
+              }
+            },
           ),
         ),
-        bottomNavigationBar: Footer(
-          selectedIndex: 0, 
-          onItemTapped: (index) {
-            switch (index) {
-              case 0:
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const HomeView()),
-                );
-                break;
-              case 1:
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const UserSearchView()),
-                );
-                break;
-              case 2:
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const HomeView()),
-                );
-                break;
-              case 3:
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const FavoritesView()),
-                );
-                break;
-              case 4:
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => OwnerProfileView(userId: userId!)),
-                );
-                break;
-            }
-          },
-        ),
-      ),
+      )
     );
   }
 

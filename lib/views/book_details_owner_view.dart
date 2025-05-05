@@ -680,7 +680,7 @@ class _BookHeader extends StatelessWidget {
   }
 
   void _returnPhysicalBook(int loanId) async {
-    await LoanController().updateLoanStateToReturned(loanId);
+    await LoanController().updateLoanState(loanId, 'Devuelto');
   }
   
 
@@ -825,7 +825,7 @@ class _BookHeader extends StatelessWidget {
                                  onTap: () async {
                                   final result = await _showLoanInfoPopup(context);
                                   if (result == true) {
-                                    Navigator.of(context).pop(); // Volver atrás y dejar que el padre refresque
+                                    Navigator.of(context).pop();
                                   }
                                 },
 

@@ -68,22 +68,17 @@ class LoanController extends BaseController{
   // Cambiar el estado del préstamo
   Future<void> updateLoanState(int loanId, String newState) async {
     try {
-      // Obtener los datos del préstamo correctamente desde 'loan['data']'
       final loanResponse = await loanService.getLoanById(loanId);
-      
-      // Verificar si loanResponse es null o si no contiene los datos esperados
       if (loanResponse == null || loanResponse['data'] == null) {
         print('Error: El préstamo con id $loanId no fue encontrado o está mal formado.');
-        return;  // Salir si no se encuentra el préstamo
+        return;
       }
 
-      final loan = loanResponse['data'];  // Acceder a los datos del préstamo
+      final loan = loanResponse['data'];
       print('loan: $loan');
 
-      // Obtener el bookName correctamente
+     
       final bookResponse = await bookService.getBookById(loan['bookId']);
-      
-      // Verificar si bookResponse es null o no contiene los datos esperados
       if (bookResponse == null || bookResponse['data'] == null) {
         print('Error: No se encontró el libro con id ${loan['bookId']}');
         return;
@@ -91,23 +86,27 @@ class LoanController extends BaseController{
 
       // Acceder al título del libro
       final bookName = bookResponse['data']['title'];
-      print('bookName: $bookName');
 
       final userId = loan['currentHolderId'];
-
-      // Verificar si userId es null
       if (userId == null) {
         print('Error: El id del usuario actual (currentHolderId) es nulo.');
         return;
       }
-      print('userId: $userId');
 
       // Actualizar el estado del préstamo
       await loanService.updateLoanState(loanId, newState);
 
+      // Si el préstamo ha sido aceptado, se notifica al usuario que lo ha solicitado
       if (newState == 'Aceptado') {
         String message = 'Tu solicitud de préstamo para el libro "$bookName" ha sido aceptada.';
         await NotificationController().createNotification(userId, 'Préstamo Aceptado', loanId, message);
+      }
+
+      final ownerId = loan['ownerId'];
+      // Si el préstamo ha sido devuelto, se notifica al propietario del libro
+      if (newState == 'Devuelto') {
+        String message = 'Tu libro "$bookName" ha sido devuelto.';
+        await NotificationController().createNotification(ownerId, 'Préstamo Devuelto', loanId, message);
       }
     } catch (e) {
       print('Error al actualizar el estado del préstamo: $e');
