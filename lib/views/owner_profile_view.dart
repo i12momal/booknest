@@ -455,30 +455,31 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
                                         ),
                                       ),
                                       const SizedBox(height: 8),
-                                      ElevatedButton(
-                                        onPressed: () async {
-                                          bool? confirm = await _showConfirmDialog(context);
-                                          if (confirm == true) {
-                                            _returnBook(loanId);
-                                          }
-                                        },
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: const Color(0xFFAD0000),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(30),
-                                            side: const BorderSide(color: Color(0xFF700101), width: 3),
+                                      if(loanData['format'] == 'Digital')
+                                        ElevatedButton(
+                                          onPressed: () async {
+                                            bool? confirm = await _showConfirmDialog(context);
+                                            if (confirm == true) {
+                                              _returnBook(loanId);
+                                            }
+                                          },
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: const Color(0xFFAD0000),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(30),
+                                              side: const BorderSide(color: Color(0xFF700101), width: 3),
+                                            ),
+                                            padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 7),
                                           ),
-                                          padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 7),
-                                        ),
-                                        child: const Text(
-                                          "Devolver",
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.bold,
+                                          child: const Text(
+                                            "Devolver",
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                           ),
                                         ),
-                                      ),
                                     ],
                                   ),
                                 ),

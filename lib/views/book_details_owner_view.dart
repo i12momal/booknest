@@ -6,7 +6,6 @@ import 'package:booknest/controllers/user_controller.dart';
 import 'package:booknest/entities/models/book_model.dart';
 import 'package:booknest/entities/models/review_model.dart';
 import 'package:booknest/entities/models/user_model.dart';
-import 'package:booknest/views/add_book_view.dart';
 import 'package:booknest/views/add_review_view.dart';
 import 'package:booknest/views/edit_book_view.dart';
 import 'package:booknest/views/edit_review_view.dart';
@@ -465,10 +464,6 @@ class _BookInfoTabsState extends State<BookInfoTabs> {
 
 
 
-
-
-
-
 class _BookHeader extends StatelessWidget {
   final Book book;
   final bool isOwner;
@@ -480,13 +475,33 @@ class _BookHeader extends StatelessWidget {
     required this.loanedFormats,
   });
 
-  void _showLoanInfoPopup(BuildContext context) async {
+  Future<bool?> _showLoanInfoPopup(BuildContext context) async {
     List<Map<String, dynamic>> loans = await LoanController().getLoansByBookId(book.id);
 
-    if (loans.isEmpty) return;
+    if (loans.isEmpty) return false;
 
     final PageController pageController = PageController();
     int currentPage = 0;
+
+    void showSuccessDialog(BuildContext context, int bookId) {
+      SuccessDialog.show(
+        context,
+        'Operación Exitosa',
+        '¡El libro ha sido devuelto con éxito!',
+        () {
+          Navigator.pop(context);
+          Future.microtask(() {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => BookDetailsOwnerView(bookId: bookId),
+              ),
+            );
+          });
+        },
+      );
+    }
+
 
     showDialog(
       context: context,
@@ -501,7 +516,7 @@ class _BookHeader extends StatelessWidget {
               ),
               child: SizedBox(
                 width: 320,
-                height: 300,
+                height: 340,
                 child: Stack(
                   children: [
                     Column(
@@ -587,6 +602,34 @@ class _BookHeader extends StatelessWidget {
                                         const SizedBox(height: 12),
                                         const Text("Fecha de finalización del préstamo:", style: TextStyle(fontWeight: FontWeight.bold)),
                                         Text(formattedEnd),
+
+                                        if (loan['format'].toString().toLowerCase().trim() == 'físico')...[
+                                          const SizedBox(height: 12),
+                                          Center(
+                                            child: ElevatedButton(
+                                              onPressed: () async {
+                                                bool? confirm = await _showConfirmReturnDialog(context);
+                                                if (confirm == true) {
+                                                  _returnPhysicalBook(loan['id']);
+                                                  showSuccessDialog(context, loan['bookId']);
+                                                }
+                                              },
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: const Color(0xFF700101),
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.circular(30),
+                                                  side: const BorderSide(color: Color(0xFF700101), width: 3),
+                                                ),
+                                                padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 7),
+                                              ),
+                                              child: const Text(
+                                                "Marcar como devuelto",
+                                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                              ),
+                                            ),
+                                          ),
+                                        ]
+
                                       ],
                                     );
                                   },
@@ -614,7 +657,32 @@ class _BookHeader extends StatelessWidget {
         );
       },
     );
+    return null;
   }
+
+  Future<bool?> _showConfirmReturnDialog(BuildContext context) {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("¿Estás seguro de que deseas marcar este libro como devuelto?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text("Cancelar"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text("Sí, devolver"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _returnPhysicalBook(int loanId) async {
+    await LoanController().updateLoanStateToReturned(loanId);
+  }
+  
 
   @override
   Widget build(BuildContext context) {
@@ -754,7 +822,13 @@ class _BookHeader extends StatelessWidget {
                                 const Text("Prestado", style: TextStyle(fontSize: 12)),
                                 const SizedBox(width: 12),
                                 GestureDetector(
-                                  onTap: () => _showLoanInfoPopup(context),
+                                 onTap: () async {
+                                  final result = await _showLoanInfoPopup(context);
+                                  if (result == true) {
+                                    Navigator.of(context).pop(); // Volver atrás y dejar que el padre refresque
+                                  }
+                                },
+
                                   child: const Text(
                                     "Información préstamo",
                                     style: TextStyle(
@@ -771,17 +845,12 @@ class _BookHeader extends StatelessWidget {
                         ],
                       ),
                     ),
-
-
                     if (!isOwner)
                       Positioned(
                         bottom: -14,
                         right: -14,
                         child: FavoriteIcon(book: book),
                       ),
-
-
-
                     if (isOwner) // La papelera solo se muestra si ERES el propietario
                       Positioned(
                         bottom: 0, 
@@ -823,11 +892,7 @@ class _BookHeader extends StatelessWidget {
                           },
                           child: const Icon(Icons.delete, color: Colors.red),
                         ),
-                      ),  
-
-                    
-                         
-                    
+                      ), 
                   ],
                 ),
               ),
