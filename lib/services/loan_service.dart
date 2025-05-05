@@ -70,6 +70,7 @@ class LoanService extends BaseService{
         'endDate': createLoanViewModel.endDate,
         'format': createLoanViewModel.format,
         'state': createLoanViewModel.state,
+        'currentPage': createLoanViewModel.currentPage,
       };
 
       final response = await BaseService.client

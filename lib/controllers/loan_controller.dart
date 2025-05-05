@@ -24,6 +24,7 @@ class LoanController extends BaseController{
       endDate: endDate.toIso8601String(),
       format: format,
       state: "Pendiente",
+      currentPage: 0,
     );
 
     final response = await loanService.createLoan(createLoanViewModel);
@@ -66,35 +67,53 @@ class LoanController extends BaseController{
 
   // Cambiar el estado del préstamo
   Future<void> updateLoanState(int loanId, String newState) async {
-    final loan = await loanService.getLoanById(loanId);
-    //final bookName = await bookService.getBookById(loan['bookId']);
-    //final userId = loan['ownerId'];
+    try {
+      // Obtener los datos del préstamo correctamente desde 'loan['data']'
+      final loanResponse = await loanService.getLoanById(loanId);
+      
+      // Verificar si loanResponse es null o si no contiene los datos esperados
+      if (loanResponse == null || loanResponse['data'] == null) {
+        print('Error: El préstamo con id $loanId no fue encontrado o está mal formado.');
+        return;  // Salir si no se encuentra el préstamo
+      }
 
-    // Actualizar el estado del préstamo
-    await loanService.updateLoanState(loanId, newState);
+      final loan = loanResponse['data'];  // Acceder a los datos del préstamo
+      print('loan: $loan');
 
-    // Crear la notificación
-    /*String message;
-    switch (newState) {
-      case 'Pendiente':
-        message = 'Tu solicitud de préstamo para el libro "$bookName" está pendiente.';
-        break;
-      case 'Aceptado':
-        message = 'Tu solicitud de préstamo para el libro "$bookName" ha sido aceptada.';
-        break;
-      case 'Rechazado':
-        message = 'Tu solicitud de préstamo para el libro "$bookName" ha sido rechazada.';
-        break;
-      case 'Devuelto':
-        message = 'El libro "$bookName" ha sido devuelto.';
-        break;
-      default:
-        message = 'Estado del préstamo actualizado.';
+      // Obtener el bookName correctamente
+      final bookResponse = await bookService.getBookById(loan['bookId']);
+      
+      // Verificar si bookResponse es null o no contiene los datos esperados
+      if (bookResponse == null || bookResponse['data'] == null) {
+        print('Error: No se encontró el libro con id ${loan['bookId']}');
+        return;
+      }
+
+      // Acceder al título del libro
+      final bookName = bookResponse['data']['title'];
+      print('bookName: $bookName');
+
+      final userId = loan['currentHolderId'];
+
+      // Verificar si userId es null
+      if (userId == null) {
+        print('Error: El id del usuario actual (currentHolderId) es nulo.');
+        return;
+      }
+      print('userId: $userId');
+
+      // Actualizar el estado del préstamo
+      await loanService.updateLoanState(loanId, newState);
+
+      if (newState == 'Aceptado') {
+        String message = 'Tu solicitud de préstamo para el libro "$bookName" ha sido aceptada.';
+        await NotificationController().createNotification(userId, 'Préstamo Aceptado', loanId, message);
+      }
+    } catch (e) {
+      print('Error al actualizar el estado del préstamo: $e');
     }
-
-    // Crear la notificación de estado
-    await NotificationController().createNotification(userId, 'loan', loanId, message);*/
   }
+
 
   Future<void> saveCurrentPageProgress(String userId, int bookId, int currentPage) async {
     try {

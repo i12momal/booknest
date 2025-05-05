@@ -28,6 +28,7 @@ class CreateLoanViewModel{
   final String endDate;
   final String format;
   final String state;
+  final int currentPage;
 
   CreateLoanViewModel({
     required this.ownerId,
@@ -36,7 +37,8 @@ class CreateLoanViewModel{
     required this.startDate,
     required this.endDate,
     required this.format,
-    required this.state
+    required this.state,
+    required this.currentPage,
   });
 }
 
@@ -50,6 +52,7 @@ class EditLoanViewModel{
   final String endDate;
   final String format;
   final String state;
+  final int currentPage;
 
   EditLoanViewModel({
     required this.id,
@@ -59,6 +62,7 @@ class EditLoanViewModel{
     required this.startDate,
     required this.endDate,
     required this.format,
-    required this.state
+    required this.state,
+    required this.currentPage,
   });
 }

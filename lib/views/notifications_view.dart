@@ -38,17 +38,17 @@ class _NotificationsViewState extends State<NotificationsView> {
     for (var notification in notifications) {
       if (notification["type"] == 'Préstamo') {
         final loanResponse = await LoanController().getLoanById(notification['relatedId']);
-        if (loanResponse != null && loanResponse['success'] == true && loanResponse['data'] != null) {
+        if (loanResponse['success'] == true && loanResponse['data'] != null) {
           final loan = loanResponse['data'];
           final book = await BookController().getBookById(loan['bookId']);
-          final user = await UserController().getUserById(loan['ownerId']);
+          final user = await UserController().getUserById(loan['currentHolderId']);
           notification['bookName'] = book?.title ?? 'Desconocido';
           notification['userName'] = user?.name ?? 'Usuario desconocido';
           notification['format'] = loan['format'] ?? 'Desconocido';
           notification['state'] = loan['state'] ?? 'Desconocido';
           notification['loanId'] = loan['id'] ?? 0;
         }
-      }
+      } 
     }
     return notifications;
   }
@@ -126,42 +126,65 @@ class _NotificationsViewState extends State<NotificationsView> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                'Libro: ${loan['bookName']}',
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                              ),
-                              const SizedBox(height: 8),
-                              Text('Solicitado por: ${loan['userName']}'),
-                              const SizedBox(height: 8),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    'Formato: ${loan['format']}',
-                                    style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 14),
-                                  ),
-                                  loan['state'] == 'Pendiente'
-                                      ? LoanStateDropdown(
-                                          selectedState: loan['state'],
-                                          onChanged: (newState) {
-                                            if (newState != null && newState != loan['state']) {
-                                              _updateLoanState(loan, newState);
-                                            }
-                                          },
-                                        )
-                                      : Text(
-                                          loan['state'],
-                                          style: TextStyle(
-                                            color: _getStateColor(loan['state']),
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
+                              if(loan['type']=='Préstamo')...[
+                                Text(
+                                  'Libro: ${loan['bookName']}',
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                ),
+                                const SizedBox(height: 8),
+                                Text('Solicitado por: ${loan['userName']}'),
+                                const SizedBox(height: 8),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      'Formato: ${loan['format']}',
+                                      style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 14),
+                                    ),
+                                    loan['state'] == 'Pendiente'
+                                        ? LoanStateDropdown(
+                                            selectedState: loan['state'],
+                                            onChanged: (newState) {
+                                              if (newState != null && newState != loan['state']) {
+                                                _updateLoanState(loan, newState);
+                                              }
+                                            },
+                                          )
+                                        : Text(
+                                            loan['state'] ?? 'Formato desconocido',
+                                            style: TextStyle(
+                                              color: _getStateColor(loan['state'] ?? 'Formato desconocido'),
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),            
                                   Icon(
                                     isRead ? Icons.mark_email_read : Icons.mark_email_unread,
                                     color: isRead ? Colors.green : Colors.grey,
                                   ),
                                 ],
                               ),
+                              ]else if(loan['type']=='Préstamo Aceptado')...[
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 8.0),
+                                  child: Text(
+                                    loan['message'], 
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    Icon(
+                                      isRead ? Icons.mark_email_read : Icons.mark_email_unread,
+                                      color: isRead ? Colors.green : Colors.grey,
+                                    ),
+                                  ],
+                                ),
+                              ]
+                            
                             ],
                           ),
                         ),
