@@ -2,9 +2,11 @@ import 'package:booknest/controllers/account_controller.dart';
 import 'package:booknest/controllers/book_controller.dart';
 import 'package:booknest/controllers/loan_controller.dart';
 import 'package:booknest/controllers/user_controller.dart';
+import 'package:booknest/entities/models/book_model.dart';
 import 'package:booknest/entities/models/category_model.dart';
 import 'package:booknest/entities/models/user_model.dart';
 import 'package:booknest/views/add_book_view.dart';
+import 'package:booknest/views/book_details_owner_view.dart';
 import 'package:booknest/views/book_reader_view.dart';
 import 'package:booknest/views/category_view.dart';
 import 'package:booknest/views/edit_user_view.dart';
@@ -40,6 +42,10 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
   final UserController _userController = UserController();
 
   List<Map<String, dynamic>> activeLoans = [];
+
+  final TextEditingController _searchController = TextEditingController();
+  final BookController _bookController = BookController();
+  List<Book> filteredBooks = [];
 
   @override
   void initState() {
@@ -186,6 +192,119 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
     );
   }
 
+  Future<void> _searchBooks(String query, Function setState) async {
+    final userId = await AccountController().getCurrentUserId();
+
+    // Recuperamos los libros del propietario
+    final userBooks = await _bookController.getUserBooks(userId!);
+
+    // Normalizamos el query para hacer la búsqueda insensible a mayúsculas/minúsculas
+    final normalizedQuery = query.toLowerCase();
+
+    // Filtramos los libros del propietario según el título o autor
+    final filtered = userBooks.where((book) {
+      final title = (book.title ?? '').toString().toLowerCase();
+      final author = (book.author ?? '').toString().toLowerCase();
+      return title.contains(normalizedQuery) || author.contains(normalizedQuery);
+    }).toList();
+
+    // Actualizamos el estado del widget para reflejar los resultados filtrados
+    setState(() {
+      filteredBooks = query.isEmpty ? userBooks : filtered;
+    });
+  }
+
+
+  void _showSearchDialog(BuildContext context) {
+    _searchController.clear();
+    filteredBooks.clear();
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          backgroundColor: Colors.white,
+          child: Container(
+            width: 500,
+            height: 400,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFF112363), width: 3),
+            ),
+            child: StatefulBuilder(
+              builder: (context, setState) {
+                return Column(
+                  children: [
+                    const SizedBox(height: 15),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                      child: TextField(
+                        controller: _searchController,
+                        decoration: InputDecoration(
+                          hintText: 'Buscar por Título o Autor',
+                          prefixIcon: const Icon(Icons.search),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            borderSide: const BorderSide(color: Color(0xFF112363), width: 2),
+                          ),
+                        ),
+                        onChanged: (query) {
+                          _searchBooks(query, setState);
+                        },
+                      ),
+                    ),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          children: [
+                            if (_searchController.text.isEmpty)
+                              const SizedBox.shrink(),
+                            if (filteredBooks.isEmpty && _searchController.text.isNotEmpty)
+                              const Center(child: Text('No se encontraron resultados.')),
+                            if (filteredBooks.isNotEmpty)
+                              ListView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: filteredBooks.length,
+                                itemBuilder: (context, index) {
+                                  final book = filteredBooks[index];
+                                  return ListTile(
+                                    leading: Image.network(
+                                      book.cover,
+                                      width: 40,
+                                      height: 60,
+                                      fit: BoxFit.cover,
+                                    ),
+                                    title: Text(book.title),
+                                    subtitle: Text(book.author),
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) => BookDetailsOwnerView(bookId: book.id)),
+                                      );
+                                    },
+                                  );
+                                },
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+
   @override
   Widget build(BuildContext context) {
     final hasDescription = _descriptionController.text.trim().isNotEmpty && _descriptionController.text.trim().toLowerCase() != 'null';
@@ -296,20 +415,30 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
                         ),
                         Align(
                           alignment: Alignment.centerRight,
-                          child: IconButton(
-                            icon: const Icon(Icons.add_circle_outline, color: Colors.black),
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (context) => const AddBookView()),
-                              );
-                            },
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.search, color: Colors.black),
+                                onPressed: () {
+                                  _showSearchDialog(context);
+                                },
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.add_circle_outline, color: Colors.black),
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (context) => const AddBookView()),
+                                  );
+                                },
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
                   ),
-
                   const Divider(thickness: 1, color: Color(0xFF112363)),
                   const SizedBox(height: 8),
                   SizedBox(
