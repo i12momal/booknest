@@ -26,6 +26,9 @@ class _ResetPasswordViewViewState extends State<ResetPasswordView> {
   bool _isSubmitting = false;
   String _passwordErrorMessage = '';
 
+  String _emailErrorMessage = '';
+  String _pinErrorMessage = '';
+
   // Función que muestra el dialogo de éxito al recuperar la contraseña
   void _showSuccessDialog() {
     SuccessDialog.show(
@@ -34,8 +37,6 @@ class _ResetPasswordViewViewState extends State<ResetPasswordView> {
       '¡Ha recuperado y actualizado su contraseña con éxito!',
       () {
         Navigator.pop(context);
-
-        // Redirigir a la pantalla de inicio de sesión después de que el usuario acepte
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const LoginView()));
       },
     );
@@ -50,6 +51,29 @@ class _ResetPasswordViewViewState extends State<ResetPasswordView> {
       () { },
     );
   }
+
+  @override
+  void initState() {
+    super.initState();
+
+    _emailController.addListener(() {
+      if (_emailErrorMessage.isNotEmpty) {
+        setState(() {
+          _emailErrorMessage = '';
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _pinController.dispose();
+    _newPasswordController.dispose();
+    _repeatPasswordController.dispose();
+    super.dispose();
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -127,6 +151,18 @@ class _ResetPasswordViewViewState extends State<ResetPasswordView> {
                         ),
                         SizedBox(height: screenHeight * 0.01),
                         CustomTextField(icon: Icons.pin, hint: '', controller: _pinController, readOnly: _isReadOnly),
+                        if (_pinErrorMessage.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8.0, bottom: 12.0),
+                            child: Text(
+                              _pinErrorMessage,
+                              style: const TextStyle(
+                                color: Colors.red,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
                         ValueListenableBuilder<String>(
                           valueListenable: _accountController.errorMessage,
                           builder: (context, value, child) {
@@ -161,30 +197,42 @@ class _ResetPasswordViewViewState extends State<ResetPasswordView> {
                                 ),
                               ),
                               onPressed: _isLoading
-                                  ? null
-                                  : () async {
-                                      FocusScope.of(context).unfocus();
+                                ? null
+                                : () async {
+                                    FocusScope.of(context).unfocus();
 
-                                      final email = _emailController.text.trim();
-                                      final pin = _pinController.text.trim();
+                                    final email = _emailController.text.trim();
+                                    final pin = _pinController.text.trim();
 
+                                    // Limpiar mensajes de error previos
+                                    setState(() {
+                                      _emailErrorMessage = '';  
+                                      _pinErrorMessage = '';   
+                                      _isLoading = true;
+                                    });
+
+                                    // Llamar al controlador para verificar el email y el PIN
+                                    final response = await _accountController.verifyEmailAndPin(email, pin);
+
+                                    // Manejar la respuesta
+                                    if (response['success'] == false) {
                                       setState(() {
-                                        _isLoading = true;
+                                        _emailErrorMessage = '';  
+                                        _pinErrorMessage = response['message']; 
                                       });
-
-                                      await _accountController.verifyEmailAndPin(email, pin);
-
-                                      if (_accountController.errorMessage.value.isEmpty) {
-                                        setState(() {
-                                          _isVerified = true;
-                                          _isReadOnly = true;
-                                        });
-                                      }
-
+                                    } else {
+                                      // Si la verificación es exitosa, proceder
                                       setState(() {
-                                        _isLoading = false;
+                                        _isVerified = true;
+                                        _isReadOnly = true;
                                       });
-                                    },
+                                    }
+
+                                    setState(() {
+                                      _isLoading = false;
+                                    });
+                                },
+
                               child: _isLoading
                                   ? const SizedBox(
                                       width: 24,
@@ -270,6 +318,14 @@ class _ResetPasswordViewViewState extends State<ResetPasswordView> {
                                         if (newPass != repeatPass) {
                                           setState(() {
                                             _passwordErrorMessage = 'Las contraseñas no coinciden';
+                                          });
+                                          return;
+                                        }
+
+                                        // Validar si las contraseñas cumplen con los requisitos
+                                        if (!RegExp(r'^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&_-])[A-Za-z\d@$!%*?&_-]{8,}$').hasMatch(newPass)) {
+                                          setState(() {
+                                            _passwordErrorMessage = 'La contraseña debe tener al menos 8 caracteres, incluir mayúsculas, minúsculas, números y símbolos';
                                           });
                                           return;
                                         }

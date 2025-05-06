@@ -44,7 +44,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
       readOnly: widget.readOnly ?? false,
       decoration: InputDecoration(
         filled: true,
-        fillColor: widget.readOnly == true ? const Color.fromARGB(255, 219, 206, 206) : Colors.white,
+        fillColor: widget.readOnly == true ? const Color.fromARGB(255, 214, 208, 208) : Colors.white,
         suffixIcon: widget.isPassword
             ? IconButton(
                 icon: Icon(

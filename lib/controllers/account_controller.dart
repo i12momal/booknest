@@ -113,33 +113,36 @@ class AccountController extends BaseController{
   }
 
   // Método asíncrono para comprobar si el email y el pin proporcionados en la recuepración de contraseña son correctos
-  Future<void> verifyEmailAndPin(String email, String pin) async {
+  Future<Map<String, dynamic>> verifyEmailAndPin(String email, String pin) async {
+    // Validar que ambos campos estén llenos
     if (email.isEmpty || pin.isEmpty) {
-      errorMessage.value = 'Por favor ingrese todos los campos';
-
-      // Hacer que el mensaje desaparezca después de 5 segundos
-      Future.delayed(const Duration(seconds: 5), () {
-        errorMessage.value = '';
-      });
-
-      return;
+      return {'success': false, 'message': 'Por favor ingrese todos los campos'};
     }
 
-    errorMessage.value = ''; // Limpiar mensaje de error
+    // Validar formato del correo
+    if (!_isValidEmail(email)) {
+      return {'success': false, 'message': 'Por favor ingrese un correo válido'};
+    }
 
+    // Limpiar mensaje de error antes de hacer la verificación
+    errorMessage.value = '';
+
+    // Llamar al servicio para verificar el correo y PIN
     final result = await accountService.verifyEmailAndPin(email, pin);
 
     if (result['success']) {
-      errorMessage.value = '';
+      return {'success': true, 'message': 'Email y PIN verificados correctamente'};
     } else {
-      errorMessage.value = result['message'];
-
-      // Hacer que el mensaje desaparezca después de 5 segundos
-      Future.delayed(const Duration(seconds: 5), () {
-        errorMessage.value = '';
-      });
+      return {'success': false, 'message': result['message']};
     }
   }
+
+  bool _isValidEmail(String email) {
+    final regex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+    return regex.hasMatch(email);
+  }
+
+
 
   Future<bool> updatePassword(String email, String pin, String newPassword) async {
     final result = await accountService.updatePassword(email, pin, newPassword);

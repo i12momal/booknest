@@ -51,7 +51,7 @@ class AccountService extends BaseService {
       // Verificar si la contraseña coincide
       if (userResponse['password'] != inputPasswordHash) {
         print("Las contraseñas no coinciden");
-        return {'success': false, 'message': 'Contraseña incorrecta'};
+        return {'success': false, 'message': 'Usuario o contraseña incorrectos'};
       }
 
       // Si la contraseña coincide, obtener el ID del usuario
@@ -214,15 +214,17 @@ class AccountService extends BaseService {
       // Verificar si el pin coincide
       if (userResponse['pinRecuperacion'] != pin) {
         print("El pin no coincide");
-        return {'success': false, 'message': 'Pin incorrecto'};
+        // Aquí solo devolvemos un error genérico
+        return {'success': false, 'message': 'Error de verificación. Los datos ingresados no son correctos.'};
       }
-      
+
       return {'success': true, 'message': 'El email y el pin coinciden', 'data': userResponse};
     } catch (e) {
       print('Error en verifyEmailAndPin: $e');
       return {'success': false, 'message': 'Error de verificación. Los campos ingresados son incorrectos.'};
     }
   }
+
 
   // Función para actualizar la contraseña en caso de pérdida
   Future<Map<String, dynamic>> updatePassword(String email, String pin, String newPassword) async {
