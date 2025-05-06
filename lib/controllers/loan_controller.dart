@@ -114,6 +114,12 @@ class LoanController extends BaseController{
         String message = 'Tu libro "$bookName" ha sido devuelto.';
         await NotificationController().createNotification(ownerId, 'Préstamo Devuelto', loanId, message);
       }
+
+      // Si el préstamo ha sido rechazado, se notifica al usuario que ha solicitado el libro
+      if (newState == 'Rechazado') {
+        String message = 'Tu solicitud de préstamo para el libro "$bookName" ha sido rechazada.';
+        await NotificationController().createNotification(userId, 'Préstamo Rechazado', loanId, message);
+      }
     } catch (e) {
       print('Error al actualizar el estado del préstamo: $e');
     }
