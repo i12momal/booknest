@@ -1,11 +1,11 @@
 import 'package:booknest/controllers/account_controller.dart';
 import 'package:booknest/controllers/book_controller.dart';
+import 'package:booknest/controllers/loan_controller.dart';
 import 'package:booknest/entities/models/book_model.dart';
 import 'package:booknest/views/book_details_owner_view.dart';
 import 'package:booknest/views/favorites_view.dart';
 import 'package:booknest/views/home_view.dart';
 import 'package:booknest/views/owner_profile_view.dart';
-import 'package:booknest/views/user_profile_view.dart';
 import 'package:booknest/views/user_search_view.dart';
 import 'package:booknest/widgets/background.dart';
 import 'package:booknest/widgets/footer.dart';
@@ -33,6 +33,7 @@ class _CategoryViewState extends State<CategoryView> {
   List<Book> _allFilteredBooks = [];
   List<Book> _books = [];
   final BookController _bookController = BookController();
+  final LoanController _loanController = LoanController();
 
   int _currentPage = 1;
   final int _booksPerPage = 20;
@@ -84,7 +85,7 @@ class _CategoryViewState extends State<CategoryView> {
 
       // Ajustamos la paginación
       if (_currentPage > _totalPages) {
-        _currentPage = _totalPages; // Si estamos en la última página y se eliminó un libro, ajustamos la página
+        _currentPage = _totalPages;
       }
 
       _books = _paginateBooks();
@@ -100,6 +101,35 @@ class _CategoryViewState extends State<CategoryView> {
     if (screenWidth >= 600) return 5;
     if (screenWidth >= 400) return 4;
     return 3;
+  }
+
+  String getAvailabilityStatus(Book book, List<String> loanedFormats) {
+    final List<String> formats = book.format
+        .split(',')
+        .map((f) => f.trim().toLowerCase())
+        .where((f) => f.isNotEmpty)
+        .toList();
+
+    final List<String> disponibles = formats
+        .where((format) => !loanedFormats.map((f) => f.toLowerCase()).contains(format))
+        .toList();
+
+    if (disponibles.isEmpty) {
+      return 'Prestado';
+    } else if (disponibles.length == formats.length) {
+      return 'Disponible';
+    } else if (disponibles.length == 1) {
+      final formatCapitalized = disponibles.first[0].toUpperCase() + disponibles.first.substring(1);
+      return 'Disponible: formato $formatCapitalized';
+    } else {
+      if (disponibles.contains('físico') && !disponibles.contains('digital')) {
+        return 'Disponible: formato Físico';
+      } else if (disponibles.contains('digital') && !disponibles.contains('físico')) {
+        return 'Disponible: formato Digital';
+      } else {
+        return 'Disponible';
+      }
+    }
   }
 
   @override
@@ -175,47 +205,74 @@ class _CategoryViewState extends State<CategoryView> {
                                     itemCount: _books.length,
                                     itemBuilder: (context, index) {
                                       final book = _books[index];
-                                      return GestureDetector(
-                                        onTap: () async {
-                                          final deletedBookId = await Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) => BookDetailsOwnerView(bookId: book.id),
+                                      return FutureBuilder<List<String>>(
+                                        future: _loanController.fetchLoanedFormats(book.id),
+                                        builder: (context, snapshot) {
+                                          if (!snapshot.hasData) {
+                                            return const Center(child: CircularProgressIndicator(strokeWidth: 1));
+                                          }
+
+                                          final loanedFormats = snapshot.data!;
+                                          final status = getAvailabilityStatus(book, loanedFormats);
+
+                                          Icon statusIcon;
+                                          if (status == 'Disponible') {
+                                            statusIcon = const Icon(Icons.check_circle, color: Colors.green, size: 20);
+                                          } else if (status == 'Prestado') {
+                                            statusIcon = const Icon(Icons.cancel, color: Colors.red, size: 20);
+                                          } else {
+                                            statusIcon = const Icon(Icons.check_circle, color: Colors.orange, size: 20);
+                                          }
+
+                                          return GestureDetector(
+                                            onTap: () async {
+                                              final deletedBookId = await Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) => BookDetailsOwnerView(bookId: book.id),
+                                                ),
+                                              );
+                                              if (deletedBookId != null && deletedBookId is int) {
+                                                _removeBook(deletedBookId);
+                                              }
+                                            },
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Stack(
+                                                  alignment: Alignment.topRight,
+                                                  children: [
+                                                    ClipRRect(
+                                                      borderRadius: BorderRadius.circular(8),
+                                                      child: AspectRatio(
+                                                        aspectRatio: 0.7,
+                                                        child: Image.network(
+                                                          book.cover,
+                                                          fit: BoxFit.cover,
+                                                          errorBuilder: (context, error, stackTrace) =>
+                                                              const Icon(Icons.broken_image),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    Padding(
+                                                      padding: const EdgeInsets.all(4.0),
+                                                      child: statusIcon,
+                                                    ),
+                                                  ],
+                                                ),
+                                                const SizedBox(height: 6),
+                                                Text(
+                                                  book.title,
+                                                  maxLines: 2,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                                                ),
+                                              ],
                                             ),
                                           );
-                                          if (deletedBookId != null && deletedBookId is int) {
-                                            // Eliminamos el libro de la lista local
-                                            _removeBook(deletedBookId);
-                                          }
                                         },
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            ClipRRect(
-                                              borderRadius: BorderRadius.circular(8),
-                                              child: AspectRatio(
-                                                aspectRatio: 0.7,
-                                                child: Image.network(
-                                                  book.cover,
-                                                  fit: BoxFit.cover,
-                                                  errorBuilder: (context, error, stackTrace) =>
-                                                      const Icon(Icons.broken_image),
-                                                ),
-                                              ),
-                                            ),
-                                            const SizedBox(height: 6),
-                                            Text(
-                                              book.title,
-                                              maxLines: 2,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: const TextStyle(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.w500,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
                                       );
+
                                     },
                                   ),
                           ),

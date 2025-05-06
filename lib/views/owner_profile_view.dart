@@ -4,6 +4,7 @@ import 'package:booknest/controllers/loan_controller.dart';
 import 'package:booknest/controllers/user_controller.dart';
 import 'package:booknest/entities/models/category_model.dart';
 import 'package:booknest/entities/models/user_model.dart';
+import 'package:booknest/views/add_book_view.dart';
 import 'package:booknest/views/book_reader_view.dart';
 import 'package:booknest/views/category_view.dart';
 import 'package:booknest/views/edit_user_view.dart';
@@ -299,12 +300,40 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
                     ],
                   ),
                   const SizedBox(height: 50),
-                  const Text('Mi Biblioteca', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  const SizedBox(height: 16),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        const Center(
+                          child: Text(
+                            'Mi Biblioteca',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          ),
+                        ),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: IconButton(
+                            icon: const Icon(Icons.add_circle_outline, color: Colors.black),
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => const AddBookView()),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
                   const Divider(thickness: 1, color: Color(0xFF112363)),
+                  const SizedBox(height: 8),
                   SizedBox(
                     height: categories.length > 4 ? 200 : 100,
-                    child: categories.length > 4
+                    child: categories.isEmpty
+                        ? const Center(child: Text('No tienes libros subidos actualmente.'))
+                        : categories.length > 4
                         ? GridView.builder(
                             scrollDirection: Axis.horizontal,
                             itemCount: categories.length,

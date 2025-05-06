@@ -145,13 +145,13 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
       return 'Disponible';  // Si todos los formatos están disponibles
     } else if (disponibles.length == 1) {
       final formatCapitalized = disponibles.first[0].toUpperCase() + disponibles.first.substring(1);
-      return 'Disponible en formato $formatCapitalized';  // Si solo hay un formato disponible
+      return 'Disponible: formato $formatCapitalized';  // Si solo hay un formato disponible
     } else {
       // Si hay más de un formato disponible, especificar uno
       if (disponibles.contains('físico') && !disponibles.contains('digital')) {
-        return 'Disponible en formato Físico';
+        return 'Disponible: formato Físico';
       } else if (disponibles.contains('digital') && !disponibles.contains('físico')) {
-        return 'Disponible en formato Digital';
+        return 'Disponible: formato Digital';
       } else {
         return 'Disponible';  // Si hay más de un formato disponible (físico y digital)
       }
@@ -697,12 +697,12 @@ class _BookHeader extends StatelessWidget {
       availabilityStatus = 'Disponible';
     } else if (disponibles.length == 1) {
       final formatCapitalized = disponibles.first[0].toUpperCase() + disponibles.first.substring(1);
-      availabilityStatus = 'Disponible en formato $formatCapitalized';
+      availabilityStatus = 'Disponible: formato $formatCapitalized';
     } else {
       if (disponibles.contains('físico') && !disponibles.contains('digital')) {
-        availabilityStatus = 'Disponible en formato Físico';
+        availabilityStatus = 'Disponible: formato Físico';
       } else if (disponibles.contains('digital') && !disponibles.contains('físico')) {
-        availabilityStatus = 'Disponible en formato Digital';
+        availabilityStatus = 'Disponible: formato Digital';
       } else {
         availabilityStatus = 'Disponible';
       }
@@ -812,7 +812,7 @@ class _BookHeader extends StatelessWidget {
                                 const Icon(Icons.check_circle, color: Colors.green, size: 18),
                                 const SizedBox(width: 4),
                                 const Text("Disponible"),
-                              ] else if (availabilityStatus.startsWith('Disponible en formato')) ...[
+                              ] else if (availabilityStatus.startsWith('Disponible: formato')) ...[
                                 const Icon(Icons.check_circle, color: Colors.green, size: 18),
                                 const SizedBox(width: 4),
                                 Text(availabilityStatus),
