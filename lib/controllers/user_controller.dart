@@ -24,18 +24,8 @@ class UserController extends BaseController{
         - message: Proporciona un mensaje de estado.
         - data (Opcional): Información del usuario actualizado si la operación fue exitosa.
   */
-  Future<Map<String, dynamic>> editUser(
-    String id,
-    String name,
-    String userName,
-    String email,
-    int phoneNumber,
-    String address,
-    String password,
-    String confirmPassword,
-    File? image,
-    String genres
-  ) async {
+  Future<Map<String, dynamic>> editUser(String id, String name, String userName, String email, int phoneNumber, String address, String password, String confirmPassword,
+    File? image, String genres, String description) async {
     String? imageUrl;
     String? passwordHash;
 
@@ -85,6 +75,7 @@ class UserController extends BaseController{
       image: imageUrl,
       genres: genres,
       role: 'usuario',
+      description: description
     );
 
     print("Contenido del viewModel:");

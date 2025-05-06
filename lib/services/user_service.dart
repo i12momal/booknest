@@ -121,6 +121,9 @@ class UserService extends BaseService{
       if (existingUser['genres'] != editUserViewModel.genres) {
         updateData['genres'] = editUserViewModel.genres;
       }
+      if (existingUser['description'] != editUserViewModel.description) {
+        updateData['description'] = editUserViewModel.description;
+      }
 
       print("Datos a actualizar: $updateData");
 

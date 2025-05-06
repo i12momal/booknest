@@ -30,6 +30,7 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneNumberController = TextEditingController();
+  final _descriptionController = TextEditingController();
   String? currentImageUrl;
 
   List<Category> categories = [];
@@ -61,6 +62,7 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
         setState(() {
           _nameController.text = userData.name;
           _emailController.text = userData.email;
+          _descriptionController.text = userData.description!;
           _phoneNumberController.text = userData.phoneNumber.toString();
           currentImageUrl = userData.image ?? '';
           _isLoading = false;
@@ -186,6 +188,8 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
 
   @override
   Widget build(BuildContext context) {
+    final hasDescription = _descriptionController.text.trim().isNotEmpty && _descriptionController.text.trim().toLowerCase() != 'null';
+
         if (_isLoading) {
           return const Scaffold(
             backgroundColor: Colors.white,
@@ -229,7 +233,7 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
                 children: [
                   const SizedBox(height: 40),
                   Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: hasDescription ? CrossAxisAlignment.start : CrossAxisAlignment.center,
                     children: [
                       CircleAvatar(
                         radius: 50,
@@ -265,33 +269,12 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
                                   maxLines: 1,
                                 ),
                                 const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    const Icon(Icons.email, size: 16),
-                                    const SizedBox(width: 4),
-                                    Expanded(
-                                      child: Text(
-                                        _emailController.text,
-                                        overflow: TextOverflow.ellipsis,
-                                        maxLines: 1,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    const Icon(Icons.phone, size: 16),
-                                    const SizedBox(width: 4),
-                                    Expanded(
-                                      child: Text(
-                                        _phoneNumberController.text,
-                                        softWrap: false,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                                if (hasDescription)
+                                  Row(
+                                    children: [
+                                      Expanded(child: Text(_descriptionController.text)),
+                                    ],
+                                  ),
                               ],
                             ),
                           ),

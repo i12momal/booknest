@@ -26,6 +26,7 @@ class _UserProfileViewState extends State<UserProfileView> {
   final _userNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneNumberController = TextEditingController();
+  final _descriptionController = TextEditingController();
   String? currentImageUrl;
 
   String? _currentUserId;
@@ -71,6 +72,7 @@ class _UserProfileViewState extends State<UserProfileView> {
           _nameController.text = userData.name;
           _userNameController.text = userData.userName;
           _emailController.text = userData.email;
+          _descriptionController.text = userData.description!;
           _phoneNumberController.text = userData.phoneNumber.toString();
           currentImageUrl = userData.image ?? '';
           _isLoading = false;
@@ -101,6 +103,7 @@ class _UserProfileViewState extends State<UserProfileView> {
 
  @override
   Widget build(BuildContext context) {
+    final hasDescription = _descriptionController.text.trim().isNotEmpty && _descriptionController.text.trim().toLowerCase() != 'null';
     return FutureBuilder<String?>(
       future: AccountController().getCurrentUserId(),
       builder: (context, snapshot) {
@@ -131,7 +134,7 @@ class _UserProfileViewState extends State<UserProfileView> {
                 children: [
                   const SizedBox(height: 40),
                   Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: hasDescription ? CrossAxisAlignment.start : CrossAxisAlignment.center,
                     children: [
                       CircleAvatar(
                         radius: 50,
@@ -157,29 +160,12 @@ class _UserProfileViewState extends State<UserProfileView> {
                                   style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                                 ),
                                 const SizedBox(height: 4),
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Icon(Icons.email, size: 16),
-                                    const SizedBox(width: 4),
-                                    Expanded(child: TapBubbleText(text: _emailController.text)),
-                                  ],
-                                ),
-                                const SizedBox(height: 4),
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Icon(Icons.phone, size: 16),
-                                    const SizedBox(width: 4),
-                                    Expanded(
-                                      child: Text(
-                                        _phoneNumberController.text,
-                                        softWrap: false,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                                if (hasDescription)
+                                  Row(
+                                    children: [
+                                      Expanded(child: Text(_descriptionController.text)),
+                                    ],
+                                  ),
                               ],
                             ),
                           ),
@@ -187,6 +173,7 @@ class _UserProfileViewState extends State<UserProfileView> {
                       ),
                     ],
                   ),
+
                   const SizedBox(height: 50),
                   const Text('Biblioteca', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   const SizedBox(height: 16),
@@ -195,7 +182,9 @@ class _UserProfileViewState extends State<UserProfileView> {
                   // Contenedor con Scroll Horizontal para categorías
                   SizedBox(
                     height: categories.length > 4 ? 200 : 100,
-                    child: categories.length > 4
+                    child: categories.isEmpty
+                        ? const Center(child: Text('No tiene libros subidos actualmente.'))
+                        : categories.length > 4
                         ? GridView.builder(
                             scrollDirection: Axis.horizontal,
                             itemCount: categories.length,

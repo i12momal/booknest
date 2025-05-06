@@ -27,6 +27,7 @@ class _EditUserViewState extends State<EditUserView> {
   final _addressController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _descriptionController = TextEditingController();
   File? _imageFile;
   final _formKey = GlobalKey<FormState>();
 
@@ -60,6 +61,7 @@ class _EditUserViewState extends State<EditUserView> {
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     _pageController.dispose();
+    _descriptionController.dispose();
     super.dispose();
   }
 
@@ -87,6 +89,7 @@ class _EditUserViewState extends State<EditUserView> {
           _emailController.text = userData.email;
           _phoneNumberController.text = userData.phoneNumber.toString();
           _addressController.text = userData.address;
+          _descriptionController.text = userData.description!;
           selectedGenres = List<String>.from(userData.genres);
           currentImageUrl = userData.image ?? '';
           _isLoading = false;
@@ -180,6 +183,7 @@ class _EditUserViewState extends State<EditUserView> {
       final name = _nameController.text.trim();
       final userName = _userNameController.text.trim();
       final email = _emailController.text.trim();
+      final description = _descriptionController.text.trim();
       final phoneNumber = int.tryParse(_phoneNumberController.text.trim()) ?? 0;
       final address = _addressController.text.trim();
       final password = _passwordController.text.isNotEmpty ? _passwordController.text.trim() : null;
@@ -199,18 +203,8 @@ class _EditUserViewState extends State<EditUserView> {
       print("Géneros seleccionados: $selectedGenres");
       print("Imagen: ${_imageFile != null ? 'Nueva imagen seleccionada' : 'Mantener imagen actual'}");
 
-      final result = await _userController.editUser(
-        widget.userId,
-        name,
-        userName,
-        email,
-        phoneNumber,
-        address,
-        password ?? '', // Asegura que siempre se pase un string
-        confirmPassword ?? '', // Asegura que siempre se pase un string
-        _imageFile, // Si no hay imagen nueva, mantendrá la actual en backend
-        selectedGenres.join(", ")
-      );
+      final result = await _userController.editUser(widget.userId, name, userName, email, phoneNumber, address, password ?? '', confirmPassword ?? '', _imageFile,
+        selectedGenres.join(", "), description);
 
       if (result['success']) {
         _showSuccessDialog();
@@ -275,6 +269,7 @@ class _EditUserViewState extends State<EditUserView> {
       addressController: _addressController,
       passwordController: _passwordController,
       confirmPasswordController: _confirmPasswordController,
+      descriptionController: _descriptionController,
       imageFile: _imageFile,
       onImagePicked: _handleImagePicked,
       onNext: nextPage,

@@ -76,7 +76,7 @@ class AccountController extends BaseController{
         - data (Opcional): Información del usuario registrado si la operación fue exitosa.
   */
   Future<Map<String, dynamic>> registerUser(String name, String userName, String email, int phoneNumber,
-    String address, String password, String confirmPassword, File? image, String genres) async {
+    String address, String password, String confirmPassword, File? image, String genres, String description) async {
 
     String? imageUrl;
 
@@ -103,6 +103,7 @@ class AccountController extends BaseController{
       genres: genres,
       role: 'usuario',
       pinRecuperacion: pinRecuperacion,
+      description: description,
     );
     
     // Llamada al servicio para registrar al usuario

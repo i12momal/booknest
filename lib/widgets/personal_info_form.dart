@@ -11,6 +11,7 @@ class PersonalInfoForm extends StatelessWidget {
   final TextEditingController addressController;
   final TextEditingController passwordController;
   final TextEditingController confirmPasswordController;
+  final TextEditingController? descriptionController;
   final File? imageFile;
   final Function(File?) onImagePicked;
   final VoidCallback onNext;
@@ -33,6 +34,7 @@ class PersonalInfoForm extends StatelessWidget {
     required this.formKey, 
     required this.isEditMode,
     this.imageUrl,
+    this.descriptionController,
   });
 
   @override
@@ -113,6 +115,7 @@ class PersonalInfoForm extends StatelessWidget {
                       _buildTextField('Contraseña', Icons.visibility, passwordController, isPassword: true),
                       _buildTextField('Confirmar Contraseña', Icons.visibility, confirmPasswordController, isPassword: true),
                     ],
+                   _buildTextField('Descripción', Icons.description, descriptionController!),
                     const SizedBox(height: 15),
 
                     ImagePickerWidget(

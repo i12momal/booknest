@@ -158,6 +158,7 @@ class AccountService extends BaseService {
         'genres': registerUserViewModel.genres,
         'role': registerUserViewModel.role,
         'pinRecuperacion': registerUserViewModel.pinRecuperacion,
+        'description': registerUserViewModel.description,
       };
       print("Datos a insertar: $userData");
 

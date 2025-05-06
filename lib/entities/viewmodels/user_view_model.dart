@@ -37,6 +37,7 @@ class CreateUserViewModel {
   final String? image;
   final String role;
   final List<String> favorites;
+  final String? description;
 
 //All required fields from class User
   CreateUserViewModel(
@@ -50,6 +51,7 @@ class CreateUserViewModel {
     required this.image,
     required this.role,
     this.favorites = const [],
+    this.description = ''
     }
   );
 }
@@ -68,6 +70,7 @@ class EditUserViewModel {
   final String genres;
   final String role;
   final List<String> favorites;
+  final String? description;
 
 //All required fields from class User
   EditUserViewModel(
@@ -84,6 +87,7 @@ class EditUserViewModel {
     required this.genres,
     required this.role,
     this.favorites = const [],
+    this.description = ''
     }
   );
 }

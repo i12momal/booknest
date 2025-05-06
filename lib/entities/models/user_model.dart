@@ -13,6 +13,7 @@ class User {
   final String role;
   final String pinRecuperacion;
   final List<String> favorites;
+  final String? description;
 
 //All required fields from class User
   User(
@@ -30,6 +31,7 @@ class User {
     required this.role,
     required this.pinRecuperacion,
     this.favorites = const [],
+    this.description = '',
     }
   );
 
@@ -52,6 +54,7 @@ class User {
       favorites: json['favorites'] is String
         ? json['favorites'].split(',').map((e) => e.trim()).toList()
         : List<String>.from(json['favorites'] ?? []),
+      description: json['description'],
     );
   }
 }

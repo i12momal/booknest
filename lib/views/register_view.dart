@@ -25,6 +25,7 @@ class _RegisterViewState extends State<RegisterView> {
   final _addressController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _descriptionController = TextEditingController();
   File? _imageFile;
   final _formKey = GlobalKey<FormState>();
 
@@ -109,13 +110,14 @@ class _RegisterViewState extends State<RegisterView> {
     final address = _addressController.text.trim();
     final password = _passwordController.text.trim();
     final confirmPassword = _confirmPasswordController.text.trim();
+    final description = _descriptionController.text.trim();
 
     setState(() {
       _isLoading = true;
     });
 
     final result = await _accountController.registerUser(
-        name, userName, email, phoneNumber, address, password, confirmPassword, _imageFile, selectedGenres.join(", "));
+        name, userName, email, phoneNumber, address, password, confirmPassword, _imageFile, selectedGenres.join(", "), description);
 
     setState(() {
       _message = result['message'];
@@ -217,6 +219,7 @@ class _RegisterViewState extends State<RegisterView> {
       addressController: _addressController,
       passwordController: _passwordController,
       confirmPasswordController: _confirmPasswordController,
+      descriptionController: _descriptionController,
       imageFile: _imageFile,
       onImagePicked: _handleImagePicked,
       onNext: nextPage,
