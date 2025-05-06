@@ -29,26 +29,32 @@ class LoanController extends BaseController{
 
     final response = await loanService.createLoan(createLoanViewModel);
 
-    // 🚨 NUEVO: Si el préstamo se creó correctamente, crear notificación para el dueño
+    String? notificationId;
+
     if (response['success'] && response['data'] != null) {
       final loan = response['data'];
       final bookTitle = book.title;
       final ownerId = book.ownerId;
 
-      // Verificar el loan['id']
-      print("ID del préstamo: ${loan['id']}");
-
-      // Crear notificación para el dueño del libro
-      await NotificationController().createNotification(
+      final notificationResponse = await NotificationController().createNotification(
         ownerId,
         'Préstamo',
         loan['id'],
-        'Has recibido una nueva solicitud de préstamo para tu libro "$bookTitle".', 
+        'Has recibido una nueva solicitud de préstamo para tu libro "$bookTitle".',
       );
+
+      if (notificationResponse['success'] && notificationResponse['data'] != null) {
+        notificationId = notificationResponse['data']['id']?.toString();
+      }
     }
 
-    return response;
+    // Devuelve el response original y, si existe, el ID de la notificación
+    return {
+      ...response,
+      if (notificationId != null) 'notificationId': notificationId,
+    };
   }
+
 
   // Método que obtiene los libros que han sido prestados a un usuario
   Future<List<Map<String, dynamic>>> getLoansByHolder(String userId) async {
@@ -174,8 +180,8 @@ class LoanController extends BaseController{
   }
 
 
-  Future<Map<String, dynamic>> cancelLoanRequest(int bookId) async {
-    return await loanService.cancelLoan(bookId);
+  Future<Map<String, dynamic>> cancelLoanRequest(int bookId, int? notificationId) async {
+    return await loanService.cancelLoan(bookId, notificationId);
   }
   
 }

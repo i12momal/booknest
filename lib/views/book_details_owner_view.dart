@@ -42,6 +42,8 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
   late Future<List<String>> _loanedFormatsFuture;
   bool _loanRequestSent = false;
 
+  int? notificationId;
+
   @override
   void initState() {
     super.initState();
@@ -68,7 +70,7 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
     );
   }
 
-  void _confirmDeleteLoanRequest(BuildContext context, int bookId) async {
+  void _confirmDeleteLoanRequest(BuildContext context, int bookId, int? notificationId) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -88,7 +90,7 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
     );
 
     if (confirm == true) {
-      final response = await loancontroller.cancelLoanRequest(bookId);
+      final response = await loancontroller.cancelLoanRequest(bookId, notificationId);
 
       if (!context.mounted) return;
 
@@ -223,7 +225,7 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
                               child:  _loanRequestSent
                               ? ElevatedButton(
                                   onPressed: () {
-                                    _confirmDeleteLoanRequest(context, book.id);
+                                    _confirmDeleteLoanRequest(context, book.id, notificationId);
                                   },
                                   style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0xFFAD0000),
@@ -275,6 +277,7 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
                                   if (response['success']) {
                                     setState(() {
                                       _loanRequestSent = true;
+                                      notificationId = int.tryParse(response['notificationId']);
                                     });
                                     _showSuccessDialog(context);
                                   } else {
@@ -410,8 +413,7 @@ class _BookInfoTabsState extends State<BookInfoTabs> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 20),
-          const SizedBox(height: 40),
+          const SizedBox(height: 35),
           const TabBar(
             indicatorColor: Color(0xFF112363),
             labelColor: Colors.black,

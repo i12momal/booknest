@@ -379,8 +379,15 @@ class LoanService extends BaseService{
     }
   }
 
-  Future<Map<String, dynamic>> cancelLoan(int bookId) async {
+  Future<Map<String, dynamic>> cancelLoan(int bookId, int? notificationId) async {
     try {
+      // Eliminamos la notificacion enviada al propietario
+      await BaseService.client
+          .from('Notifications')
+          .delete()
+          .eq('id', notificationId!);
+
+      // Eliminamos la solicitud de préstamo
       final response = await BaseService.client
           .from('Loan')
           .delete()
