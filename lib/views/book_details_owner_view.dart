@@ -44,12 +44,16 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
 
   int? notificationId;
 
+  bool _isSendingRequest = false;
+  bool _isDeletingRequest = false;
+
   @override
   void initState() {
     super.initState();
     _bookFuture = _controller.getBookById(widget.bookId);
     _currentUserFuture = AccountController().getCurrentUserId();
     _loanedFormatsFuture = loancontroller.fetchLoanedFormats(widget.bookId);
+    _checkIfLoanRequestExists();
   }
 
   void _showSuccessDialog(BuildContext context) {
@@ -68,6 +72,19 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
       message,
       () {},
     );
+  }
+
+  Future<void> _checkIfLoanRequestExists() async {
+    final userId = await AccountController().getCurrentUserId();
+    if (userId != null) {
+      final result = await loancontroller.checkExistingLoanRequest(widget.bookId, userId);
+      if (mounted) {
+        setState(() {
+          _loanRequestSent = result['exists'];
+          notificationId = result['notificationId'];
+        });
+      }
+    }
   }
 
   void _confirmDeleteLoanRequest(BuildContext context, int bookId, int? notificationId) async {
@@ -225,26 +242,33 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
                               child:  _loanRequestSent
                               ? ElevatedButton(
                                   onPressed: () {
+                                    setState(() => _isDeletingRequest = true);
                                     _confirmDeleteLoanRequest(context, book.id, notificationId);
+                                    if (mounted) setState(() => _isDeletingRequest = false);
                                   },
                                   style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFFAD0000),
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: screenWidth * 0.1,
-                                    vertical: screenHeight * 0.02,
+                                    backgroundColor: const Color(0xFFAD0000),
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: screenWidth * 0.1,
+                                      vertical: screenHeight * 0.02,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(30),
+                                      side: const BorderSide(color: Color(0xFF700101), width: 3),
+                                    ),
                                   ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(30),
-                                    side: const BorderSide(color: Color(0xFF700101), width: 3),
-                                  ),
-                                ),
-                                child: const Text(
-                                  "Eliminar Solicitud de Préstamo",
-                                  style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
-                                ),
-                                )
+                                  child: _isDeletingRequest
+                                    ? const CircularProgressIndicator(color: Colors.white)
+                                    : const Text(
+                                        "Eliminar Solicitud de Préstamo",
+                                        style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                                      ),
+
+                              )
                               : ElevatedButton(
                                 onPressed: () async {
+                                  setState(() => _isSendingRequest = true);
+
                                   // Obtener los formatos disponibles del libro (campo 'format' en la tabla Book)
                                   final formats = book.format.split(',').map((e) => e.trim()).toList();
 
@@ -253,6 +277,7 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
                                   if (!context.mounted) return;
                                   if (availableFormats.isEmpty) {
                                     _showErrorDialog(context, 'No hay formatos disponibles para préstamo.');
+                                    setState(() => _isSendingRequest = false);
                                     return;
                                   }
 
@@ -265,6 +290,7 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
                                     if (!context.mounted) return;
                                     if (selectedFormat == null || selectedFormat.isEmpty) {
                                       _showErrorDialog(context, 'Debes seleccionar un formato válido.');
+                                      setState(() => _isSendingRequest = false);
                                       return;
                                     }
                                   }
@@ -283,6 +309,7 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
                                   } else {
                                     _showErrorDialog(context, response['message']);
                                   }
+                                  setState(() => _isSendingRequest = false);
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0xFFAD0000),
@@ -295,10 +322,13 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
                                     side: const BorderSide(color: Color(0xFF700101), width: 3),
                                   ),
                                 ),
-                                child: const Text(
-                                  "Solicitar Préstamo",
-                                  style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
-                                ),
+                                child: _isSendingRequest
+                                  ? const CircularProgressIndicator(color: Colors.white)
+                                  : const Text(
+                                      "Solicitar Préstamo",
+                                      style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                                    ),
+
                               ),
                             ),
                           ),

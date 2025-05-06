@@ -189,5 +189,11 @@ class LoanController extends BaseController{
   Future<Map<String, dynamic>> cancelLoanRequest(int bookId, int? notificationId) async {
     return await loanService.cancelLoan(bookId, notificationId);
   }
+
+  // Método que comprueba si el usuario ya ha realizado una solicitud de préstamo para un libro
+  Future<Map<String, dynamic>> checkExistingLoanRequest(int bookId, String userId) async {
+    return await loanService.checkExistingLoanRequest(bookId, userId);
+  }
+
   
 }

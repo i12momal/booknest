@@ -405,4 +405,35 @@ class LoanService extends BaseService{
     }
   }
 
+  // Método que comprueba si el usuario ya ha realizado una solicitud de préstamo para un libro
+  Future<Map<String, dynamic>> checkExistingLoanRequest(int bookId, String userId) async {
+    try {
+      if (BaseService.client == null) {
+        return {'exists': false, 'notificationId': null};
+      }
+
+      final response = await BaseService.client
+          .from('Loan')
+          .select()
+          .eq('currentHolderId', userId)
+          .eq('state', 'Pendiente')
+          .eq('bookId', bookId)
+          .limit(1)
+          .maybeSingle();
+
+      if (response != null) {
+        return {
+          'exists': true,
+          'notificationId': response['notificationId'],
+        };
+      } else {
+        return {'exists': false, 'notificationId': null};
+      }
+    } catch (e) {
+      print('Error al obtener solicitud del usuario: $e');
+      return {'exists': false, 'notificationId': null};
+    }
+  }
+
+
 }
