@@ -5,7 +5,6 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:booknest/widgets/custom_text_field.dart';
 import 'package:booknest/widgets/language_dropdown.dart';
-import 'package:booknest/widgets/bookstate_dropdown.dart';
 import 'package:booknest/controllers/book_controller.dart';
 
 class BookInfoFormEdit extends StatefulWidget {
@@ -21,6 +20,7 @@ class BookInfoFormEdit extends StatefulWidget {
   final void Function(bool isPhysical, bool isDigital) onFormatChanged;
   final void Function(File?) onFilePicked;
   final List<String> selectedFormats;
+  final int bookId;
   
   final File? coverFile;
   final String? coverImageUrl; 
@@ -47,6 +47,7 @@ class BookInfoFormEdit extends StatefulWidget {
     required this.coverFile,
     this.coverImageUrl,
     this.selectedFormats = const [],
+    required this.bookId,
   });
 
   @override
@@ -57,6 +58,9 @@ class _BookInfoFormEditState extends State<BookInfoFormEdit> {
   String? languageErrorMessage;
   String? bookStateErrorMessage;
   String? formatErrorMessage;
+  String? coverImageErrorMessage;
+  String? fileErrorMessage;
+  File? coverImageFile;
 
   // Variables de estado para los checkboxes
   bool isPhysicalSelected = false;
@@ -72,17 +76,41 @@ class _BookInfoFormEditState extends State<BookInfoFormEdit> {
   void initState() {
     super.initState();
     bookController = BookController();
+    coverImageFile = widget.coverFile;
 
-    // Si estamos en modo edición, cargamos los datos del libro.
+    // Si estamos en modo edición, cargamos los datos del libro (no actualizamos nada).
     if (widget.isEditMode) {
-      // Simula una carga asincrónica
+      // Aquí solo cargamos los datos del libro sin hacer un "update"
       Future.delayed(Duration.zero, () async {
-        final bookData = await BookController().getBookById(1); 
+        final bookData = await BookController().getBookById(widget.bookId); 
         if (bookData != null) {
           loadBookData(bookData);
         }
       });
     }
+  }
+
+
+  String? validateISBN(String? value) {
+    final trimmed = value?.trim() ?? '';
+
+    if (trimmed.isEmpty) {
+      return 'Por favor ingresa el ISBN del libro';
+    } else if (!_isValidISBN(trimmed)) {
+      return 'ISBN no válido';
+    }
+    
+    return null; // Si es válido
+  }
+
+  bool _isValidISBN(String value) {
+    // Verificamos si es ISBN-13
+    final isbn13RegEx = RegExp(r'^\d{13}$');
+    
+    // Verificamos si es ISBN-10
+    final isbn10RegEx = RegExp(r'^\d{9}[\dX]$');
+    
+    return isbn13RegEx.hasMatch(value) || isbn10RegEx.hasMatch(value);
   }
 
   void loadBookData(Book book) {
@@ -91,24 +119,29 @@ class _BookInfoFormEditState extends State<BookInfoFormEdit> {
 
     String? fileName;
 
-    if (fileUrl != null) {
-      final rawName = Uri.decodeFull(fileUrl.split('/').last); // Extrae el nombre del archivo
+    if (fileUrl != null && fileUrl.isNotEmpty) {
+      final rawName = Uri.decodeFull(fileUrl.split('/').last);
       print("Raw name extracted: $rawName");
 
       final dotIndex = rawName.lastIndexOf('.');
-      final nameParts = rawName.substring(0, dotIndex).split('_');
+      if (dotIndex != -1) {
+        final nameParts = rawName.substring(0, dotIndex).split('_');
 
-      // Asume que los últimos dos elementos son UID y timestamp
-      if (nameParts.length > 2) {
-        final cleanedName = nameParts.sublist(0, nameParts.length - 2).join('_');
-        final extension = rawName.substring(dotIndex);
-        fileName = "$cleanedName$extension";
+        // Asume que los últimos dos elementos son UID y timestamp
+        if (nameParts.length > 2) {
+          final cleanedName = nameParts.sublist(0, nameParts.length - 2).join('_');
+          final extension = rawName.substring(dotIndex);
+          fileName = "$cleanedName$extension";
+        } else {
+          fileName = rawName;
+        }
       } else {
         fileName = rawName;
       }
 
-      print("File name extracted: $fileName"); // Verificar que el nombre se extrae correctamente
-    }
+  print("File name extracted: $fileName");
+}
+
 
     setState(() {
       isPhysicalSelected = formatoList.contains('físico');
@@ -179,10 +212,62 @@ class _BookInfoFormEditState extends State<BookInfoFormEdit> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildTextField('Título', Icons.class_outlined, widget.titleController),
-                    _buildTextField('Autor', Icons.person, widget.authorController),
-                    _buildTextField('ISBN', Icons.menu, widget.isbnController),
-                    _buildTextField('Número de páginas', Icons.insert_drive_file_outlined , widget.pagesNumberController),
+                    _buildTextField('Título', Icons.class_outlined, widget.titleController,
+                    (value) {
+                        final trimmed = value?.trim() ?? '';
+                        if (trimmed.isEmpty) {
+                          return 'Por favor ingresa el título del libro';
+                        } 
+                        return null;
+                      },
+                    ),
+                    _buildTextField('Autor', Icons.person, widget.authorController,
+                    (value) {
+                        final trimmed = value?.trim() ?? '';
+                        if (trimmed.isEmpty) {
+                          return 'Por favor ingresa el autor del libro';
+                        } 
+                        return null;
+                      },),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'ISBN',
+                          style: TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                        CustomTextField(
+                          validator: (value) {
+                            final trimmed = value?.trim() ?? '';
+                            if (trimmed.isEmpty) {
+                              return 'Por favor ingresa el ISBN del libro';
+                            } 
+                            // Verificar si el ISBN es válido 
+                            else if (!_isValidISBN(trimmed)) {
+                              return 'ISBN no válido';
+                            }
+                            return null;
+                          }, 
+                          icon: Icons.menu,
+                          hint: '123456789X ó 9781234567897',
+                          controller: widget.isbnController,
+                        ),
+                        const SizedBox(height: 15),
+                      ],
+                    ),
+                    _buildTextField('Número de páginas', Icons.insert_drive_file_outlined , widget.pagesNumberController,
+                    (value) {
+                      final trimmed = value?.trim() ?? '';
+                      if (trimmed.isEmpty) {
+                        return 'Por favor ingresa el número de páginas';
+                      }
+                      
+                      final numericRegEx = RegExp(r'^\d+$');
+                      if (!numericRegEx.hasMatch(trimmed)) {
+                        return 'Debe ser un número válido';
+                      }
+                      return null; 
+                    },),
                     
                     // Etiqueta y dropdown de idioma
                     const Text(
@@ -223,45 +308,12 @@ class _BookInfoFormEditState extends State<BookInfoFormEdit> {
                     
                     const SizedBox(height: 15),
 
-                    if(widget.isEditMode == true )...[
-                      const Text(
-                        'Estado',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
-                      ),
-                      const SizedBox(height: 5),
-                      BookStateDropdown(
-                        controller: widget.bookStateController,
-                        onChanged: (String? newValue) {
-                          if (newValue != null && newValue.isNotEmpty) {
-                            setState(() {
-                              bookStateErrorMessage = null;
-                            });
-                            widget.bookStateController.text = newValue;
-                            widget.formKey.currentState?.validate();
-                          }
-                        },
-                      ),
-                      if (bookStateErrorMessage != null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: Text(
-                            bookStateErrorMessage!,
-                            style: const TextStyle(color: Colors.red),
-                          ),
-                        ),
-                      
-                      const SizedBox(height: 15),
-                    ]else...[],
-
                     BookCoverPickerWidget(
                       initialCoverImage: coverImage,
                       onCoverImagePicked: widget.onCoverPicked,
                       coverImageUrl: widget.coverImageUrl,
                     ),
+            
                     const SizedBox(height: 15),
                     const Text(
                       'Formato',
@@ -385,6 +437,17 @@ class _BookInfoFormEditState extends State<BookInfoFormEdit> {
                           ),
                         ),
                       ),
+                      if (fileErrorMessage != null) ...{
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Text(
+                            fileErrorMessage!,
+                            style: const TextStyle(color: Colors.red, fontSize: 12),
+                          ),
+                        ),
+                      },
+
+
                     }else...[], 
 
                     const SizedBox(height: 22),
@@ -392,18 +455,53 @@ class _BookInfoFormEditState extends State<BookInfoFormEdit> {
                       alignment: Alignment.center,
                       child: ElevatedButton(
                         onPressed: () {
-                          // Verificar que al menos un formato esté seleccionado
-                          if (widget.selectedFormats.isEmpty) {
-                            setState(() {
-                              formatErrorMessage = 'Seleccione al menos un formato'; // Mostrar mensaje de error
-                            });
-                            return; // Evita que se ejecute cualquier otra cosa si no se seleccionó ningún formato
-                          } else {
-                            setState(() {
-                              formatErrorMessage = null; // Limpiar mensaje de error si hay formatos seleccionados
-                            });
+                          // Resetear errores
+                          setState(() {
+                            coverImageErrorMessage = null;
+                            formatErrorMessage = null;
+                            fileErrorMessage = null;
+                            languageErrorMessage = null;
+                          });
+
+                          // Validar formulario
+                          final isFormValid = widget.formKey.currentState?.validate() ?? false;
+                          print("Formulario válido: $isFormValid");
+
+                          // Validar portada
+                          bool hasCoverImage = coverImageFile != null || widget.coverImageUrl != null;
+                          if (!hasCoverImage) {
+                            coverImageErrorMessage = 'Por favor selecciona una imagen de portada';
                           }
-                          widget.onNext();
+                          print("Validación de portada: $hasCoverImage");
+
+                          // Validar formato
+                          bool hasFormat = widget.selectedFormats.isNotEmpty;
+                          if (!hasFormat) {
+                            formatErrorMessage = '* Seleccione al menos un formato';
+                          }
+                          print("Validación de formato: $hasFormat");
+
+                          // Validar archivo digital si es necesario SOLO al pulsar el botón
+                          bool isDigitalSelected = widget.selectedFormats.contains('Digital');
+                          bool hasFileIfDigital = isDigitalSelected && (uploadedFileName == null || uploadedFileName!.isEmpty);
+                          if (hasFileIfDigital) {
+                            fileErrorMessage = 'Es necesario un archivo para el formato digital';
+                          }
+                          print("Archivo digital: $hasFileIfDigital");
+
+                          // Reflejar todos los errores en pantalla
+                          setState(() {});
+
+                          // Avanzar solo si todo está válido
+                          if (isFormValid && hasCoverImage && hasFormat && !hasFileIfDigital) {
+                            print("Formulario validado. Avanzando al siguiente paso.");
+                            widget.onNext();
+                          } else {
+                            print("No se pudo avanzar. Revisando errores:");
+                            print("Error portada: $coverImageErrorMessage");
+                            print("Error formato: $formatErrorMessage");
+                            print("Error archivo: $fileErrorMessage");
+                          }
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFAD0000),
@@ -433,7 +531,7 @@ class _BookInfoFormEditState extends State<BookInfoFormEdit> {
     );
   }
 
-  Widget _buildTextField(String label, IconData? icon, TextEditingController controller) {
+  Widget _buildTextField(String label, IconData? icon, TextEditingController controller, String? Function(String?)? validator) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -442,6 +540,7 @@ class _BookInfoFormEditState extends State<BookInfoFormEdit> {
           style: const TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold),
         ),
         CustomTextField(
+          validator:validator,
           icon: icon,
           hint: '',
           controller: controller,
@@ -462,6 +561,8 @@ class _BookInfoFormEditState extends State<BookInfoFormEdit> {
         formatErrorMessage = null;
       });
     }
+    print("Formatos seleccionados: ${widget.selectedFormats}");
+
   }
 
   void _pickFile() async {
@@ -480,6 +581,7 @@ class _BookInfoFormEditState extends State<BookInfoFormEdit> {
       setState(() {
         uploadedFileName = fileName;
         isUploading = false;
+        fileErrorMessage = null;
       });
 
       widget.onFilePicked(File(filePath));

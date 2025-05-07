@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:booknest/controllers/account_controller.dart';
 import 'package:booknest/entities/models/book_model.dart';
+import 'package:booknest/views/book_details_owner_view.dart';
 import 'package:booknest/views/login_view.dart';
 import 'package:booknest/widgets/book_info_form_edit.dart';
 import 'package:booknest/widgets/genre_and_summary_selection.dart';
@@ -109,7 +110,6 @@ class _EditBookViewState extends State<EditBookView> {
     try {
       final Book? bookData = await _bookController.getBookById(widget.bookId);
       if (bookData != null) {
-        print("Libro obtenido correctamente: ${bookData.title}");
         setState(() {
           _titleController.text = bookData.title;
           _authorController.text = bookData.author;
@@ -121,13 +121,13 @@ class _EditBookViewState extends State<EditBookView> {
           _stateController.text = bookData.state;
           
           // Cargar géneros seleccionados
-        if (bookData.categories != null && bookData.categories.isNotEmpty) {
+        if (bookData.categories.isNotEmpty) {
           selectedGenres = bookData.categories.split(',').map((genre) => genre.trim()).toList();
         }
 
-        if (bookData.cover != null && bookData.cover.isNotEmpty) {
+        if (bookData.cover.isNotEmpty) {
           setState(() {
-            currentCoverImageUrl = bookData.cover ?? '';  // Aquí obtienes la URL de la portada
+            currentCoverImageUrl = bookData.cover;  // Aquí obtienes la URL de la portada
           });
         }
 
@@ -189,16 +189,17 @@ class _EditBookViewState extends State<EditBookView> {
     FocusScope.of(context).unfocus();
     await Future.delayed(const Duration(milliseconds: 500));
 
-    if (_formKey.currentState?.validate() ?? false) {
-      _pageController.nextPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
-      setState(() {
-        _currentPage = 1;
-      });
-    }
+    // Ya validaste antes de llamar a esto
+    print("Formulario válido, cambiando página");
+    _pageController.nextPage(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+    setState(() {
+      _currentPage = 1;
+    });
   }
+
 
   // Función para pasar a la página de datos personales desde la selección de géneros
   void prevPage() {
@@ -218,9 +219,24 @@ class _EditBookViewState extends State<EditBookView> {
       return;
     }
 
+    // Validación de resumen
+    String summaryText = _summaryController.text.trim();
+    if (summaryText.isEmpty) {
+      setState(() {
+        _summaryError = 'Por favor introduzca un resumen del libro';
+      });
+      return;
+    } else if (summaryText.length < 30) {
+      setState(() {
+        _summaryError = 'El resumen debe tener al menos 30 caracteres';
+      });
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _message = '';
+      _summaryError = '';
     });
 
     try {
@@ -241,20 +257,7 @@ class _EditBookViewState extends State<EditBookView> {
 
       final userId = await AccountController().getCurrentUserId();
 
-      // Imprimir los valores antes de la llamada
-      print("Book ID: ${widget.bookId}");
-      print("Title: $title");
-      print("Author: $author");
-      print("ISBN: $isbn");
-      print("Pages Number: $pagesNumber");
-      print("Language: $language");
-      print("Selected Formats: ${selectedFormat.join(", ")}");
-      print("Image URL: $fileToSend");
-      print("Cover Image: $coverImage");
-      print("Summary: $summary");
-      print("Selected Genres: ${selectedGenres.join(", ")}");
-      print("State: $state");
-      print("User ID: $userId");
+      print("Id del libro a editar ${widget.bookId}");
 
       final result = await _bookController.editBook(
         widget.bookId,
@@ -269,7 +272,7 @@ class _EditBookViewState extends State<EditBookView> {
         selectedGenres.join(", "),
         state,
         userId ?? '',
-        coverImage, // Ahora pasas el archivo si está presente, o null si no
+        coverImage,
       );
 
       // Ocultar el spinner y mostrar el mensaje de éxito
@@ -301,14 +304,20 @@ class _EditBookViewState extends State<EditBookView> {
       'Actualización Exitosa', 
       'Los datos del libro han sido actualizados correctamente!',
       () {
-        Navigator.pop(context);
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const LoginView()),
-        );
+        Navigator.pop(context); // Cierra el diálogo
+
+        Future.microtask(() {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => BookDetailsOwnerView(bookId: widget.bookId),
+              ),
+            );
+          });
       },
     );
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -333,6 +342,7 @@ class _EditBookViewState extends State<EditBookView> {
   // Página de registro: Datos Personales
   Widget _buildBookInfoPage() {
     return BookInfoFormEdit(
+      bookId: widget.bookId,
       isEditMode: isEditMode,
       titleController: _titleController,
       authorController: _authorController,
@@ -386,8 +396,11 @@ class _EditBookViewState extends State<EditBookView> {
           } else {
             selectedGenres.add(genre);
           }
+          
           if (selectedGenres.isNotEmpty) {
-            _genreError = ''; // Limpia solo el error de géneros
+            _genreError = '';
+          } else {
+            _genreError = '* Seleccione al menos un género'; 
           }
         });
       },
