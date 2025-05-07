@@ -13,6 +13,7 @@ class GenreAndSummarySelectionWidget extends StatefulWidget {
   final bool isEditMode;
   final bool isLoading;
   final VoidCallback onSummaryChanged;
+  final GlobalKey<FormState>? formKey;
 
   const GenreAndSummarySelectionWidget({
     super.key,
@@ -26,6 +27,7 @@ class GenreAndSummarySelectionWidget extends StatefulWidget {
     required this.summaryError,
     required this.genreError,
     required this.onSummaryChanged,
+    this.formKey
   });
 
   @override
@@ -58,42 +60,49 @@ class _GenreAndSummarySelectionWidgetState extends State<GenreAndSummarySelectio
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Primer widget: Resumen
-            SummaryInputWidget(
-              controller: widget.summaryController,
-              onChanged: widget.onSummaryChanged,
-            ),
-
-            // Mostrar mensaje de error si existe
-            if (widget.summaryError.isNotEmpty) 
-              Padding(
-                padding: const EdgeInsets.only(top: 10.0),
-                child: Text(
-                  widget.summaryError,
-                  style: const TextStyle(
-                    color: Colors.red,
-                    fontSize: 14,
-                  ),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Form(
+            key: widget.formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Primer widget: Resumen
+                SummaryInputWidget(
+                  controller: widget.summaryController,
+                  onChanged: widget.onSummaryChanged,
                 ),
-              ),
 
-            const SizedBox(height: 30),
+                // Mostrar mensaje de error si existe
+                if (widget.summaryError.isNotEmpty) 
+                  Padding(
+                    padding: const EdgeInsets.only(top: 10.0),
+                    child: Text(
+                      widget.summaryError,
+                      style: const TextStyle(
+                        color: Colors.red,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
 
-            // Segundo widget: Selección de géneros
-            GenreSelectionBookWidget(
-              isEditMode: widget.isEditMode,
-              genres: widget.genres,
-              selectedGenres: widget.selectedGenres,
-              message: widget.genreError,
-              onGenreSelected: widget.onGenreSelected,
-              onRegister: widget.onRegister,
-              isLoading: widget.isLoading,
+                const SizedBox(height: 30),
+
+                // Segundo widget: Selección de géneros
+                GenreSelectionBookWidget(
+                  isEditMode: widget.isEditMode,
+                  genres: widget.genres,
+                  selectedGenres: widget.selectedGenres,
+                  message: widget.genreError,
+                  onGenreSelected: widget.onGenreSelected,
+                  onRegister: widget.onRegister,
+                  isLoading: widget.isLoading,
+                ),
+              ],
             ),
-          ],
-        ),
+          )
+        )
+        
       ),
     );
   }

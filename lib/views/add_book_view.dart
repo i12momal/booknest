@@ -26,6 +26,7 @@ class _AddBookViewState extends State<AddBookView>{
   final _formatController = TextEditingController();
   final _summaryController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  final _secondFormKey = GlobalKey<FormState>();
 
   final PageController _pageController = PageController();
   final CategoriesController _categoryController = CategoriesController();
@@ -92,11 +93,14 @@ class _AddBookViewState extends State<AddBookView>{
 
   // Método que realiza la función de añadir un nuevo libro
   Future<void> _addBook() async {
+    bool hasError = false;
+
     // Validación de géneros seleccionados
     if (selectedGenres.isEmpty) {
       setState(() {
         _message = "* Seleccione al menos un género asociado";
       });
+      hasError = true;
     }
 
     // Validación de resumen
@@ -105,17 +109,21 @@ class _AddBookViewState extends State<AddBookView>{
       setState(() {
         _summaryMessage = 'Por favor introduzca un resumen del libro';
       });
-      return;
+      hasError = true;
     } else if (summaryText.length < 30) {
       setState(() {
         _summaryMessage = 'El resumen debe tener al menos 30 caracteres';
       });
+      hasError = true;
     }
 
-    // Limpiar mensaje de error y empezar a cargar
+    // Si hay errores, salimos del método
+    if (hasError) return;
+
+    // Limpiar mensajes de error y empezar a cargar
     setState(() {
       _summaryMessage = '';
-      _message = '';  // Limpiamos cualquier mensaje de error previo
+      _message = '';
       _isLoading = true;
     });
 
@@ -124,31 +132,27 @@ class _AddBookViewState extends State<AddBookView>{
     final isbn = _isbnController.text.trim();
     final pagesNumber = int.tryParse(_pagesNumberController.text.trim()) ?? 0;
     final language = _languageController.text.trim();
-    final summary = _summaryController.text.trim();
+    final summary = summaryText;
 
-    // Verificar los formatos seleccionados
     final List<String> formats = [];
     if (isPhysicalSelected) formats.add('Físico');
     if (isDigitalSelected) formats.add('Digital');
 
-    // Verificar si el archivo digital está presente
     File? file;
-    if (isDigitalSelected && uploadedFileName != null && uploadedFileName!.isNotEmpty) {
-      file = File(uploadedFileName!);  // Si seleccionaron digital, pasamos el archivo
+    if (isDigitalSelected && uploadedFileName?.isNotEmpty == true) {
+      file = File(uploadedFileName!);
     }
 
-    // Llamar al controlador para agregar el libro
     final result = await _bookController.addBook(
-      title, author, isbn, pagesNumber, language, formats.join(", "), file, summary, selectedGenres.join(", "), coverImage
+      title, author, isbn, pagesNumber, language, formats.join(", "),
+      file, summary, selectedGenres.join(", "), coverImage
     );
 
-    // Actualizar el estado con el resultado de la operación
     setState(() {
       _isLoading = false;
       _message = result['message'];
     });
 
-    // Si la operación fue exitosa, mostrar el diálogo de éxito
     if (result['success']) {
       setState(() {
         _message = '';
@@ -227,6 +231,7 @@ class _AddBookViewState extends State<AddBookView>{
   // Página de registro: Selección de Géneros y Resumen
   Widget _buildGenreAndSummarySelectionPage() {
     return GenreAndSummarySelectionWidget(
+      formKey: _secondFormKey,
       isEditMode: isEditMode,
       genres: genres,
       selectedGenres: selectedGenres,

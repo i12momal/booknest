@@ -59,7 +59,7 @@ class SummaryInputWidget extends StatelessWidget {
           ),
           child: Scrollbar(
             child: SingleChildScrollView(
-              child: TextField(
+              child: TextFormField(
                 controller: controller,
                 onChanged: (_) => onChanged(),
                 maxLines: null,
@@ -73,6 +73,15 @@ class SummaryInputWidget extends StatelessWidget {
                   color: Colors.white,
                   fontSize: 11,
                 ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Por favor introduzca un resumen del libro';
+                  }
+                  if (value.trim().length < 30) {
+                    return 'El resumen debe tener al menos 30 caracteres';
+                  }
+                  return null;
+                },
               ),
             ),
           ),
