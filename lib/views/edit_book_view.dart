@@ -39,6 +39,9 @@ class _EditBookViewState extends State<EditBookView> {
   bool _isLoading = false;
   String _message = '';
   int _currentPage = 0;
+
+  String _summaryError = '';
+  String _genreError = '';
   
   List<String> genres = [];
   List<String> selectedGenres = [];
@@ -374,7 +377,8 @@ class _EditBookViewState extends State<EditBookView> {
       isEditMode: isEditMode,
       genres: genres,
       selectedGenres: selectedGenres,
-      message: _message,
+      summaryError: _summaryError,
+      genreError: _genreError,
       onGenreSelected: (genre) {
         setState(() {
           if (selectedGenres.contains(genre)) {
@@ -383,13 +387,19 @@ class _EditBookViewState extends State<EditBookView> {
             selectedGenres.add(genre);
           }
           if (selectedGenres.isNotEmpty) {
-            _message = '';  // Limpiar mensaje si ya hay géneros seleccionados
+            _genreError = ''; // Limpia solo el error de géneros
           }
         });
       },
       onRegister: _updateBook,
       summaryController: _summaryController,
-      isLoading: _isLoading
+      isLoading: _isLoading,
+      onSummaryChanged: () {
+        setState(() {
+          _summaryError = ''; // Limpia el error del resumen al escribir
+        });
+      },
     );
   }
+
 }

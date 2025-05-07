@@ -89,7 +89,7 @@ class GenreSelectionBookWidget extends StatelessWidget {
         
         Text(
           message,
-          style: const TextStyle(color: Color(0xFFAD0000)),
+          style: const TextStyle(color: Colors.red),
         ),
         const SizedBox(height: 2),
 

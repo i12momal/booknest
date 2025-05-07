@@ -32,6 +32,7 @@ class _AddBookViewState extends State<AddBookView>{
   final BookController _bookController = BookController();
 
   String _message = '';
+  String _summaryMessage = '';
   int _currentPage = 0;
 
   final isEditMode = false;
@@ -91,15 +92,32 @@ class _AddBookViewState extends State<AddBookView>{
 
   // Método que realiza la función de añadir un nuevo libro
   Future<void> _addBook() async {
+    // Validación de géneros seleccionados
     if (selectedGenres.isEmpty) {
       setState(() {
         _message = "* Seleccione al menos un género asociado";
       });
-      return;
     }
 
-    // Limpiar el mensaje de error si ya se seleccionaron géneros
-    setState(() { _message = ''; _isLoading = true;});
+    // Validación de resumen
+    String summaryText = _summaryController.text.trim();
+    if (summaryText.isEmpty) {
+      setState(() {
+        _summaryMessage = 'Por favor introduzca un resumen del libro';
+      });
+      return;
+    } else if (summaryText.length < 30) {
+      setState(() {
+        _summaryMessage = 'El resumen debe tener al menos 30 caracteres';
+      });
+    }
+
+    // Limpiar mensaje de error y empezar a cargar
+    setState(() {
+      _summaryMessage = '';
+      _message = '';  // Limpiamos cualquier mensaje de error previo
+      _isLoading = true;
+    });
 
     final title = _titleController.text.trim();
     final author = _authorController.text.trim();
@@ -113,28 +131,33 @@ class _AddBookViewState extends State<AddBookView>{
     if (isPhysicalSelected) formats.add('Físico');
     if (isDigitalSelected) formats.add('Digital');
 
-     // Verificar si el archivo digital está presente
+    // Verificar si el archivo digital está presente
     File? file;
     if (isDigitalSelected && uploadedFileName != null && uploadedFileName!.isNotEmpty) {
       file = File(uploadedFileName!);  // Si seleccionaron digital, pasamos el archivo
     }
 
-
+    // Llamar al controlador para agregar el libro
     final result = await _bookController.addBook(
-        title, author, isbn, pagesNumber, language, formats.join(", "), file, summary, selectedGenres.join(", "), coverImage);
+      title, author, isbn, pagesNumber, language, formats.join(", "), file, summary, selectedGenres.join(", "), coverImage
+    );
 
+    // Actualizar el estado con el resultado de la operación
     setState(() {
-        _isLoading = false;
-        _message = result['message'];
-      });
+      _isLoading = false;
+      _message = result['message'];
+    });
 
+    // Si la operación fue exitosa, mostrar el diálogo de éxito
     if (result['success']) {
       setState(() {
         _message = '';
+        _summaryMessage = '';
       });
       _showSuccessDialog();
     }
   }
+
 
   // Función que muestra el dialogo de éxito al añadir un nuevo libro
   void _showSuccessDialog() {
@@ -207,7 +230,8 @@ class _AddBookViewState extends State<AddBookView>{
       isEditMode: isEditMode,
       genres: genres,
       selectedGenres: selectedGenres,
-      message: _message,
+      summaryError: _summaryMessage,
+      genreError: _message,
       onGenreSelected: (genre) {
         setState(() {
           if (selectedGenres.contains(genre)) {
@@ -216,13 +240,18 @@ class _AddBookViewState extends State<AddBookView>{
             selectedGenres.add(genre);
           }
           if (selectedGenres.isNotEmpty) {
-            _message = '';  // Limpiar mensaje si ya hay géneros seleccionados
+            _message = '';
           }
         });
       },
       onRegister: _addBook,
       summaryController: _summaryController,
       isLoading: _isLoading,
+      onSummaryChanged: () {
+      setState(() {
+        _summaryMessage = '';
+      });
+    },
     );
   }
 }

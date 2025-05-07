@@ -2,15 +2,19 @@ import 'package:flutter/material.dart';
 
 class SummaryInputWidget extends StatelessWidget {
   final TextEditingController controller;
+  final VoidCallback onChanged;
 
-  const SummaryInputWidget({super.key, required this.controller});
+  const SummaryInputWidget({
+    super.key,
+    required this.controller,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Título con icono
         const Row(
           children: [
             Text(
@@ -18,7 +22,7 @@ class SummaryInputWidget extends StatelessWidget {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Colors.black, 
+                color: Colors.black,
               ),
             ),
             SizedBox(width: 8),
@@ -57,6 +61,7 @@ class SummaryInputWidget extends StatelessWidget {
             child: SingleChildScrollView(
               child: TextField(
                 controller: controller,
+                onChanged: (_) => onChanged(),
                 maxLines: null,
                 keyboardType: TextInputType.multiline,
                 decoration: const InputDecoration(
@@ -72,7 +77,7 @@ class SummaryInputWidget extends StatelessWidget {
             ),
           ),
         ),
-      ]
+      ],
     );
   }
 }
