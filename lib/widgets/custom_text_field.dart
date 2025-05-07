@@ -4,7 +4,7 @@ class CustomTextField extends StatefulWidget {
   final IconData? icon;
   final String hint;
   final bool isPassword;
-  final TextEditingController controller; 
+  final TextEditingController controller;
   final String? Function(String?)? validator;
   final Function(String)? onChanged;
   final FocusNode? focusNode;
@@ -17,7 +17,7 @@ class CustomTextField extends StatefulWidget {
     this.icon,
     required this.hint,
     this.isPassword = false,
-    required this.controller, 
+    required this.controller,
     this.validator,
     this.onChanged,
     this.focusNode,
@@ -36,15 +36,19 @@ class _CustomTextFieldState extends State<CustomTextField> {
   @override
   Widget build(BuildContext context) {
     return TextFormField(
-      controller: widget.controller, 
+      controller: widget.controller,
       obscureText: widget.isPassword ? !_isPasswordVisible : false,
       onChanged: widget.onChanged,
       focusNode: widget.focusNode,
       onEditingComplete: widget.onEditingComplete,
       readOnly: widget.readOnly ?? false,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
       decoration: InputDecoration(
+        errorMaxLines: 2,
         filled: true,
-        fillColor: widget.readOnly == true ? const Color.fromARGB(255, 214, 208, 208) : Colors.white,
+        fillColor: widget.readOnly == true
+            ? const Color.fromARGB(255, 214, 208, 208)
+            : Colors.white,
         suffixIcon: widget.isPassword
             ? IconButton(
                 icon: Icon(
@@ -57,8 +61,8 @@ class _CustomTextFieldState extends State<CustomTextField> {
                   });
                 },
               )
-            : (widget.icon != null 
-                ? Icon(widget.icon, color: const Color.fromRGBO(184, 184, 184, 100)) 
+            : (widget.icon != null
+                ? Icon(widget.icon, color: const Color.fromRGBO(184, 184, 184, 100))
                 : null),
         hintText: widget.hint,
         hintStyle: const TextStyle(
@@ -78,6 +82,10 @@ class _CustomTextFieldState extends State<CustomTextField> {
             color: Color(0xFF112363),
             width: 2.5,
           ),
+        ),
+        errorStyle: const TextStyle(
+          color: Colors.red,
+          fontWeight: FontWeight.bold,
         ),
       ),
       validator: widget.validator,
