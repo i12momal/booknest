@@ -67,7 +67,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
         hintText: widget.hint,
         hintStyle: const TextStyle(
           color: Color.fromRGBO(164, 164, 164, 100),
-          fontSize: 16,
+          fontSize: 13,
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -85,7 +85,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
         ),
         errorStyle: const TextStyle(
           color: Colors.red,
-          fontWeight: FontWeight.bold,
+          //fontWeight: FontWeight.bold,
         ),
       ),
       validator: widget.validator,
