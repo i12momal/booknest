@@ -1,10 +1,10 @@
 import 'package:booknest/controllers/account_controller.dart';
 import 'package:booknest/controllers/book_controller.dart';
+import 'package:booknest/controllers/reminder_controller.dart';
 import 'package:booknest/controllers/user_controller.dart';
 import 'package:booknest/views/book_details_owner_view.dart';
 import 'package:booknest/views/home_view.dart';
 import 'package:booknest/views/owner_profile_view.dart';
-import 'package:booknest/views/user_profile_view.dart';
 import 'package:booknest/views/user_search_view.dart';
 import 'package:booknest/widgets/background.dart';
 import 'package:booknest/widgets/footer.dart';
@@ -22,6 +22,8 @@ class _FavoritesViewState extends State<FavoritesView> {
   List<Map<String, dynamic>> filteredFavorites = [];
   String selectedLetter = '';
   String? userId;
+
+  List<bool> isReminderActiveList = [];
 
   int currentPage = 1;
   final int itemsPerPage = 20;
@@ -59,13 +61,19 @@ class _FavoritesViewState extends State<FavoritesView> {
     final allBooks = await BookController().fetchAllBooks();
 
     // Filtra los libros favoritos 
-    final favorites = allBooks
-        .where((book) => userFavoritesIds.contains(book['id'].toString()))
-        .toList();
+    final favorites = allBooks.where((book) => userFavoritesIds.contains(book['id'].toString())).toList();
+
+    // Inicializamos el estado de los recordatorios
+    List<bool> reminderStates = [];
+    for (var book in favorites) {
+      final reminderExists = await ReminderController().getUsersIdForReminder(book['id']);
+      reminderStates.add(reminderExists.contains(userId));
+    }
 
     setState(() {
       allFavorites = favorites;
       filteredFavorites = favorites;
+      isReminderActiveList = reminderStates;
     });
   }
 
@@ -84,6 +92,25 @@ class _FavoritesViewState extends State<FavoritesView> {
         }).toList();
       }
     });
+  }
+
+  Future<void> _toggleReminder(int bookId, int index) async {
+    final reminderExists = await ReminderController().getUsersIdForReminder(bookId);
+    final isReminderActive = reminderExists.contains(userId);
+
+    setState(() {
+      // Actualiza solo el estado del recordatorio para el libro en cuestión
+      isReminderActiveList[index] = !isReminderActive;
+    });
+
+    if (isReminderActive) {
+      await ReminderController().removeFromReminder(bookId, userId!);
+    } else {
+      // Aquí debes asegurarte de que solo envíes los datos necesarios para el recordatorio
+      await ReminderController().addReminder(bookId, userId!);
+    }
+    
+    setState(() {});
   }
 
   @override
@@ -189,18 +216,30 @@ class _FavoritesViewState extends State<FavoritesView> {
                                 Positioned(
                                   bottom: 8,
                                   right: 8,
-                                  child: IconButton(
-                                    icon: const Icon(Icons.favorite, color: Colors.red),
-                                    onPressed: () async {
-                                      await UserController()
-                                          .removeFromFavorites(book['id']);
-                                      await _loadFavorites(); // Refresca la vista
-                                    },
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        icon: Icon(
+                                          Icons.notifications,
+                                          color: isReminderActiveList[index] ? Colors.amber : Colors.grey,
+                                        ),
+                                        onPressed: () => _toggleReminder(book['id'], index),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.favorite, color: Colors.red),
+                                        onPressed: () async {
+                                          await UserController().removeFromFavorites(book['id']);
+                                          await _loadFavorites();
+                                        },
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],
                             ),
                           ),
+
                         );
 
 

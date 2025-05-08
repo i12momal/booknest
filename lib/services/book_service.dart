@@ -419,18 +419,34 @@ class BookService extends BaseService{
 
   Future<Map<String, dynamic>> deleteBook(int bookId) async {
     try {
-      // 1. Eliminar préstamos y reseñas asociadas
+      // Paso 1: Obtener todos los préstamos asociados con el libro
+      final loans = await BaseService.client
+          .from('Loan')
+          .select('id')
+          .eq('bookId', bookId);
+
+      //Paso 2: Eliminar los préstamos asociados al libro
       await BaseService.client
           .from('Loan')
           .delete()
           .eq('bookId', bookId);
 
+      // Paso 3: Eliminar reseñas
       await BaseService.client
           .from('Review')
           .delete()
           .eq('bookId', bookId);
 
-      // 2. Eliminar el libro
+      // Paso 4: Eliminar notificaciones
+     for (var loan in loans) {
+      final loanId = loan['id']; // Obtenemos el id de cada préstamo
+      await BaseService.client
+          .from('Notifications')
+          .delete()
+          .eq('relatedId', loanId); // Eliminar las notificaciones cuyo relatedId es el loanId
+    }
+
+      // Paso 5: Eliminar el libro
       final bookResponse = await BaseService.client
           .from('Book')
           .delete()

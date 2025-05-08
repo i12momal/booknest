@@ -223,6 +223,26 @@ class _NotificationsViewState extends State<NotificationsView> {
                                     ),
                                   ],
                                 ),
+                              ]else if(loan['type']=='Recordatorio')...[
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 8.0),
+                                  child: Text(
+                                    loan['message'], 
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    Icon(
+                                      isRead ? Icons.mark_email_read : Icons.mark_email_unread,
+                                      color: isRead ? Colors.green : Colors.grey,
+                                    ),
+                                  ],
+                                ),
                               ]
                             ],
                           ),
