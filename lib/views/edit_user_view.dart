@@ -44,6 +44,10 @@ class _EditUserViewState extends State<EditUserView> {
   List<String> selectedGenres = [];
   String? currentImageUrl;
 
+  String? _originalEmail;
+  String? _originalUsername;
+
+
   @override
   void initState() {
     super.initState();
@@ -92,6 +96,8 @@ class _EditUserViewState extends State<EditUserView> {
           _descriptionController.text = userData.description!;
           selectedGenres = List<String>.from(userData.genres);
           currentImageUrl = userData.image ?? '';
+          _originalEmail = userData.email;
+          _originalUsername = userData.userName;
           _isLoading = false;
         });
       } else {
@@ -276,6 +282,8 @@ class _EditUserViewState extends State<EditUserView> {
       formKey: _formKey,
       isEditMode: isEditMode,
       imageUrl: currentImageUrl,
+      originalEmail: _originalEmail,
+      originalUsername: _originalUsername,
     );
   }
 

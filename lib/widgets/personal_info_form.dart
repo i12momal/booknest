@@ -19,6 +19,9 @@ class PersonalInfoForm extends StatefulWidget {
   final GlobalKey<FormState> formKey;
   final bool isEditMode;
   final String? imageUrl; 
+  final String? originalEmail;
+  final String? originalUsername;
+
 
   const PersonalInfoForm({
     super.key,
@@ -36,6 +39,8 @@ class PersonalInfoForm extends StatefulWidget {
     required this.isEditMode,
     this.imageUrl,
     this.descriptionController,
+    this.originalEmail,
+    this.originalUsername,
   });
 
   @override
@@ -78,6 +83,7 @@ class _PersonalInfoFormState extends State<PersonalInfoForm> {
 
   Future<void> validateUserName(String username) async {
     final trimmed = username.trim();
+
     if (trimmed.isEmpty) {
       setState(() {
         _userNameValidationMessage = 'Por favor ingresa un nombre de usuario';
@@ -91,16 +97,24 @@ class _PersonalInfoFormState extends State<PersonalInfoForm> {
         _userNameValidationMessage = 'Máximo 15 caracteres permitidos';
       });
     } else {
-      bool userNameExists = await AccountController().checkUsernameExists(trimmed);
-      setState(() {
-        _userNameValidationMessage = userNameExists ? 'Este nombre de usuario ya está en uso' : null;
-      });
+      // Validar solo si el nombre ha cambiado
+      if (widget.isEditMode && trimmed == widget.originalUsername) {
+        setState(() {
+          _userNameValidationMessage = null;
+        });
+      } else {
+        bool userNameExists = await AccountController().checkUsernameExists(trimmed);
+        setState(() {
+          _userNameValidationMessage = userNameExists ? 'Este nombre de usuario ya está en uso' : null;
+        });
+      }
     }
   }
 
 
   Future<void> validateEmail(String email) async {
     final trimmed = email.trim();
+
     if (trimmed.isEmpty) {
       setState(() {
         _emailValidationMessage = 'Por favor ingresa tu correo electrónico';
@@ -110,12 +124,20 @@ class _PersonalInfoFormState extends State<PersonalInfoForm> {
         _emailValidationMessage = 'Debe ser un correo electrónico válido';
       });
     } else {
-      bool emailExists = await AccountController().checkEmailExists(trimmed);
-      setState(() {
-        _emailValidationMessage = emailExists ? 'Este correo ya está en uso' : null;
-      });
+      // Validar solo si el email ha cambiado
+      if (widget.isEditMode && trimmed == widget.originalEmail) {
+        setState(() {
+          _emailValidationMessage = null;
+        });
+      } else {
+        bool emailExists = await AccountController().checkEmailExists(trimmed);
+        setState(() {
+          _emailValidationMessage = emailExists ? 'Este correo ya está en uso' : null;
+        });
+      }
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -338,7 +360,7 @@ class _PersonalInfoFormState extends State<PersonalInfoForm> {
                             validateEmail(widget.emailController.text),
                             validateUserName(widget.userNameController.text),
                           ]);
-                          
+
                           bool isValid = widget.formKey.currentState?.validate() ?? false;
 
                           if (isValid && _emailValidationMessage == null && _userNameValidationMessage == null) {
