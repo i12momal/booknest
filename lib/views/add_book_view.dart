@@ -1,7 +1,10 @@
 import 'dart:io';
+import 'package:booknest/controllers/account_controller.dart';
 import 'package:booknest/controllers/categories_controller.dart';
 import 'package:booknest/controllers/book_controller.dart';
 import 'package:booknest/views/login_view.dart';
+import 'package:booknest/views/owner_profile_view.dart';
+import 'package:booknest/views/user_profile_view.dart';
 import 'package:booknest/widgets/background.dart';
 import 'package:booknest/widgets/page_navigation.dart';
 import 'package:booknest/widgets/book_info_form_add.dart';
@@ -36,6 +39,8 @@ class _AddBookViewState extends State<AddBookView>{
   String _summaryMessage = '';
   int _currentPage = 0;
 
+  String? userId;
+
   final isEditMode = false;
 
   bool _isLoading = false;
@@ -53,6 +58,7 @@ class _AddBookViewState extends State<AddBookView>{
   void initState() {
     super.initState();
     _fetchCategories();
+    _loadUserId();
   }
 
   // Función para obtener las categorías
@@ -60,6 +66,13 @@ class _AddBookViewState extends State<AddBookView>{
     List<String> categories = await _categoryController.getCategories();
     setState(() {
       genres = categories;
+    });
+  }
+
+  void _loadUserId() async {
+    final id = await AccountController().getCurrentUserId();
+    setState(() {
+      userId = id;
     });
   }
 
@@ -171,12 +184,14 @@ class _AddBookViewState extends State<AddBookView>{
       '¡Tu libro ha sido creado con éxito!',
       () {
         Navigator.pop(context);
-
-        // Redirigir a la pantalla de inicio de sesión después de que el usuario acepte
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const LoginView()),
-        );
+          Future.microtask(() {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => OwnerProfileView(userId: userId!),
+              ),
+            );
+          });
       },
     );
   }

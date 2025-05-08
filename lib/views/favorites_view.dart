@@ -219,23 +219,30 @@ class _FavoritesViewState extends State<FavoritesView> {
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      IconButton(
-                                        icon: Icon(
+                                      InkWell(
+                                        onTap: () => _toggleReminder(book['id'], index),
+                                        child: Icon(
                                           Icons.notifications,
                                           color: isReminderActiveList[index] ? Colors.amber : Colors.grey,
+                                          size: 25,
                                         ),
-                                        onPressed: () => _toggleReminder(book['id'], index),
                                       ),
-                                      IconButton(
-                                        icon: const Icon(Icons.favorite, color: Colors.red),
-                                        onPressed: () async {
+                                      const SizedBox(width: 7),
+                                      InkWell(
+                                        onTap: () async {
                                           await UserController().removeFromFavorites(book['id']);
                                           await _loadFavorites();
                                         },
+                                        child: const Icon(
+                                          Icons.favorite,
+                                          color: Colors.red,
+                                          size: 25,
+                                        ),
                                       ),
                                     ],
                                   ),
                                 ),
+
                               ],
                             ),
                           ),
