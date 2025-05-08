@@ -104,20 +104,20 @@ class LoanController extends BaseController{
 
       // Si el préstamo ha sido aceptado, se notifica al usuario que lo ha solicitado
       if (newState == 'Aceptado') {
-        String message = 'Tu solicitud de préstamo para el libro "$bookName" ha sido aceptada.';
+        String message = 'Tu solicitud de préstamo para el libro "$bookName" en formato ${loan['format']} ha sido aceptada.';
         await NotificationController().createNotification(userId, 'Préstamo Aceptado', loanId, message);
       }
 
       final ownerId = loan['ownerId'];
       // Si el préstamo ha sido devuelto, se notifica al propietario del libro
       if (newState == 'Devuelto') {
-        String message = 'Tu libro "$bookName" ha sido devuelto.';
+        String message = 'Tu libro "$bookName" en formato ${loan['format']} ha sido devuelto.';
         await NotificationController().createNotification(ownerId, 'Préstamo Devuelto', loanId, message);
       }
 
       // Si el préstamo ha sido rechazado, se notifica al usuario que ha solicitado el libro
       if (newState == 'Rechazado') {
-        String message = 'Tu solicitud de préstamo para el libro "$bookName" ha sido rechazada.';
+        String message = 'Tu solicitud de préstamo para el libro "$bookName" en formato ${loan['format']} ha sido rechazada.';
         await NotificationController().createNotification(userId, 'Préstamo Rechazado', loanId, message);
       }
     } catch (e) {
