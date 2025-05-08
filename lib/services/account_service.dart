@@ -391,4 +391,27 @@ class AccountService extends BaseService {
     }
   }
 
+
+  Future<bool> checkUsernameExists(String username) async {
+    final response = await Supabase.instance.client
+      .from('User')
+      .select('id')
+      .eq('userName', username)
+      .maybeSingle();
+
+    return response != null;
+  }
+
+
+  Future<bool> checkEmailExists(String email) async {
+    final response = await Supabase.instance.client
+      .from('User')
+      .select('id')
+      .eq('email', email)
+      .maybeSingle();
+
+    return response != null;
+  }
+
+
 }

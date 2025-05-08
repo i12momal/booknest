@@ -215,4 +215,13 @@ class AccountController extends BaseController{
     }
   }
 
+
+  Future<bool> checkUsernameExists(String username) async {
+    return await accountService.checkUsernameExists(username);
+  }
+
+  Future<bool> checkEmailExists(String email) async {
+    return await accountService.checkEmailExists(email);
+  }
+
 }

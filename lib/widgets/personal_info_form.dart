@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:booknest/controllers/account_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:booknest/widgets/custom_text_field.dart';
 import 'package:booknest/widgets/image_picker.dart';
@@ -43,6 +44,78 @@ class PersonalInfoForm extends StatefulWidget {
 
 class _PersonalInfoFormState extends State<PersonalInfoForm> {
   bool isPasswordModified = false;
+  String? _userNameValidationMessage;
+  late FocusNode _userNameFocusNode;
+
+  String? _emailValidationMessage;
+  late FocusNode _emailFocusNode;
+
+  @override
+  void initState() {
+    super.initState();
+    _userNameFocusNode = FocusNode();
+    _emailFocusNode = FocusNode();
+
+    _userNameFocusNode.addListener(() {
+      if (!_userNameFocusNode.hasFocus) {
+        validateUserName(widget.userNameController.text);
+      }
+    });
+
+     _emailFocusNode.addListener(() {
+      if (!_emailFocusNode.hasFocus) {
+        validateEmail(widget.emailController.text);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _userNameFocusNode.dispose();
+    _emailFocusNode.dispose();
+    super.dispose();
+  }
+
+  Future<void> validateUserName(String username) async {
+    final trimmed = username.trim();
+    if (trimmed.isEmpty) {
+      setState(() {
+        _userNameValidationMessage = 'Por favor ingresa un nombre de usuario';
+      });
+    } else if (trimmed.length < 5) {
+      setState(() {
+        _userNameValidationMessage = 'Debe tener al menos 5 caracteres';
+      });
+    } else if (trimmed.length > 15) {
+      setState(() {
+        _userNameValidationMessage = 'Máximo 15 caracteres permitidos';
+      });
+    } else {
+      bool userNameExists = await AccountController().checkUsernameExists(trimmed);
+      setState(() {
+        _userNameValidationMessage = userNameExists ? 'Este nombre de usuario ya está en uso' : null;
+      });
+    }
+  }
+
+
+  Future<void> validateEmail(String email) async {
+    final trimmed = email.trim();
+    if (trimmed.isEmpty) {
+      setState(() {
+        _emailValidationMessage = 'Por favor ingresa tu correo electrónico';
+      });
+    } else if (!RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$').hasMatch(trimmed)) {
+      setState(() {
+        _emailValidationMessage = 'Debe ser un correo electrónico válido';
+      });
+    } else {
+      bool emailExists = await AccountController().checkEmailExists(trimmed);
+      setState(() {
+        _emailValidationMessage = emailExists ? 'Este correo ya está en uso' : null;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -140,30 +213,24 @@ class _PersonalInfoFormState extends State<PersonalInfoForm> {
                       Icons.email, 
                       widget.emailController, 
                       validator: (value) {
-                        final trimmed = value?.trim() ?? '';
-                        if (trimmed.isEmpty) {
-                          return 'Por favor ingresa tu correo electrónico';
-                        } else if (!RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$').hasMatch(trimmed)) {
-                          return 'Debe ser un correo electrónico válido';
-                        }
-                        return null;
+                        return _emailValidationMessage;
                       },
+                      onChanged: (value) {
+                        validateEmail(value);
+                      },
+                      focusNode: _emailFocusNode,
                     ),
                     _buildTextField(
                       'Usuario', 
                       Icons.account_circle, 
                       widget.userNameController, 
                       validator: (value) {
-                        final trimmed = value?.trim() ?? '';
-                        if (trimmed.isEmpty) {
-                          return 'Por favor ingresa un nombre de usuario';
-                        } else if (trimmed.length < 5) {
-                          return 'Debe tener al menos 5 caracteres';
-                        } else if (trimmed.length > 15){
-                          return 'Máximo 15 caracteres permitidos';
-                        }
-                        return null;
+                        return _userNameValidationMessage;
                       },
+                      onChanged: (value) {
+                        validateUserName(value);
+                      },
+                      focusNode: _userNameFocusNode,
                     ),
                     if (widget.isEditMode) ...[
                       const Text(
@@ -266,9 +333,18 @@ class _PersonalInfoFormState extends State<PersonalInfoForm> {
                     Align(
                       alignment: Alignment.center,
                       child: ElevatedButton(
-                        onPressed: () {
-                          if (widget.formKey.currentState?.validate() ?? false) {
+                        onPressed: () async {
+                          await Future.wait([
+                            validateEmail(widget.emailController.text),
+                            validateUserName(widget.userNameController.text),
+                          ]);
+                          
+                          bool isValid = widget.formKey.currentState?.validate() ?? false;
+
+                          if (isValid && _emailValidationMessage == null && _userNameValidationMessage == null) {
                             widget.onNext();
+                          } else {
+                            setState(() {});
                           }
                         },
                         style: ElevatedButton.styleFrom(
@@ -299,7 +375,7 @@ class _PersonalInfoFormState extends State<PersonalInfoForm> {
     );
   }
 
-  Widget _buildTextField(String label, IconData icon, TextEditingController controller, {bool isPassword = false, String? Function(String?)? validator}) {
+  Widget _buildTextField(String label, IconData icon, TextEditingController controller, {bool isPassword = false, String? Function(String?)? validator, ValueChanged<String>? onChanged, FocusNode? focusNode}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -313,6 +389,8 @@ class _PersonalInfoFormState extends State<PersonalInfoForm> {
           hint: '',
           isPassword: isPassword,
           controller: controller,
+          onChanged: onChanged,
+          focusNode: focusNode,
         ),
         const SizedBox(height: 15),
       ],
