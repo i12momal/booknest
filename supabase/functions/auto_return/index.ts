@@ -126,6 +126,40 @@ serve(async (_req) => {
           } else {
             console.log("Notificación registrada exitosamente para el préstamo devuelto.");
           }
+
+          // Enviar notificación a aquellos usuarios que habían marcado un recordatorio
+          const messageReminder = `El libro "${bookTitle}" en formato ${bookFormat} vuelve a estar disponible.`;
+          const usersIdreminder = await supabase
+            .from('Reminder')
+            .select('userId')
+            .eq('bookId', bookId);
+
+          if (usersIdreminder.error) {
+            console.error("Error al obtener recordatorios:", usersIdreminder.error);
+          } else if (!usersIdreminder.data || usersIdreminder.data.length === 0) {
+            console.log("No hay usuarios que hayan marcado recordatorio para este libro.");
+          } else {
+            for (const row of usersIdreminder.data) {
+              const userId = row.userId;
+
+              const createReminderViewModel = {
+                userId: userId,
+                type: 'Recordatorio',
+                relatedId: bookId,
+                message: messageReminder,
+                read: false
+              };
+
+              const reminderResponse = await createNotification(createReminderViewModel);
+
+              if (!reminderResponse.success) {
+                console.error("Error al enviar la notificación de recordatorio:", reminderResponse.message);
+              } else {
+                console.log("✅ Notificación registrada exitosamente para el recordatorio del usuario:", userId);
+              }
+            }
+          }
+
         }
       } else {
         console.log(`Loan ID: ${loan.id} is not overdue yet.`);

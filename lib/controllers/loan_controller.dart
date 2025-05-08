@@ -115,11 +115,10 @@ class LoanController extends BaseController{
         String message = 'Tu libro "$bookName" en formato ${loan['format']} ha sido devuelto.';
         await NotificationController().createNotification(ownerId, 'Préstamo Devuelto', loanId, message);
 
-         print('ids del libro cpn recordatorio ${bookResponse['data']['id']}');
+
         // Se envía un mensaje a todos aquellos que hayan activado la campana de recordatorio para ese libro
         //1. Obtenemos el id de los usuarios
         List<String> usersIdreminder = await ReminderController().getUsersIdForReminder(bookResponse['data']['id']);
-        print('ids de los usuarios que solicitaron recordatorio para este libro $usersIdreminder');
         //2. Creamos mensaje para cada uno de ellos
         String messageReminder = 'El libro "$bookName" en formato ${loan['format']} vuelve a estar disponible.';
         for(String user in usersIdreminder){
