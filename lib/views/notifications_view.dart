@@ -121,16 +121,25 @@ class _NotificationsViewState extends State<NotificationsView> {
     );
 
     if (confirm == true) {
-      for (var id in selectedNotificationIds) {
-        await NotificationController().deleteNotification(id);
+      final removableNotifications = selectedNotificationIds
+          .map((id) => allNotifications.firstWhere((n) => n['id'] == id))
+          .where((notification) =>
+              notification['type'] != 'Préstamo' ||
+              (notification['state'] != 'Pendiente' && notification['state'] != 'Aceptado'))
+          .toList();
+
+      for (var notification in removableNotifications) {
+        await NotificationController().deleteNotification(notification['id']);
       }
+
       setState(() {
-        allNotifications.removeWhere((n) => selectedNotificationIds.contains(n['id']));
+        allNotifications.removeWhere((n) => removableNotifications.any((r) => r['id'] == n['id']));
         selectedNotificationIds.clear();
         isSelectionMode = false;
       });
     }
   }
+
 
   Color _getStateColor(String state) {
     switch (state.toLowerCase()) {
@@ -192,7 +201,9 @@ class _NotificationsViewState extends State<NotificationsView> {
                             onChanged: (value) {
                               setState(() {
                                 final idsOnPage = paginatedNotifications.map((n) => n['id'] as int).toSet();
+
                                 final allSelected = idsOnPage.every((id) => selectedNotificationIds.contains(id));
+
                                 if (allSelected) {
                                   selectedNotificationIds.removeAll(idsOnPage);
                                   if (selectedNotificationIds.isEmpty) isSelectionMode = false;
@@ -202,6 +213,7 @@ class _NotificationsViewState extends State<NotificationsView> {
                                 }
                               });
                             },
+
                           ),
                           const Text('Seleccionar todo', style: TextStyle(fontWeight: FontWeight.bold)),
                         ],
