@@ -6,6 +6,7 @@ import 'package:booknest/views/owner_profile_view.dart';
 import 'package:booknest/views/user_search_view.dart';
 import 'package:booknest/widgets/category_selection_popup.dart';
 import 'package:booknest/widgets/footer.dart';
+import 'package:booknest/widgets/language_dropdown.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:booknest/widgets/background.dart';
@@ -23,6 +24,7 @@ class _HomeViewState extends State<HomeView> {
   List<Map<String, dynamic>> categories = [];
   String? selectedCategory;
   final TextEditingController _searchController = TextEditingController();
+  final TextEditingController _languageFilterController = TextEditingController();
 
   List<String> allCategories = [];
 
@@ -43,6 +45,8 @@ class _HomeViewState extends State<HomeView> {
   List<Map<String, dynamic>> allLoadedBooks = [];
   List<Map<String, dynamic>> allCategoryBooks = []; 
   List<Map<String, dynamic>> allBooksIncludingUnavailable = [];
+
+  String? selectedLanguage;
 
   Future<void> _loadCategoriesAndBooks() async {
     final userId = Supabase.instance.client.auth.currentUser?.id;
@@ -113,6 +117,99 @@ class _HomeViewState extends State<HomeView> {
     if (screenWidth >= 400) return 4;
     return 3;
   }
+
+  void _showLanguageFilterPopup(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border.all(color: const Color(0xFF112363), width: 3),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Filtrar por idioma',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF112363),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                LanguageDropdown(
+                  controller: _languageFilterController,
+                  languages: const ['All', 'Español', 'Inglés', 'Francés', 'Alemán', 'Italiano','Portugués', 'Ruso', 'Chino', 'Japonés', 'Coreano', 'Árabe','Otro'],
+                  onChanged: (selected) {
+                    if (selected == 'All') {
+                      selectedLanguage = null;
+                      _languageFilterController.clear();
+                    } else {
+                      selectedLanguage = selected;
+                      _languageFilterController.text = selected!;
+                    }
+                  },
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _applyFilters();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFAD0000),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      side: const BorderSide(color: Color(0xFF700101), width: 3),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                  ),
+                  child: const Text(
+                    'Aplicar filtro', 
+                    style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+
+
+  void _applyFilters() {
+    List<Map<String, dynamic>> books = selectedCategory != null
+        ? allCategoryBooks.where((book) {
+            return (book['categories'] as String).toLowerCase().contains(selectedCategory!.toLowerCase()) &&
+                  book['owner_id'] != userId;
+          }).toList()
+        : allLoadedBooks;
+
+    if (selectedLanguage != null) {
+      books = books.where((book) {
+        final bookLanguage = book['language']?.toString().toLowerCase() ?? '';
+        return bookLanguage == selectedLanguage!.toLowerCase();
+      }).toList();
+    }
+
+    setState(() {
+      filteredBooks = books;
+      currentPage = 1;
+    });
+  }
+
+
 
   void _showCategorySelectionPopup(BuildContext context) {
     showDialog(
@@ -341,10 +438,24 @@ class _HomeViewState extends State<HomeView> {
 
                   const SizedBox(height: 25),
 
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 8),
-                    child: Text("Libros relacionados", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      children: [
+                        const Text(
+                          "Libros relacionados",
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                        ),
+                        const Spacer(),
+                        IconButton(
+                          icon: const Icon(Icons.filter_alt_outlined, color: Color(0xFF112363)),
+                          tooltip: 'Filtrar por idioma',
+                          onPressed: () => _showLanguageFilterPopup(context),
+                        ),
+                      ],
+                    ),
                   ),
+
                   const Divider(thickness: 1, color: Color(0xFF112363)),
 
                   // Lista de libros

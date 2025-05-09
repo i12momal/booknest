@@ -5,16 +5,21 @@ class LanguageDropdown extends StatelessWidget {
   final String? Function(String?)? validator;
   final ValueChanged<String?>? onChanged;
 
+  final List<String>? languages;
+
   const LanguageDropdown({
     super.key,
     required this.controller,
     this.validator,
     this.onChanged,
+    this.languages,
   });
+
 
   @override
   Widget build(BuildContext context) {
-    final List<String> languages = [
+    final List<String> languageOptions = languages ??
+    [
       'Español',
       'Inglés',
       'Francés',
@@ -49,7 +54,7 @@ class LanguageDropdown extends StatelessWidget {
             fontSize: 16,
           ),
         ),
-        items: languages.map((String language) {
+        items: languageOptions.map((String language) {
           return DropdownMenuItem<String>(
             value: language,
             child: Text(language),
