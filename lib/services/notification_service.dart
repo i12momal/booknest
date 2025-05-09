@@ -107,4 +107,26 @@ class NotificationService extends BaseService{
     }
   }
 
+  Future<Map<String, dynamic>> deleteNotification(int notificationId) async {
+    try {
+      
+      final notificationResponse = await BaseService.client
+          .from('Notifications')
+          .delete()
+          .eq('id', notificationId)
+          .select();
+
+      if (notificationResponse.isNotEmpty) {
+        return {'success': true};
+      } else {
+        return {
+          'success': false,
+          'message': 'Notificación no encontrada o no se pudo eliminar'
+        };
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Error al eliminar la notificación'};
+    }
+  }
+
 }
