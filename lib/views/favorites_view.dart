@@ -28,6 +28,8 @@ class _FavoritesViewState extends State<FavoritesView> {
   int currentPage = 1;
   final int itemsPerPage = 20;
 
+  bool isLoading = true;
+
   @override
   void initState() {
     super.initState();
@@ -43,6 +45,10 @@ class _FavoritesViewState extends State<FavoritesView> {
   }
 
   Future<void> _loadFavorites() async {
+    setState(() {
+      isLoading = true;
+    });
+
     final response = await UserController().getFavorites();
     
     // Verifica si la respuesta tiene los favoritos
@@ -53,6 +59,7 @@ class _FavoritesViewState extends State<FavoritesView> {
       setState(() {
         allFavorites = [];
         filteredFavorites = [];
+        isLoading = false;
       });
       return;
     }
@@ -74,6 +81,7 @@ class _FavoritesViewState extends State<FavoritesView> {
       allFavorites = favorites;
       filteredFavorites = favorites;
       isReminderActiveList = reminderStates;
+      isLoading = false;
     });
   }
 
@@ -147,7 +155,17 @@ class _FavoritesViewState extends State<FavoritesView> {
             ),
             const SizedBox(height: 12),
             Expanded(
-              child: paginatedFavorites.isEmpty
+              child: isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : paginatedFavorites.isEmpty
+                  ? const Center(
+                      child: Text(
+                        'No hay libros seleccionados como favoritos.',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                      ),
+                    )
+              
+              : paginatedFavorites.isEmpty
                   ? const Center(
                       child: Text(
                         'No hay libros seleccionados como favoritos.',
