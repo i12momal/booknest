@@ -82,13 +82,17 @@ class _NotificationsViewState extends State<NotificationsView> {
   Future<void> _confirmMarkAsRead() async {
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Marcar como leídas'),
-        content: const Text('¿Deseas marcar estas notificaciones como leídas?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Aceptar')),
-        ],
+      barrierDismissible: false,
+      builder: (_) => WillPopScope(
+        onWillPop: () async => false,
+        child: AlertDialog(
+          title: const Text('Marcar como leídas'),
+          content: const Text('¿Deseas marcar estas notificaciones como leídas?'),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancelar')),
+            TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Aceptar')),
+          ],
+        ),
       ),
     );
 
