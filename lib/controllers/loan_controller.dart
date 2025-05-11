@@ -154,7 +154,6 @@ class LoanController extends BaseController{
         }
       }
 
-
       // Si el préstamo ha sido rechazado, se notifica al usuario que ha solicitado el libro
       if (newState == 'Rechazado') {
         String message = 'Tu solicitud de préstamo para el libro "$bookName" en formato ${loan['format']} ha sido rechazada.';

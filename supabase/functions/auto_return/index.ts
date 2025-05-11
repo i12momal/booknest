@@ -15,161 +15,152 @@ async function createNotification(createNotificationViewModel: { userId: string,
   try {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Crear el registro en la tabla Notification
-    console.log("Creando registro en la tabla Notification...");
     const notificationData = {
-      'userId': createNotificationViewModel.userId,
-      'type': createNotificationViewModel.type,
-      'relatedId': createNotificationViewModel.relatedId,
-      'message': createNotificationViewModel.message,
-      'read': createNotificationViewModel.read
+      userId: createNotificationViewModel.userId,
+      type: createNotificationViewModel.type,
+      relatedId: createNotificationViewModel.relatedId,
+      message: createNotificationViewModel.message,
+      read: createNotificationViewModel.read
     };
-    console.log("Datos a insertar: ", notificationData);
 
-    const response = await supabase.from('Notifications').insert(notificationData).select().single();
+    const { data, error } = await supabase.from('Notifications').insert(notificationData).select().single();
 
-    console.log("Respuesta de la inserción en Notification: ", response);
-
-    if (response != null) {
-      console.log("Notificación registrada exitosamente");
-      return {
-        'success': true,
-        'message': 'Notificación registrada exitosamente',
-        'data': response
-      };
-    } else {
-      console.log("Error: No se pudo crear el registro en la tabla Notification");
-      return { 'success': false, 'message': 'Error al registrar la notificación' };
+    if (error) {
+      console.log("Error al insertar notificación:", error);
+      return { success: false, message: 'Error al registrar la notificación' };
     }
+
+    return { success: true, message: 'Notificación registrada exitosamente', data };
   } catch (ex) {
-    console.log("Error en createNotification: ", ex);
-    return { 'success': false, 'message': 'Se ha producido una excepción' };
+    console.log("Excepción en createNotification:", ex);
+    return { success: false, message: 'Se ha producido una excepción' };
   }
 }
 
+async function getActiveLoanForBookAndFormat(bookId: number, format: string): Promise<boolean> {
+  try {
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    const { data, error } = await supabase
+      .from('Loan')
+      .select('id')
+      .eq('bookId', bookId)
+      .eq('format', format)
+      .eq('state', 'Aceptado')
+      .maybeSingle();
 
+    return !!data;
+  } catch (e) {
+    console.log('Error al verificar préstamo activo:', e);
+    return false;
+  }
+}
 
+async function areAllFormatsAvailable(bookId: number, formats: string[]): Promise<boolean> {
+  try {
+    for (const format of formats) {
+      const hasActiveLoan = await getActiveLoanForBookAndFormat(bookId, format);
+      if (hasActiveLoan) return false;
+    }
+    return true;
+  } catch (e) {
+    console.log('Error al verificar disponibilidad de formatos:', e);
+    return false;
+  }
+}
+
+async function removeFromReminder(bookId: number, userId: string, format: string) {
+  try {
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    await supabase.from('Reminder')
+      .delete()
+      .eq('userId', userId)
+      .eq('bookId', bookId)
+      .eq('format', format);
+  } catch (error) {
+    console.log("Error al eliminar recordatorio:", error);
+  }
+}
 
 serve(async (_req) => {
   try {
-    // Usamos las variables cargadas de .env
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-
     const { data: loans, error } = await supabase
       .from("Loan")
       .select("*")
       .eq("state", "Aceptado");
 
-    if (error) {
-      console.error("Error fetching loans:", error);
-      return new Response("Error fetching loans", { status: 500 });
-    }
+    if (error) return new Response("Error fetching loans", { status: 500 });
 
     const now = new Date();
-
-    // Función para normalizar fechas a 'YYYY-MM-DD'
     const normalizeDate = (date: Date) => date.toISOString().split("T")[0];
     const nowDateStr = normalizeDate(now);
 
-    // El cronjob se ejecuta a las 23:59, por lo tanto, si la fecha final es hoy o anterior, debe marcarse como "Devuelto".
     for (const loan of loans) {
-      const loanEndDate = new Date(loan.endDate + "Z");  // Asegura que se trate como UTC
+      const loanEndDate = new Date(loan.endDate + "Z");
       const loanDateStr = normalizeDate(loanEndDate);
-      console.log(`Loan ID: ${loan.id}, Loan End Date: ${loanDateStr}, Today: ${nowDateStr}`);
 
-      // Si la fecha de finalización es hoy o antes de hoy, lo marcamos como "Devuelto"
       if (loanDateStr <= nowDateStr) {
-        console.log(`Updating loan ID: ${loan.id} to "Devuelto"`);
-        
-        const { error: updateError } = await supabase
-          .from("Loan")
-          .update({ state: "Devuelto" })
-          .eq("id", loan.id);
-    
-        if (updateError) {
-          console.error(`Error updating loan ${loan.id}`, updateError);
-          return new Response("Error updating loan", { status: 500 });
-        } else {
-          console.log(`Successfully updated loan ${loan.id} to "Devuelto"`);
+        await supabase.from("Loan").update({ state: "Devuelto" }).eq("id", loan.id);
 
-          // Obtener el libro relacionado
-          const bookId = loan.bookId;
-          const bookResponse = await supabase
-            .from('Book')
-            .select('title')
-            .eq('id', bookId)
-            .single();
-   
-          if (bookResponse.error) {
-            console.error(`Error fetching book details for loan ${loan.id}`);
-            return new Response("Error fetching book details", { status: 500 });
+        const bookResponse = await supabase
+          .from('Book')
+          .select('title, format')
+          .eq('id', loan.bookId)
+          .single();
+
+        if (bookResponse.error) continue;
+
+        const bookTitle = bookResponse.data.title;
+        const bookFormat = loan.format;
+        const ownerId = loan.ownerId;
+
+        await createNotification({
+          userId: ownerId,
+          type: 'Préstamo Devuelto',
+          relatedId: loan.id,
+          message: `Tu libro "${bookTitle}" en formato ${bookFormat} ha sido devuelto automáticamente.`,
+          read: false
+        });
+
+        // Recordatorios
+        const { data: reminders, error: reminderError } = await supabase
+          .from('Reminder')
+          .select('userId')
+          .eq('bookId', loan.bookId)
+          .eq('format', bookFormat)
+          .eq('notified', false);
+
+        if (!reminderError && reminders && reminders.length > 0) {
+          for (const row of reminders) {
+            const userId = row.userId;
+
+            await createNotification({
+              userId,
+              type: 'Recordatorio',
+              relatedId: loan.bookId,
+              message: `El libro "${bookTitle}" en formato ${bookFormat} vuelve a estar disponible.`,
+              read: false
+            });
           }
+        }
 
-          const bookTitle = bookResponse.data.title;
-          const ownerId = loan.ownerId;
-          const bookFormat = loan.format;
+        // Verificación y eliminación de recordatorios si todos los formatos están disponibles
+        const bookFormats = bookResponse.data.format.split(',').map((f: string) => f.trim());
+        const allAvailable = await areAllFormatsAvailable(loan.bookId, bookFormats);
 
-          // Enviar notificación al propietario del libro
-          const message = `Tu libro "${bookTitle}" en formato ${bookFormat} ha sido devuelto automáticamente.`;
-          const createNotificationViewModel = {
-            userId: ownerId,
-            type: 'Préstamo Devuelto',
-            relatedId: loan.id,
-            message: message,
-            read: false
-          };
-
-          const notificationResponse = await createNotification(createNotificationViewModel);
-
-          if (!notificationResponse.success) {
-            console.error("Error al registrar la notificación:", notificationResponse.message);
-          } else {
-            console.log("Notificación registrada exitosamente para el préstamo devuelto.");
-          }
-
-          // Enviar notificación a aquellos usuarios que habían marcado un recordatorio
-          const messageReminder = `El libro "${bookTitle}" en formato ${bookFormat} vuelve a estar disponible.`;
-          const usersIdreminder = await supabase
-            .from('Reminder')
-            .select('userId')
-            .eq('bookId', bookId);
-
-          if (usersIdreminder.error) {
-            console.error("Error al obtener recordatorios:", usersIdreminder.error);
-          } else if (!usersIdreminder.data || usersIdreminder.data.length === 0) {
-            console.log("No hay usuarios que hayan marcado recordatorio para este libro.");
-          } else {
-            for (const row of usersIdreminder.data) {
-              const userId = row.userId;
-
-              const createReminderViewModel = {
-                userId: userId,
-                type: 'Recordatorio',
-                relatedId: bookId,
-                message: messageReminder,
-                read: false
-              };
-
-              const reminderResponse = await createNotification(createReminderViewModel);
-
-              if (!reminderResponse.success) {
-                console.error("Error al enviar la notificación de recordatorio:", reminderResponse.message);
-              } else {
-                console.log("✅ Notificación registrada exitosamente para el recordatorio del usuario:", userId);
-              }
+        if (allAvailable) {
+          for (const f of bookFormats) {
+            for (const row of reminders || []) {
+              await removeFromReminder(loan.bookId, row.userId, f);
             }
           }
-
         }
-      } else {
-        console.log(`Loan ID: ${loan.id} is not overdue yet.`);
       }
     }
 
     return new Response("Checked and updated overdue loans", { status: 200 });
-
   } catch (e) {
-    console.error('Error in cron job:', e);
+    console.error('Error en el proceso:', e);
     return new Response("Internal Server Error", { status: 500 });
   }
 });
