@@ -164,13 +164,13 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
       return 'Disponible';  // Si todos los formatos están disponibles
     } else if (disponibles.length == 1) {
       final formatCapitalized = disponibles.first[0].toUpperCase() + disponibles.first.substring(1);
-      return 'Disponible: formato $formatCapitalized';  // Si solo hay un formato disponible
+      return formatCapitalized;  // Si solo hay un formato disponible
     } else {
       // Si hay más de un formato disponible, especificar uno
       if (disponibles.contains('físico') && !disponibles.contains('digital')) {
-        return 'Disponible: formato Físico';
+        return 'Físico';
       } else if (disponibles.contains('digital') && !disponibles.contains('físico')) {
-        return 'Disponible: formato Digital';
+        return 'Digital';
       } else {
         return 'Disponible';  // Si hay más de un formato disponible (físico y digital)
       }
@@ -623,7 +623,7 @@ class _BookHeader extends StatelessWidget {
                                                 );
                                               }
                                             },
-                                          child: Text(borrowerName ?? 'Desconocido', style: const TextStyle(color: Color(0xFF112363), fontWeight: FontWeight.bold, decoration: TextDecoration.underline),),),
+                                          child: Text(borrowerName ?? '', style: const TextStyle(color: Color(0xFF112363), fontWeight: FontWeight.bold, decoration: TextDecoration.underline),),),
                                           const SizedBox(height: 12),
                                         ],
                                         const Text("Formato:", style: TextStyle(fontWeight: FontWeight.bold)),
@@ -729,12 +729,12 @@ class _BookHeader extends StatelessWidget {
       availabilityStatus = 'Disponible';
     } else if (disponibles.length == 1) {
       final formatCapitalized = disponibles.first[0].toUpperCase() + disponibles.first.substring(1);
-      availabilityStatus = 'Disponible: formato $formatCapitalized';
+      availabilityStatus = formatCapitalized;
     } else {
       if (disponibles.contains('físico') && !disponibles.contains('digital')) {
-        availabilityStatus = 'Disponible: formato Físico';
+        availabilityStatus = 'Físico';
       } else if (disponibles.contains('digital') && !disponibles.contains('físico')) {
-        availabilityStatus = 'Disponible: formato Digital';
+        availabilityStatus = 'Digital';
       } else {
         availabilityStatus = 'Disponible';
       }
@@ -844,23 +844,47 @@ class _BookHeader extends StatelessWidget {
                                 const Icon(Icons.check_circle, color: Colors.green, size: 18),
                                 const SizedBox(width: 4),
                                 const Text("Disponible"),
-                              ] else if (availabilityStatus.startsWith('Disponible: formato')) ...[
-                                const Icon(Icons.check_circle, color: Colors.green, size: 18),
-                                const SizedBox(width: 4),
-                                Text(availabilityStatus),
+                              ] else if (availabilityStatus.startsWith('Físico') || availabilityStatus.startsWith('Digital') ) ...[
+                                Row(
+                                  children: [
+                                    const Icon(Icons.check_circle, color: Colors.green, size: 18),
+                                    const SizedBox(width: 4),
+                                    Text(availabilityStatus),
+                                  ],
+                                ),
+                                const SizedBox(width: 10),
+                                if (isOwner) ...[
+                                  const SizedBox(height: 4),
+                                  GestureDetector(
+                                    onTap: () async {
+                                      final result = await _showLoanInfoPopup(context);
+                                      if (result == true) {
+                                        Navigator.of(context).pop();
+                                      }
+                                    },
+                                    child: const Text(
+                                      "Información préstamo",
+                                      style: TextStyle(
+                                        color: Color(0xFF112363),
+                                        fontWeight: FontWeight.bold,
+                                        decoration: TextDecoration.underline,
+                                        fontSize: 10,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ] else if (availabilityStatus == 'Prestado') ...[
                                 const Icon(Icons.cancel, color: Colors.red, size: 18),
                                 const SizedBox(width: 4),
                                 const Text("Prestado", style: TextStyle(fontSize: 12)),
                                 const SizedBox(width: 12),
                                 GestureDetector(
-                                 onTap: () async {
-                                  final result = await _showLoanInfoPopup(context);
-                                  if (result == true) {
-                                    Navigator.of(context).pop();
-                                  }
-                                },
-
+                                  onTap: () async {
+                                    final result = await _showLoanInfoPopup(context);
+                                    if (result == true) {
+                                      Navigator.of(context).pop();
+                                    }
+                                  },
                                   child: const Text(
                                     "Información préstamo",
                                     style: TextStyle(

@@ -88,11 +88,17 @@ class _HomeViewState extends State<HomeView> {
 
   // Función de búsqueda de libros por título o autor
   Future<void> _searchBooks(String query) async {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
     final normalizedQuery = _controller.normalize(query);
 
     final filtered = allBooksIncludingUnavailable.where((book) {
       final title = _controller.normalize(book['title']?.toString() ?? '');
       final author = _controller.normalize(book['author']?.toString() ?? '');
+      final ownerId = book['owner_id'];
+
+      // Ignorar libros del usuario actual
+      if (ownerId == userId) return false;
+
       return title.contains(normalizedQuery) || author.contains(normalizedQuery);
     }).toList();
 
@@ -100,6 +106,7 @@ class _HomeViewState extends State<HomeView> {
       filteredBooks = query.isEmpty ? allLoadedBooks : filtered;
     });
   }
+
 
   Future<void> _loadUserId() async {
     final id = await AccountController().getCurrentUserId();

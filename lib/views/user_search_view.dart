@@ -161,12 +161,19 @@ class _UserSearchViewState extends State<UserSearchView> {
                           ),
                           child: ListTile(
                             leading: ClipOval(
-                              child: Image.network(
-                                user['image'] ?? 'assets/images/default.png',
-                                width: 50,
-                                height: 50,
-                                fit: BoxFit.cover,
-                              ),
+                              child: user['image'] != null
+                              ? Image.network(
+                                  user['image'],
+                                  width: 50,
+                                  height: 50,
+                                  fit: BoxFit.cover,
+                                )
+                              : Image.asset(
+                                  'assets/images/default.png',
+                                  width: 50,
+                                  height: 50,
+                                  fit: BoxFit.cover,
+                                )
                             ),
                             title: Text(user['userName'] ?? 'Sin nombre de usuario'),
                             subtitle: Text(user['name'] ?? 'Sin nombre completo'),
