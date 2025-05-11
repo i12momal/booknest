@@ -436,4 +436,37 @@ class LoanService extends BaseService{
   }
 
 
+  Future<bool> getActiveLoanForBookAndFormat(int bookId, String format) async {
+    try {
+      final response = await BaseService.client
+          .from('Loan')
+          .select()
+          .eq('bookId', bookId)
+          .eq('format', format)
+          .eq('state', 'Aceptado') // Solo prestamos activos
+          .maybeSingle();
+
+      return response != null;
+    } catch (e) {
+      print('Error al verificar préstamo activo: $e');
+      return false;
+    }
+  }
+
+  Future<bool> areAllFormatsAvailable(int bookId, List<String> formats) async {
+    try {
+      for (final format in formats) {
+        final hasActiveLoan = await getActiveLoanForBookAndFormat(bookId, format);
+        if (hasActiveLoan) {
+          return false; // Al menos un formato sigue prestado
+        }
+      }
+      return true; // Todos los formatos están disponibles
+    } catch (e) {
+      print('Error al verificar disponibilidad de formatos: $e');
+      return false;
+    }
+  }
+
+
 }

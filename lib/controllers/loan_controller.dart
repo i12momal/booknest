@@ -111,21 +111,49 @@ class LoanController extends BaseController{
 
       final ownerId = loan['ownerId'];
       // Si el préstamo ha sido devuelto, se notifica al propietario del libro
-      if (newState == 'Devuelto') {
+      if (newState.trim().toLowerCase() == 'devuelto') {
         String message = 'Tu libro "$bookName" en formato ${loan['format']} ha sido devuelto.';
         await NotificationController().createNotification(ownerId, 'Préstamo Devuelto', loanId, message);
 
+        final format = loan['format'] as String;
+        final bookId = loan['bookId'] as int;
 
-        // Se envía un mensaje a todos aquellos que hayan activado la campana de recordatorio para ese libro
-        //1. Obtenemos el id de los usuarios
-        List<String> usersIdreminder = await ReminderController().getUsersIdForReminder(bookResponse['data']['id']);
-        //2. Creamos mensaje para cada uno de ellos
-        String messageReminder = 'El libro "$bookName" en formato ${loan['format']} vuelve a estar disponible.';
-        for(String user in usersIdreminder){
-          await NotificationController().createNotification(user, 'Recordatorio', loan['bookId'], messageReminder);
+        // Obtener todos los recordatorios del libro
+        final allReminders = await ReminderController().getRemindersByBook(bookId);
+
+        // Filtrar solo los que coinciden con el formato y no han sido notificados
+        final usersToNotify = allReminders
+            .where((r) => r.format.trim().toLowerCase() == format.trim().toLowerCase() && !r.notified)
+            .map((r) => r.userId)
+            .toSet()
+            .toList();
+
+        if (usersToNotify.isNotEmpty) {
+          final String messageReminder = 'El libro "$bookName" en formato $format vuelve a estar disponible.';
+          for (String userId in usersToNotify) {
+            await NotificationController().createNotification(userId, 'Recordatorio', bookId, messageReminder);
+
+            // Marcar como notificado
+            await ReminderController().markAsNotified(bookId, userId, format);
+
+            // Verificar si TODOS los formatos ya están disponibles
+            final bookFormats = (bookResponse['data']['format'] as String)
+                .split(',')
+                .map((f) => f.trim())
+                .toList();
+
+            final allAvailable = await loanService.areAllFormatsAvailable(bookId, bookFormats);
+
+            if (allAvailable) {
+              // Eliminar todos los recordatorios del usuario para ese libro
+              for (final f in bookFormats) {
+                await ReminderController().removeFromReminder(bookId, userId, f);
+              }
+            }
+          }
         }
-       
       }
+
 
       // Si el préstamo ha sido rechazado, se notifica al usuario que ha solicitado el libro
       if (newState == 'Rechazado') {
@@ -137,6 +165,55 @@ class LoanController extends BaseController{
     }
   }
 
+
+
+  // Este archivo podría ser algo como loan_controller.dart o book_controller.dart.
+  Future<bool> areAllFormatsAvailable(int bookId) async {
+    final bookResponse = await bookService.getBookById(bookId);
+    if (bookResponse == null || bookResponse['data'] == null) {
+      print('Error: No se encontró el libro');
+      return false;
+    }
+
+    final formats = (bookResponse['data']['format'] as String).split(',').map((f) => f.trim()).toList();
+    bool allFormatsAvailable = true;
+
+    for (var format in formats) {
+      final activeLoan = await loanService.getActiveLoanForBookAndFormat(bookId, format);
+      if (activeLoan != null) {
+        allFormatsAvailable = false;
+        break;
+      }
+    }
+
+    return allFormatsAvailable;
+  }
+
+  Future<void> handleBookReturnAndNotification(int bookId, String format) async {
+    final usersIdForReminder = await ReminderController().getUsersIdForReminder(bookId);
+    final bookResponse = await bookService.getBookById(bookId);
+
+    if (bookResponse == null || bookResponse['data'] == null) {
+      print('Error: No se encontró el libro');
+      return;
+    }
+
+    final bookName = bookResponse['data']['title'];
+
+    // Enviar notificación a los usuarios con recordatorio
+    for (String userId in usersIdForReminder) {
+      String messageReminder = 'El libro "$bookName" en formato $format vuelve a estar disponible.';
+      await NotificationController().createNotification(userId, 'Recordatorio', bookId, messageReminder);
+    }
+
+    // Verificar si todos los formatos están disponibles
+    bool allFormatsAvailable = await areAllFormatsAvailable(bookId);
+
+    if (allFormatsAvailable) {
+      // Si todos los formatos están disponibles, desactivar la campana
+      await ReminderController().updateReminderStateForAllUsers(bookId, false);
+    }
+  }
 
   Future<void> saveCurrentPageProgress(String userId, int bookId, int currentPage) async {
     try {
@@ -158,19 +235,6 @@ class LoanController extends BaseController{
   Future<int?> getSavedPageProgress(String userId, int bookId) async {
     return await loanService.getSavedPageProgress(userId, bookId);
   }
-
-  // Método para devolver el libro
-  Future<void> updateLoanStateToReturned(int loanId) async {
-    try {
-      // Lógica para actualizar el estado del préstamo a "Devuelto"
-      await loanService.updateLoanState(loanId, 'Devuelto');
-    } catch (e) {
-      print('Error al actualizar el estado del préstamo: $e');
-      rethrow;
-    }
-  }
-
-
 
   Future<List<String>> fetchAvailableFormats(int bookId, List<String> formats) async {
     try {

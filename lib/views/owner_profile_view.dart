@@ -39,6 +39,8 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
   bool _isLoading = false;
   String _message = '';
 
+  bool _isReturning = false;
+
   final UserController _userController = UserController();
 
   List<Map<String, dynamic>> activeLoans = [];
@@ -143,17 +145,6 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
     }
   }
 
-  void _returnBook(int loanId) async {
-    try {
-      await LoanController().updateLoanStateToReturned(loanId);
-      await _fetchActiveLoans();
-      _showSuccessDialog();
-    } catch (e) {
-      print('Error al devolver el libro: $e');
-      _showErrorDialog();
-    }
-  }
-
   void _showSuccessDialog() {
     SuccessDialog.show(
       context,
@@ -190,6 +181,25 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
         ],
       ),
     );
+  }
+
+  void _returnBook(int loanId) async {
+    setState(() {
+      _isReturning = true;
+    });
+
+    try {
+      await LoanController().updateLoanState(loanId, 'Devuelto');
+      await _fetchActiveLoans();
+      _showSuccessDialog();
+    } catch (e) {
+      print('Error al devolver el libro: $e');
+      _showErrorDialog();
+    } finally {
+      setState(() {
+        _isReturning = false;
+      });
+    }
   }
 
   Future<void> _searchBooks(String query, Function setState) async {
@@ -598,29 +608,41 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
                                       const SizedBox(height: 8),
                                       if(loanData['format'] == 'Digital')
                                         ElevatedButton(
-                                          onPressed: () async {
-                                            bool? confirm = await _showConfirmDialog(context);
-                                            if (confirm == true) {
-                                              _returnBook(loanId);
-                                            }
-                                          },
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: const Color(0xFFAD0000),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(30),
-                                              side: const BorderSide(color: Color(0xFF700101), width: 3),
-                                            ),
-                                            padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 7),
+                                        onPressed: _isReturning
+                                            ? null
+                                            : () async {
+                                                bool? confirm = await _showConfirmDialog(context);
+                                                if (confirm == true) {
+                                                  _returnBook(loanId);
+                                                }
+                                              },
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: const Color(0xFFAD0000),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(30),
+                                            side: const BorderSide(color: Color(0xFF700101), width: 3),
                                           ),
-                                          child: const Text(
-                                            "Devolver",
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
+                                          padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 7),
                                         ),
+                                        child: _isReturning
+                                            ? const SizedBox(
+                                                width: 16,
+                                                height: 16,
+                                                child: CircularProgressIndicator(
+                                                  strokeWidth: 2,
+                                                  color: Colors.white,
+                                                ),
+                                              )
+                                            : const Text(
+                                                "Devolver",
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                      ),
+
                                     ],
                                   ),
                                 ),

@@ -1,5 +1,6 @@
 import 'package:booknest/controllers/account_controller.dart';
 import 'package:booknest/controllers/book_controller.dart';
+import 'package:booknest/controllers/loan_controller.dart';
 import 'package:booknest/controllers/reminder_controller.dart';
 import 'package:booknest/controllers/user_controller.dart';
 import 'package:booknest/views/book_details_owner_view.dart';
@@ -73,8 +74,8 @@ class _FavoritesViewState extends State<FavoritesView> {
     // Inicializamos el estado de los recordatorios
     List<bool> reminderStates = [];
     for (var book in favorites) {
-      final reminderExists = await ReminderController().getUsersIdForReminder(book['id']);
-      reminderStates.add(reminderExists.contains(userId));
+      final reminders = await ReminderController().getRemindersByBookAndUser(book['id'], userId!);
+      reminderStates.add(reminders.isNotEmpty);
     }
 
     setState(() {
@@ -102,24 +103,41 @@ class _FavoritesViewState extends State<FavoritesView> {
     });
   }
 
+  // Este archivo podría ser algo como favorite_books_page.dart o similar.
   Future<void> _toggleReminder(int bookId, int index) async {
-    final reminderExists = await ReminderController().getUsersIdForReminder(bookId);
-    final isReminderActive = reminderExists.contains(userId);
+    final reminders = await ReminderController().getRemindersByBookAndUser(bookId, userId!);
+    final isActive = reminders.isNotEmpty;
+
+    final formats = (allFavorites[index]['format'] as String).split(',').map((f) => f.trim()).toList();
 
     setState(() {
-      // Actualiza solo el estado del recordatorio para el libro en cuestión
-      isReminderActiveList[index] = !isReminderActive;
+      isReminderActiveList[index] = !isActive;
     });
 
-    if (isReminderActive) {
-      await ReminderController().removeFromReminder(bookId, userId!);
+    if (isActive) {
+      // Elimina todos los recordatorios de ese libro para ese usuario
+      for (final r in reminders) {
+        await ReminderController().removeFromReminder(bookId, userId!, r.format);
+      }
     } else {
-      // Aquí debes asegurarte de que solo envíes los datos necesarios para el recordatorio
-      await ReminderController().addReminder(bookId, userId!);
+      // Crea un recordatorio por cada formato disponible
+      for (final format in formats) {
+        await ReminderController().addReminder(bookId, userId!, format);
+      }
     }
-    
+
+    // Actualizar visualmente la campana si todos los formatos están disponibles
+    final allFormatsAvailable = await LoanController().areAllFormatsAvailable(bookId);
+    if (allFormatsAvailable) {
+      setState(() {
+        isReminderActiveList[index] = false; // Cambia la campana a gris (inactiva)
+      });
+    }
+
     setState(() {});
   }
+
+
 
   @override
   Widget build(BuildContext context) {
