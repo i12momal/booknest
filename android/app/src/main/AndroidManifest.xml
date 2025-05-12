@@ -3,6 +3,12 @@
         android:label="booknest"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+
+         <!-- ✅ API KEY DE GOOGLE MAPS -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyAylXeV1G4_k0RKPoTD8Oo6fR8dydEpwsI" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -42,4 +48,6 @@
             <data android:mimeType="text/plain"/>
         </intent>
     </queries>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 </manifest>

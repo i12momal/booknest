@@ -41,7 +41,7 @@ class _SplashVideoPageState extends State<SplashVideoPage> with TickerProviderSt
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
   late Animation<double> _videoFadeAnimation; // Animación específica para desvanecer el video
-  final bool _showHome = false;
+  bool _showHome = false;
 
   @override
   void initState() {
@@ -73,11 +73,25 @@ class _SplashVideoPageState extends State<SplashVideoPage> with TickerProviderSt
     );
 
     _controller.addListener(() {
-      // Cuando el video está a punto de terminar (2 segundos antes de que termine)
       if (_controller.value.position >= _controller.value.duration - const Duration(seconds: 2) && !_showHome) {
-        // Iniciar la animación de desvanecimiento
         _fadeController.forward();
-        
+        _showHome = true;
+
+        // Esperar a que termine el fade y luego navegar
+        Future.delayed(const Duration(milliseconds: 1600), () {
+          Navigator.of(context).pushReplacement(
+            PageRouteBuilder(
+              transitionDuration: const Duration(milliseconds: 800),
+              pageBuilder: (_, __, ___) => const MyHomePage(title: ''),
+              transitionsBuilder: (_, animation, __, child) {
+                return FadeTransition(
+                  opacity: animation,
+                  child: child,
+                );
+              },
+            ),
+          );
+        });
       }
     });
   }

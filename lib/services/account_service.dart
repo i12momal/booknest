@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:booknest/entities/viewmodels/account_view_model.dart';
 import 'package:booknest/entities/models/user_session.dart';
+import 'package:booknest/entities/models/user_model.dart' as user;
 import 'package:booknest/services/base_service.dart';
 import 'package:crypto/crypto.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -375,6 +376,22 @@ class AccountService extends BaseService {
     return currentUser?.id;
   }
 
+  Future<String> getCurrentUserIdNonNull() async {
+    if (BaseService.client == null) {
+      return 'No se pudo establecer conexión';
+    }
+
+    // Obtener el ID del usuario desde SharedPreferences
+    final userId = await UserSession.getUserId();
+    if (userId != null) {
+      return userId;
+    }
+
+    // Si no hay ID en SharedPreferences, intentar obtenerlo de la autenticación
+    final currentUser = BaseService.client.auth.currentUser;
+    return currentUser!.id;
+  }
+
   Future<Map<String, dynamic>> logoutUser() async {
     try {
       // Cerrar sesión en Supabase Auth
@@ -413,5 +430,20 @@ class AccountService extends BaseService {
     return response != null;
   }
 
+  Future<user.User> getCurrentUser() async {
+    final userId = await getCurrentUserIdNonNull();
+
+    final response = await BaseService.client
+        .from('User')
+        .select()
+        .eq('id', userId)
+        .single();
+
+    if (response == null) {
+      throw Exception('Usuario no encontrado');
+    }
+
+    return user.User.fromJson(response);
+  }
 
 }

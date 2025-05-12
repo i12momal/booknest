@@ -1,6 +1,6 @@
 import 'package:booknest/controllers/account_controller.dart';
 import 'package:booknest/controllers/user_controller.dart';
-import 'package:booknest/main.dart';
+import 'package:booknest/views/login_view.dart';
 import 'package:flutter/material.dart';
 
 class Footer extends StatefulWidget {
@@ -66,7 +66,7 @@ class _FooterState extends State<Footer> {
       await AccountController().logout();
       if (context.mounted) {
         Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const MyHomePage(title: '')), 
+          MaterialPageRoute(builder: (context) => const LoginView()), 
           (route) => false,
         );
       }

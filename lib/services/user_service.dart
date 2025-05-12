@@ -1,4 +1,3 @@
-import 'package:booknest/entities/models/book_model.dart';
 import 'package:booknest/entities/models/user_model.dart';
 import 'package:booknest/entities/viewmodels/user_view_model.dart';
 import 'package:booknest/services/base_service.dart';
@@ -355,7 +354,6 @@ class UserService extends BaseService{
     return null;
   }
 
-
   Future<List<Map<String, dynamic>>> searchUsers(String query) async {
     // Creamos el filtro compuesto para búsqueda por nombre o nombre de usuario
     final filters = [
@@ -372,4 +370,22 @@ class UserService extends BaseService{
     // Devolvemos los resultados como una lista de mapas
     return response.map((e) => Map<String, dynamic>.from(e)).toList();
   }
+
+
+  Future<User> getCurrentUser() async {
+    final userId = await getCurrentUser();
+
+    final response = await BaseService.client
+        .from('User') // Usa el nombre exacto de tu tabla en Supabase
+        .select()
+        .eq('id', userId)
+        .single();
+
+    if (response == null) {
+      throw Exception('Usuario no encontrado');
+    }
+
+    return User.fromJson(response);
+  }
+
 }

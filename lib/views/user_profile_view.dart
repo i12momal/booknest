@@ -4,6 +4,7 @@ import 'package:booknest/entities/models/category_model.dart';
 import 'package:booknest/entities/models/user_model.dart';
 import 'package:booknest/views/category_view.dart';
 import 'package:booknest/views/favorites_view.dart';
+import 'package:booknest/views/geolocation_view.dart';
 import 'package:booknest/views/home_view.dart';
 import 'package:booknest/views/login_view.dart';
 import 'package:booknest/views/owner_profile_view.dart';
@@ -268,7 +269,7 @@ class _UserProfileViewState extends State<UserProfileView> {
                 case 2:
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const HomeView()),
+                    MaterialPageRoute(builder: (context) => const GeolocationMap()),
                   );
                   break;
                 case 3:

@@ -10,6 +10,7 @@ import 'package:booknest/views/add_review_view.dart';
 import 'package:booknest/views/edit_book_view.dart';
 import 'package:booknest/views/edit_review_view.dart';
 import 'package:booknest/views/favorites_view.dart';
+import 'package:booknest/views/geolocation_view.dart';
 import 'package:booknest/views/home_view.dart';
 import 'package:booknest/views/owner_profile_view.dart';
 import 'package:booknest/views/user_profile_view.dart';
@@ -354,7 +355,7 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
                         case 2:
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => const HomeView()),
+                            MaterialPageRoute(builder: (context) => const GeolocationMap()),
                           );
                           break;
                         case 3:

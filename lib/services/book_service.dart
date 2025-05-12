@@ -389,6 +389,28 @@ class BookService extends BaseService{
     }
   }
 
+  Future<List<Book>> getUserPhysicalBooks(String userId) async {
+    try {
+      final response = await BaseService.client
+          .from('Book')
+          .select()
+          .eq('owner_id', userId).like('format', '%Físico%');
+
+      // Verificamos si la respuesta es nula o si no contiene datos
+      if (response == null || response.isEmpty) {
+        return [];
+      }
+
+      // Convertimos los datos en una lista de libros
+      List<dynamic> data = response;
+      return data.map((book) => Book.fromJson(book)).toList();
+    } catch (e) {
+      print('Error obteniendo libros: $e');
+      return [];
+    }
+  }
+
+
   // Obtener los libros de un usuario y filtrar por categoría
   Future<List<Book>> getBooksByCategoryForUser(String userId, String categoryName) async {
     try {

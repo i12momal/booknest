@@ -254,11 +254,21 @@ class BookController extends BaseController{
     return bookService.fetchAllBooks();
   }
 
-  // Método asíncrono que obtiene los libros de un usuario por categorías.
+  // Método asíncrono que obtiene los libros de un usuario.
   Future<List<Book>> getUserBooks(String userId) async {
     try {
       // Llamamos al servicio para obtener los libros filtrados
       final books = await bookService.getBooksForUser(userId);
+      return books;
+    } catch (e) {
+      throw Exception('Error al obtener los libros del usuario desde el controlador: $e');
+    }
+  }
+
+  Future<List<Book>> getUserPhysicalBooks(String userId) async {
+    try {
+      // Llamamos al servicio para obtener los libros filtrados
+      final books = await bookService.getUserPhysicalBooks(userId);
       return books;
     } catch (e) {
       throw Exception('Error al obtener los libros del usuario desde el controlador: $e');

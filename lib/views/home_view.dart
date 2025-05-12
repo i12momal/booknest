@@ -1,7 +1,9 @@
 import 'package:booknest/controllers/account_controller.dart';
 import 'package:booknest/controllers/categories_controller.dart';
+import 'package:booknest/entities/models/geolocation_model.dart';
 import 'package:booknest/views/book_details_owner_view.dart';
 import 'package:booknest/views/favorites_view.dart';
+import 'package:booknest/views/geolocation_view.dart';
 import 'package:booknest/views/owner_profile_view.dart';
 import 'package:booknest/views/user_search_view.dart';
 import 'package:booknest/widgets/category_selection_popup.dart';
@@ -577,7 +579,7 @@ class _HomeViewState extends State<HomeView> {
                 case 2:
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const HomeView()),
+                    MaterialPageRoute(builder: (context) => const GeolocationMap()),
                   );
                   break;
                 case 3:

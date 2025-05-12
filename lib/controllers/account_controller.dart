@@ -202,6 +202,11 @@ class AccountController extends BaseController{
     return result;
   }
 
+  Future<String> getCurrentUserIdNonNull() async {
+    final result = await accountService.getCurrentUserIdNonNull();
+    return result;
+  }
+
   Future<void> logout() async {
     final result = await accountService.logoutUser();
 

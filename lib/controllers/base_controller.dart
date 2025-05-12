@@ -1,5 +1,6 @@
 import 'package:booknest/services/account_service.dart';
 import 'package:booknest/services/category_service.dart';
+import 'package:booknest/services/geolocation_service.dart';
 import 'package:booknest/services/loan_service.dart';
 import 'package:booknest/services/reminder_service.dart';
 import 'package:booknest/services/review_service.dart';
@@ -16,6 +17,7 @@ abstract class BaseController {
   final LoanService loanService = LoanService();
   final NotificationService notificationService = NotificationService();
   final ReminderService reminderService = ReminderService();
+  final GeolocationService geolocationService = GeolocationService();
 
   BaseController();
 }

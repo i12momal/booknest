@@ -196,4 +196,9 @@ class UserController extends BaseController{
     return await userService.getFavorites();
   }
 
+
+  Future<User> getCurrentUser() async {
+    return await userService.getCurrentUser();
+  }
+
 }
