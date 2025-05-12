@@ -1,5 +1,6 @@
 import 'package:booknest/controllers/geolocation_controller.dart';
 import 'package:booknest/entities/models/geolocation_model.dart';
+import 'package:booknest/views/book_details_owner_view.dart';
 import 'package:booknest/views/user_profile_view.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter/material.dart';
@@ -56,6 +57,7 @@ class _GeolocationMapState extends State<GeolocationMap> {
       markerId: const MarkerId("user_location"),
       position: _center,
       infoWindow: const InfoWindow(title: "Tu ubicación"),
+      icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
     ));
 
     // Agregar marcadores para los usuarios cercanos
@@ -66,23 +68,87 @@ class _GeolocationMapState extends State<GeolocationMap> {
         infoWindow: InfoWindow(
           title: user.userName,
           snippet: '${user.books.length} libros disponibles',
+          onTap: () {
+            // Mostrar el nombre de usuario y los libros disponibles en una ventana emergente
+            _showUserBooksDialog(user);
+          },
         ),
-        onTap: () {
-          // Lógica para abrir el perfil del usuario
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => UserProfileView(userId: user.userId)),
-          );
-        },
       ));
     }
     setState(() {});
   }
 
+  void _showUserBooksDialog(Geolocation user) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: const BorderSide(color: Color(0xFF112363), width: 3), 
+          ),
+           title: Center(child: Text(user.userName)),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('${user.books.length} libros disponibles:'),
+                const SizedBox(height: 10),
+                ...user.books.map((book) {
+                  return GestureDetector(
+                    onTap: () {
+                      // Lógica para ir al detalle del libro
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => BookDetailsOwnerView(bookId: book.id),
+                        ),
+                      );
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 8.0),
+                      child: Text(
+                        book.title,
+                        style: const TextStyle(
+                          color: Colors.blue, 
+                          decoration: TextDecoration.underline,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => UserProfileView(userId: user.userId),
+                  ),
+                );
+              },
+              child: const Text('Ver perfil'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Mapa de intercambio de libros")),
+      appBar: AppBar(
+        title: const Center(
+          child: Text("Mapa de Ubicación"),
+        ),
+      ),
       body: GoogleMap(
         onMapCreated: (GoogleMapController controller) {
           mapController = controller;
