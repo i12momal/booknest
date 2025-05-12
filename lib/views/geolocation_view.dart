@@ -1,3 +1,4 @@
+import 'package:booknest/controllers/account_controller.dart';
 import 'package:booknest/controllers/geolocation_controller.dart';
 import 'package:booknest/entities/models/geolocation_model.dart';
 import 'package:booknest/views/book_details_owner_view.dart';
@@ -19,11 +20,13 @@ class _GeolocationMapState extends State<GeolocationMap> {
   final Set<Marker> _markers = {};
   List<Geolocation> _nearbyUsers = [];
   GeolocationController geoController = GeolocationController();
+  String? userId;
 
   @override
   void initState() {
     super.initState();
     _getUserLocation();
+    _loadUserId();
   }
 
   Future<void> _getUserLocation() async {
@@ -34,7 +37,7 @@ class _GeolocationMapState extends State<GeolocationMap> {
       // Guarda la ubicación y libros del usuario (fuera de setState)
       geoController.guardarUbicacionYLibros();
 
-      // Luego obtén los usuarios cercanos
+      // Luego obtén los usuarios cercanos, pero no agregamos el usuario actual a los marcadores
       final users = await geoController.getNearbyUsers(position);
       _nearbyUsers = users;
 
@@ -50,9 +53,17 @@ class _GeolocationMapState extends State<GeolocationMap> {
     }
   }
 
+  void _loadUserId() async {
+    final id = await AccountController().getCurrentUserId();
+    setState(() {
+      userId = id;
+    });
+  }
+
   void updateMarkers(List<Geolocation> nearbyUsers) {
     _markers.clear(); // Limpiar marcadores anteriores
-    // Agregar marcador para el usuario actual
+
+    // Agregar marcador para la ubicación del usuario actual (solo "Tu ubicación")
     _markers.add(Marker(
       markerId: const MarkerId("user_location"),
       position: _center,
@@ -60,21 +71,24 @@ class _GeolocationMapState extends State<GeolocationMap> {
       icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
     ));
 
-    // Agregar marcadores para los usuarios cercanos
+    // Ahora solo agregamos los marcadores de los usuarios cercanos (si no es el mismo que el usuario actual)
     for (var user in nearbyUsers) {
-      _markers.add(Marker(
-        markerId: MarkerId(user.userId),
-        position: LatLng(user.latitude, user.longitude),
-        infoWindow: InfoWindow(
-          title: user.userName,
-          snippet: '${user.books.length} libros disponibles',
-          onTap: () {
-            // Mostrar el nombre de usuario y los libros disponibles en una ventana emergente
-            _showUserBooksDialog(user);
-          },
-        ),
-      ));
+      if (user.userId != userId && user.books.isNotEmpty) { 
+        _markers.add(Marker(
+          markerId: MarkerId(user.userId),
+          position: LatLng(user.latitude, user.longitude),
+          infoWindow: InfoWindow(
+            title: user.userName,
+            snippet: '${user.books.length} libros disponibles',
+            onTap: () {
+              // Mostrar el nombre de usuario y los libros disponibles en una ventana emergente
+              _showUserBooksDialog(user);
+            },
+          ),
+        ));
+      }
     }
+
     setState(() {});
   }
 
@@ -85,9 +99,9 @@ class _GeolocationMapState extends State<GeolocationMap> {
         return AlertDialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
-            side: const BorderSide(color: Color(0xFF112363), width: 3), 
+            side: const BorderSide(color: Color(0xFF112363), width: 3),
           ),
-           title: Center(child: Text(user.userName)),
+          title: Center(child: Text(user.userName)),
           content: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -111,7 +125,7 @@ class _GeolocationMapState extends State<GeolocationMap> {
                       child: Text(
                         book.title,
                         style: const TextStyle(
-                          color: Colors.blue, 
+                          color: Colors.blue,
                           decoration: TextDecoration.underline,
                           fontWeight: FontWeight.bold,
                         ),
@@ -139,7 +153,6 @@ class _GeolocationMapState extends State<GeolocationMap> {
       },
     );
   }
-
 
   @override
   Widget build(BuildContext context) {
