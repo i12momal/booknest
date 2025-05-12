@@ -66,7 +66,7 @@ class _FooterState extends State<Footer> {
       await AccountController().logout();
       if (context.mounted) {
         Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const MyApp()), 
+          MaterialPageRoute(builder: (context) => const MyHomePage(title: '')), 
           (route) => false,
         );
       }

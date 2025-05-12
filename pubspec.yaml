@@ -41,6 +41,7 @@ dependencies:
   flutter_rating_bar: ^4.0.0
   url_launcher: ^6.1.7
   syncfusion_flutter_pdfviewer: ^29.1.40
+  video_player: ^2.7.0
 
 
   # The following adds the Cupertino Icons font to your application.
@@ -81,6 +82,9 @@ flutter:
    - assets/images/titulo.png
    - assets/images/pluma.png
    - assets/gifs/cargando.gif
+   - assets/gifs/pluma.mp4
+   - assets/gifs/plumas2.mp4
+   - assets/gifs/plumas3.mp4
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
