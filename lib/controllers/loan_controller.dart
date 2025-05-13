@@ -165,8 +165,6 @@ class LoanController extends BaseController{
   }
 
 
-
-  // Este archivo podría ser algo como loan_controller.dart o book_controller.dart.
   Future<bool> areAllFormatsAvailable(int bookId) async {
     final bookResponse = await bookService.getBookById(bookId);
     if (bookResponse == null || bookResponse['data'] == null) {

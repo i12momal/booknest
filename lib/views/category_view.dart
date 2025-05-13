@@ -121,12 +121,12 @@ class _CategoryViewState extends State<CategoryView> {
       return 'Disponible';
     } else if (disponibles.length == 1) {
       final formatCapitalized = disponibles.first[0].toUpperCase() + disponibles.first.substring(1);
-      return 'Disponible: formato $formatCapitalized';
+      return formatCapitalized;
     } else {
       if (disponibles.contains('físico') && !disponibles.contains('digital')) {
-        return 'Disponible: formato Físico';
+        return 'Físico';
       } else if (disponibles.contains('digital') && !disponibles.contains('físico')) {
-        return 'Disponible: formato Digital';
+        return 'Digital';
       } else {
         return 'Disponible';
       }

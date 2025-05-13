@@ -545,7 +545,7 @@ class _BookHeader extends StatelessWidget {
               insetPadding: const EdgeInsets.all(16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
-                side: const BorderSide(color: Color(0xFF112363), width: 3), // Borde azul
+                side: const BorderSide(color: Color(0xFF112363), width: 3),
               ),
               child: SizedBox(
                 width: 320,

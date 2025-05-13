@@ -1,5 +1,6 @@
 import 'package:booknest/controllers/account_controller.dart';
 import 'package:booknest/controllers/geolocation_controller.dart';
+import 'package:booknest/entities/models/book_model.dart';
 import 'package:booknest/entities/models/geolocation_model.dart';
 import 'package:booknest/views/book_details_owner_view.dart';
 import 'package:booknest/views/user_profile_view.dart';
@@ -22,6 +23,9 @@ class _GeolocationMapState extends State<GeolocationMap> {
   GeolocationController geoController = GeolocationController();
   String? userId;
 
+  final List<Book> availableBooks = [];
+  final List<Book> loanBooks = [];
+
   @override
   void initState() {
     super.initState();
@@ -35,10 +39,22 @@ class _GeolocationMapState extends State<GeolocationMap> {
       _center = LatLng(position.latitude, position.longitude);
 
       // Guarda la ubicación y libros del usuario (fuera de setState)
-      geoController.guardarUbicacionYLibros();
+      await geoController.guardarUbicacionYLibros();
 
       // Luego obtén los usuarios cercanos, pero no agregamos el usuario actual a los marcadores
       final users = await geoController.getNearbyUsers(position);
+
+      for (var user in users){
+        for(var book in user.books){
+          final isAvailable = await geoController.isAvailable(book.id);
+           if (isAvailable) {
+            availableBooks.add(book);
+          } else {
+            loanBooks.add(book);
+          }
+        }
+      }
+
       _nearbyUsers = users;
 
       // Actualiza el estado visual con los marcadores
@@ -79,7 +95,7 @@ class _GeolocationMapState extends State<GeolocationMap> {
           position: LatLng(user.latitude, user.longitude),
           infoWindow: InfoWindow(
             title: user.userName,
-            snippet: '${user.books.length} libros disponibles',
+            snippet: '${user.books.length} libros físicos',
             onTap: () {
               // Mostrar el nombre de usuario y los libros disponibles en una ventana emergente
               _showUserBooksDialog(user);
@@ -107,9 +123,21 @@ class _GeolocationMapState extends State<GeolocationMap> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('${user.books.length} libros disponibles:'),
+                Text('${user.books.length} libros físicos:'),
                 const SizedBox(height: 10),
                 ...user.books.map((book) {
+                  final isAvailable = availableBooks.any((b) => b.id == book.id);
+                  final isLoaned = loanBooks.any((b) => b.id == book.id);
+
+                  Icon statusIcon;
+                  if (isAvailable) {
+                    statusIcon = const Icon(Icons.check_circle, color: Colors.green, size: 18);
+                  } else if (isLoaned) {
+                    statusIcon = const Icon(Icons.cancel, color: Colors.red, size: 18);
+                  } else {
+                    statusIcon = const Icon(Icons.help_outline, color: Colors.grey, size: 18);
+                  }
+
                   return GestureDetector(
                     onTap: () {
                       // Lógica para ir al detalle del libro
@@ -122,13 +150,21 @@ class _GeolocationMapState extends State<GeolocationMap> {
                     },
                     child: Padding(
                       padding: const EdgeInsets.only(bottom: 8.0),
-                      child: Text(
-                        book.title,
-                        style: const TextStyle(
-                          color: Colors.blue,
-                          decoration: TextDecoration.underline,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      child: Row(
+                        children: [
+                          statusIcon,
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              book.title,
+                              style: const TextStyle(
+                                color: Colors.blue,
+                                decoration: TextDecoration.underline,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   );

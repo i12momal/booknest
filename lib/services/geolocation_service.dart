@@ -80,4 +80,24 @@ class GeolocationService extends BaseService{
   }
 
 
+  Future<bool> isAvailable(int bookId) async {
+    try {
+      final response = await BaseService.client
+          .from('Loan')
+          .select('state')
+          .eq('bookId', bookId);
+
+      for (var res in response) {
+        final state = res['state'];
+        if (state == 'Aceptado' || state == 'Pendiente') {
+          return false;
+        }
+      }
+      return true; 
+    } catch (e) {
+      print("Error comprobando disponibilidad: $e");
+      return true;
+    }
+  }
+
 }

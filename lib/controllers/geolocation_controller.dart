@@ -53,7 +53,7 @@ class GeolocationController extends BaseController{
     return await geolocationService.getNearbyUsers(position);
   }
 
-  void guardarUbicacionYLibros() async {
+  Future<List<Book>> guardarUbicacionYLibros() async {
     try {
       final position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
@@ -79,8 +79,15 @@ class GeolocationController extends BaseController{
       );
 
       print('Ubicación actualizada con éxito');
+      return librosDelUsuario;
     } catch (e) {
       print('Error al guardar ubicación: $e');
+      return [];
     }
+  }
+
+
+  Future<bool> isAvailable(int bookId) async {
+    return geolocationService.isAvailable(bookId);
   }
 }
