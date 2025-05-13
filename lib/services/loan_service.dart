@@ -1,3 +1,5 @@
+import 'package:booknest/controllers/book_controller.dart';
+import 'package:booknest/controllers/loan_controller.dart';
 import 'package:booknest/entities/viewmodels/loan_view_model.dart';
 import 'package:booknest/services/base_service.dart';
 
@@ -362,6 +364,31 @@ class LoanService extends BaseService{
   }
 
 
+  Future<List<Map<String, String>>> getLoanedFormatsAndStates(int bookId) async {
+    try {
+      final loanData = await BaseService.client
+          .from('Loan')
+          .select('format, state')
+          .eq('bookId', bookId)
+          .or('state.eq.Aceptado, state.eq.Pendiente');
+
+      final loanedFormats = (loanData as List)
+          .where((loan) => loan['format'] != null && loan['state'] != null)
+          .map((loan) => {
+                'format': loan['format'].toString().trim().toLowerCase(),
+                'state': loan['state'].toString().trim()
+              })
+          .toList();
+
+      return loanedFormats;
+    } catch (e) {
+      print('Error en getLoanedFormats: $e');
+      return [];
+    }
+  }
+
+
+
 
   Future<List<Map<String, dynamic>>> getLoansByBookId(int bookId) async {
     try {
@@ -381,29 +408,80 @@ class LoanService extends BaseService{
 
   Future<Map<String, dynamic>> cancelLoan(int bookId, int? notificationId) async {
     try {
-      // Eliminamos la notificacion enviada al propietario
-      await BaseService.client
-          .from('Notifications')
-          .delete()
-          .eq('id', notificationId!);
+      // Eliminamos la notificación si existe
+      if (notificationId != null) {
+        await BaseService.client
+            .from('Notifications')
+            .delete()
+            .eq('id', notificationId);
+      }
 
-      // Eliminamos la solicitud de préstamo
+      // Eliminamos la solicitud de préstamo (solo si está en estado Pendiente)
       final response = await BaseService.client
           .from('Loan')
           .delete()
           .eq('bookId', bookId)
-          .eq('state', 'Pendiente').select();
+          .eq('state', 'Pendiente')
+          .select();
 
-      // Verifica si response contiene elementos eliminados
+      // Recalcular el estado del libro si se eliminó algo
       if (response.isNotEmpty) {
+        final bookResponse = await BaseService.client
+            .from('Book')
+            .select('id, format')
+            .eq('id', bookId)
+            .single();
+
+        if (bookResponse != null) {
+          final bookFormats = bookResponse['format']
+              .toString()
+              .split(',')
+              .map((f) => f.trim().toLowerCase())
+              .toList();
+
+          final loanedFormats = await LoanController().getLoanedFormatsAndStates(bookId);
+          final normalizedLoans = loanedFormats.map((f) => {
+                'format': f['format'].toString().trim().toLowerCase(),
+                'state': f['state'].toString().trim().toLowerCase(),
+              }).toList();
+
+          String newState = 'Disponible';
+
+          if (bookFormats.length == 2) {
+            final acceptedCount =
+                normalizedLoans.where((f) => f['state'] == 'aceptado').length;
+            final pendingCount =
+                normalizedLoans.where((f) => f['state'] == 'pendiente').length;
+
+            if ((acceptedCount == 2) ||
+                (pendingCount == 2) ||
+                (acceptedCount == 1 && pendingCount == 1)) {
+              newState = 'No Disponible';
+            }
+          } else if (bookFormats.length == 1 && normalizedLoans.isNotEmpty) {
+            final state = normalizedLoans.first['state'];
+            if (state == 'pendiente' || state == 'aceptado') {
+              newState = 'Pendiente';
+            }
+          }
+
+          print('Nuevo estado del libro tras cancelación: $newState');
+          await BookController().changeState(bookId, newState);
+        }
+
         return {'success': true};
       } else {
-        return {'success': false, 'message': 'No se pudo eliminar la solicitud o no existía'};
+        return {
+          'success': false,
+          'message': 'No se pudo eliminar la solicitud o no existía'
+        };
       }
     } catch (e) {
+      print('Error al cancelar la solicitud: $e');
       return {'success': false, 'message': 'Error al eliminar la solicitud'};
     }
   }
+
 
   // Método que comprueba si el usuario ya ha realizado una solicitud de préstamo para un libro
   Future<Map<String, dynamic>> checkExistingLoanRequest(int bookId, String userId) async {

@@ -1,6 +1,5 @@
 import 'package:booknest/controllers/account_controller.dart';
 import 'package:booknest/controllers/categories_controller.dart';
-import 'package:booknest/entities/models/geolocation_model.dart';
 import 'package:booknest/views/book_details_owner_view.dart';
 import 'package:booknest/views/favorites_view.dart';
 import 'package:booknest/views/geolocation_view.dart';
@@ -56,8 +55,6 @@ class _HomeViewState extends State<HomeView> {
       setState(() {
         isLoading = true;
       });
-
-      //await Future.delayed(const Duration(milliseconds: 1515));
 
       final userCategories = await _controller.loadUserGenres(userId);
       final categoryNames = userCategories.map((c) => c['name'].toString()).toList();

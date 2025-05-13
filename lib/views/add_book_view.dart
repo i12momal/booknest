@@ -95,12 +95,19 @@ class _AddBookViewState extends State<AddBookView>{
 
   // Función para pasar a la página de datos personales desde la selección de géneros
   void prevPage() {
-    _pageController.previousPage(
-        duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
-    setState(() {
-      _currentPage = 0;
-    });
+    if (_currentPage > 0) {
+      _pageController.previousPage(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+      setState(() {
+        _currentPage--;
+      });
+    } else {
+      Navigator.pop(context);
+    }
   }
+
 
   // Método que realiza la función de añadir un nuevo libro
   Future<void> _addBook() async {

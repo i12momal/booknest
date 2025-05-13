@@ -36,7 +36,7 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
   final loancontroller = LoanController();
   final bool _shouldReloadReviews = false;
 
-  late Future<List<String>> _loanedFormatsFuture;
+  late Future<List<Map<String, String>>> _loanedFormatsFuture;
   bool _loanRequestSent = false;
 
   int? notificationId;
@@ -49,7 +49,7 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
     super.initState();
     _bookFuture = _controller.getBookById(widget.bookId);
     _currentUserFuture = AccountController().getCurrentUserId();
-    _loanedFormatsFuture = loancontroller.fetchLoanedFormats(widget.bookId);
+    _loanedFormatsFuture = loancontroller.getLoanedFormatsAndStates(widget.bookId);
     _checkIfLoanRequestExists();
   }
 
@@ -58,7 +58,15 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
       context,
       'Solicitud de Préstamo Exitosa',
       '¡Tu solicitud de préstamo ha sido enviada exitosamente!',
-      () {},
+      () {
+        Navigator.pushReplacement(
+        context,
+        PageRouteBuilder(
+          pageBuilder: (context, animation1, animation2) => BookDetailsOwnerView(bookId: widget.bookId,),
+          transitionDuration: Duration.zero,
+        ),
+      );
+      },
     );
   }
 
@@ -116,7 +124,17 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
           context,
           'Operación Exitosa',
           '¡Tu solicitud de préstamo ha sido eliminada correctamente!',
-          () {},
+          () {
+            Navigator.pop(context);
+            Future.microtask(() {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => BookDetailsOwnerView(bookId: bookId),
+                ),
+              );
+            });
+          },
         );
       } else {
         _showErrorDialog(context, response['message']);
@@ -203,7 +221,7 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
             final isOwner = book.ownerId.toString() == currentUserId;
 
             // FutureBuilder para obtener los formatos prestados
-            return FutureBuilder<List<String>>(
+            return FutureBuilder<List<Map<String, String>>>(
               future: _loanedFormatsFuture, // Carga los formatos prestados
               builder: (context, loanedSnapshot) {
                 if (loanedSnapshot.connectionState == ConnectionState.waiting) {
@@ -213,9 +231,10 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
                 }
 
                 final loanedFormats = loanedSnapshot.data!;
+                final formats = loanedFormats.map((e) => e['format']!).toList();
 
                 // Usar la lógica de disponibilidad para obtener el estado
-                final availabilityStatus = getAvailabilityStatus(book, loanedFormats);
+                final availabilityStatus = getAvailabilityStatus(book, formats);
                 return Scaffold(
                   body: Background(
                     title: 'Detalles del libro',
@@ -390,7 +409,7 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
 class _BookHeader extends StatelessWidget {
   final Book book;
   final bool isOwner;
-  final List<String> loanedFormats;
+  final List<Map<String, String>> loanedFormats;
 
   const _BookHeader({
     required this.book,
@@ -609,27 +628,39 @@ class _BookHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final List<String> formats = book.format.split(',').map((f) => f.trim().toLowerCase()).where((f) => f.isNotEmpty).toList();
 
-    final List<String> disponibles = formats.where((format) => !loanedFormats.map((f) => f.toLowerCase()).contains(format)).toList();
+    final List<String> allFormats = book.format.split(',').map((f) => f.trim().toLowerCase()).where((f) => f.isNotEmpty).toList();
+
+    final List<String> acceptedFormats = loanedFormats.where((entry) => entry['state'] == 'Aceptado').map((entry) => entry['format']!).toList();
+
+    final List<String> pendingFormats = loanedFormats.where((entry) => entry['state'] == 'Pendiente').map((entry) => entry['format']!).toList();
+
+    final List<String> availableFormats = allFormats.where((f) => !acceptedFormats.contains(f) && !pendingFormats.contains(f)).toList();
 
     String availabilityStatus;
-    if (disponibles.isEmpty) {
-      availabilityStatus = 'Prestado';
-    } else if (disponibles.length == formats.length) {
+
+    if (availableFormats.isEmpty) {
+      // No hay ningún formato disponible
+      if (pendingFormats.isNotEmpty) {
+        // Hay al menos un pendiente (podría ser combinado con Aceptado)
+        availabilityStatus = 'Pendiente';
+      } else {
+        // Todos están aceptados
+        availabilityStatus = 'Prestado';
+      }
+    } else if (availableFormats.length == allFormats.length) {
       availabilityStatus = 'Disponible';
-    } else if (disponibles.length == 1) {
-      final formatCapitalized = disponibles.first[0].toUpperCase() + disponibles.first.substring(1);
-      availabilityStatus = formatCapitalized;
     } else {
-      if (disponibles.contains('físico') && !disponibles.contains('digital')) {
+      // Hay algunos formatos disponibles
+      if (availableFormats.contains('físico') && !availableFormats.contains('digital')) {
         availabilityStatus = 'Físico';
-      } else if (disponibles.contains('digital') && !disponibles.contains('físico')) {
+      } else if (availableFormats.contains('digital') && !availableFormats.contains('físico')) {
         availabilityStatus = 'Digital';
       } else {
         availabilityStatus = 'Disponible';
       }
     }
+
 
     return Stack(
       children: [
@@ -708,7 +739,7 @@ class _BookHeader extends StatelessWidget {
                           const SizedBox(height: 8),
                           Row(
                             children: [
-                              if (formats.contains("físico"))
+                              if (allFormats.contains("físico"))
                                 const Row(
                                   children: [
                                     Icon(Icons.book, size: 18),
@@ -716,9 +747,9 @@ class _BookHeader extends StatelessWidget {
                                     Text("Físico"),
                                   ],
                                 ),
-                              if (formats.contains("físico") && formats.contains("digital"))
+                              if (allFormats.contains("físico") && allFormats.contains("digital"))
                                 const SizedBox(width: 12),
-                              if (formats.contains("digital"))
+                              if (allFormats.contains("digital"))
                                 const Row(
                                   children: [
                                     Icon(Icons.tablet_android, size: 18),
@@ -731,7 +762,11 @@ class _BookHeader extends StatelessWidget {
                           const SizedBox(height: 6),
                           Row(
                             children: [
-                              if (availabilityStatus == 'Disponible') ...[
+                              if (availabilityStatus == 'Pendiente') ...[
+                                const Icon(Icons.cancel, color: Colors.orange, size: 18),
+                                const SizedBox(width: 4),
+                                const Text("Pendiente"),
+                              ]else if (availabilityStatus == 'Disponible') ...[
                                 const Icon(Icons.check_circle, color: Colors.green, size: 18),
                                 const SizedBox(width: 4),
                                 const Text("Disponible"),

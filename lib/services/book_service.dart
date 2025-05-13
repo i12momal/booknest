@@ -504,4 +504,21 @@ class BookService extends BaseService{
     }
   }
 
+
+  Future<void> changeState(int bookId, String state) async {
+    try {
+      print('Intentando actualizar el estado del libro $bookId a "$state"...');
+
+      final response = await BaseService.client
+          .from('Book')
+          .update({'state': state})
+          .eq('id', bookId)
+          .select();
+
+      print('Respuesta de Supabase al cambiar el estado: $response');
+    } catch (e) {
+      print('Error al cambiar el estado de Book: $e');
+    }
+  }
+
 }

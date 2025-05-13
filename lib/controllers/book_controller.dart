@@ -274,4 +274,8 @@ class BookController extends BaseController{
       throw Exception('Error al obtener los libros del usuario desde el controlador: $e');
     }
   }
+
+  Future<void> changeState(int bookId, String state) async {
+    await bookService.changeState(bookId, state);
+  }
 }
