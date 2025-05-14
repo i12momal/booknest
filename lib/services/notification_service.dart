@@ -31,6 +31,13 @@ class NotificationService extends BaseService{
         return {'success': false, 'message': 'Error de conexión a la base de datos.'};
       }
 
+      final user = BaseService.client.auth.currentUser;
+
+      if (user == null) {
+        print("El usuario no está autenticado.");
+        return {'success': false, 'message': 'El usuario no está autenticado.'};
+      }
+
       // Crear el registro en la tabla Book 
       print("Creando registro en la tabla Notification...");
       final Map<String, dynamic> notificationData = {

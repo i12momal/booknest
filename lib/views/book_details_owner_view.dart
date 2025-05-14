@@ -93,10 +93,11 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
           _selectedFormat = result['format'];
         });
       }
+
     }
   }
 
-  void _confirmDeleteLoanRequest(BuildContext context, int bookId, int? notificationId, String? format) async {
+  Future<void> _confirmDeleteLoanRequest(BuildContext context, int bookId, int? notificationId, String? format) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -121,6 +122,7 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
       if (!context.mounted) return;
 
       if (response['success']) {
+        await _checkIfLoanRequestExists();
         setState(() {
           _loanRequestSent = false;
         });
@@ -261,11 +263,12 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
                               width: double.infinity,
                               child:  _loanRequestSent
                               ? ElevatedButton(
-                                  onPressed: () {
+                                  onPressed: () async {
                                     setState(() => _isDeletingRequest = true);
-                                    _confirmDeleteLoanRequest(context, book.id, notificationId, _selectedFormat);
+                                    await _confirmDeleteLoanRequest(context, book.id, notificationId, _selectedFormat);
                                     if (mounted) setState(() => _isDeletingRequest = false);
                                   },
+
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: const Color(0xFFAD0000),
                                     padding: EdgeInsets.symmetric(
@@ -321,10 +324,7 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
                                   if (!context.mounted) return;
 
                                   if (response['success']) {
-                                    setState(() {
-                                      _loanRequestSent = true;
-                                      notificationId = int.tryParse(response['notificationId']);
-                                    });
+                                    await _checkIfLoanRequestExists();
                                     _showSuccessDialog(context);
                                   } else {
                                     _showErrorDialog(context, response['message']);

@@ -410,10 +410,12 @@ class LoanService extends BaseService{
     try {
       // Eliminamos la notificación si existe
       if (notificationId != null) {
-        await BaseService.client
+        final not = await BaseService.client
             .from('Notifications')
             .delete()
             .eq('id', notificationId);
+
+        print('not $not');
       }
 
       if (format == null) {
@@ -495,7 +497,7 @@ class LoanService extends BaseService{
   Future<Map<String, dynamic>> checkExistingLoanRequest(int bookId, String userId) async {
     try {
       if (BaseService.client == null) {
-        return {'exists': false, 'notificationId': null};
+        return {'exists': false, 'notificationId': null, 'format': null};
       }
 
       final response = await BaseService.client
@@ -508,9 +510,12 @@ class LoanService extends BaseService{
           .maybeSingle();
 
       if (response != null) {
+        final loanId = response['id'];
+        final notificationResponse = await BaseService.client.from('Notifications').select('id').eq('type', 'Préstamo').eq('relatedId', loanId).limit(1).maybeSingle(); 
+
         return {
           'exists': true,
-          'notificationId': response['notificationId'],
+          'notificationId': notificationResponse != null ? notificationResponse['id'] : null,
           'format': response['format']
         };
       } else {
