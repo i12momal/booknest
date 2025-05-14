@@ -114,6 +114,7 @@ serve(async (_req) => {
         const bookFormat = loan.format;
         const ownerId = loan.ownerId;
 
+        // Notificación
         await createNotification({
           userId: ownerId,
           type: 'Préstamo Devuelto',
@@ -121,6 +122,9 @@ serve(async (_req) => {
           message: `Tu libro "${bookTitle}" en formato ${bookFormat} ha sido devuelto automáticamente.`,
           read: false
         });
+
+        // Book state
+        await supabase.from("Book").update({ state: "Disponible" }).eq("id", loan.bookId);
 
         // Recordatorios
         const { data: reminders, error: reminderError } = await supabase
