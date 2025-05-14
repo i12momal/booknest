@@ -307,8 +307,8 @@ await bookService.changeState(book.id, estadoLibro);
   }
 
 
-  Future<Map<String, dynamic>> cancelLoanRequest(int bookId, int? notificationId) async {
-    return await loanService.cancelLoan(bookId, notificationId);
+  Future<Map<String, dynamic>> cancelLoanRequest(int bookId, int? notificationId, String? format) async {
+    return await loanService.cancelLoan(bookId, notificationId, format);
   }
 
   // Método que comprueba si el usuario ya ha realizado una solicitud de préstamo para un libro

@@ -41,6 +41,8 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
 
   int? notificationId;
 
+  String? _selectedFormat;
+
   bool _isSendingRequest = false;
   bool _isDeletingRequest = false;
 
@@ -59,13 +61,14 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
       'Solicitud de Préstamo Exitosa',
       '¡Tu solicitud de préstamo ha sido enviada exitosamente!',
       () {
-        Navigator.pushReplacement(
-        context,
-        PageRouteBuilder(
-          pageBuilder: (context, animation1, animation2) => BookDetailsOwnerView(bookId: widget.bookId,),
-          transitionDuration: Duration.zero,
-        ),
-      );
+        Future.microtask(() {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => BookDetailsOwnerView(bookId: widget.bookId),
+            ),
+          );
+        });
       },
     );
   }
@@ -87,12 +90,13 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
         setState(() {
           _loanRequestSent = result['exists'];
           notificationId = result['notificationId'];
+          _selectedFormat = result['format'];
         });
       }
     }
   }
 
-  void _confirmDeleteLoanRequest(BuildContext context, int bookId, int? notificationId) async {
+  void _confirmDeleteLoanRequest(BuildContext context, int bookId, int? notificationId, String? format) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -112,7 +116,7 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
     );
 
     if (confirm == true) {
-      final response = await loancontroller.cancelLoanRequest(bookId, notificationId);
+      final response = await loancontroller.cancelLoanRequest(bookId, notificationId, format);
 
       if (!context.mounted) return;
 
@@ -250,7 +254,7 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
                             reloadReviews: _shouldReloadReviews,
                           ),
                         ),
-                        if (!isOwner && availabilityStatus != 'Prestado')
+                        if (!isOwner && (availabilityStatus != 'Prestado' || _loanRequestSent))
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
                             child: SizedBox(
@@ -259,7 +263,7 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
                               ? ElevatedButton(
                                   onPressed: () {
                                     setState(() => _isDeletingRequest = true);
-                                    _confirmDeleteLoanRequest(context, book.id, notificationId);
+                                    _confirmDeleteLoanRequest(context, book.id, notificationId, _selectedFormat);
                                     if (mounted) setState(() => _isDeletingRequest = false);
                                   },
                                   style: ElevatedButton.styleFrom(

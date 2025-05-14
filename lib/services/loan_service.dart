@@ -406,7 +406,7 @@ class LoanService extends BaseService{
     }
   }
 
-  Future<Map<String, dynamic>> cancelLoan(int bookId, int? notificationId) async {
+  Future<Map<String, dynamic>> cancelLoan(int bookId, int? notificationId, String? format) async {
     try {
       // Eliminamos la notificación si existe
       if (notificationId != null) {
@@ -416,12 +416,20 @@ class LoanService extends BaseService{
             .eq('id', notificationId);
       }
 
+      if (format == null) {
+        return {
+          'success': false,
+          'message': 'Formato no especificado para eliminar la solicitud.'
+        };
+      }
+
       // Eliminamos la solicitud de préstamo (solo si está en estado Pendiente)
       final response = await BaseService.client
           .from('Loan')
           .delete()
           .eq('bookId', bookId)
           .eq('state', 'Pendiente')
+          .eq('format', format)
           .select();
 
       // Recalcular el estado del libro si se eliminó algo
@@ -503,13 +511,14 @@ class LoanService extends BaseService{
         return {
           'exists': true,
           'notificationId': response['notificationId'],
+          'format': response['format']
         };
       } else {
-        return {'exists': false, 'notificationId': null};
+        return {'exists': false, 'notificationId': null, 'format': null};
       }
     } catch (e) {
       print('Error al obtener solicitud del usuario: $e');
-      return {'exists': false, 'notificationId': null};
+      return {'exists': false, 'notificationId': null, 'format': null};
     }
   }
 
@@ -521,7 +530,7 @@ class LoanService extends BaseService{
           .select()
           .eq('bookId', bookId)
           .eq('format', format)
-          .eq('state', 'Aceptado') // Solo prestamos activos
+          .eq('state', 'Aceptado')
           .maybeSingle();
 
       return response != null;
