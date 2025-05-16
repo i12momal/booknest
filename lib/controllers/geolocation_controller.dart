@@ -53,29 +53,26 @@ class GeolocationController extends BaseController{
     return await geolocationService.getNearbyUsers(position);
   }
 
-  Future<List<Book>> guardarUbicacionYLibros() async {
+  Future<List<Book>> guardarUbicacionYLibros({bool? geolocationEnabled}) async {
     try {
       final position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
 
       String userId = await AccountController().getCurrentUserIdNonNull();
-
       user.User currentUser = await accountService.getCurrentUser();
       String userName = currentUser.userName;
 
       final List<Book> librosDelUsuario = await BookController().getUserPhysicalBooks(userId);
 
-      // ✅ Eliminar ubicación anterior si existe
-      await geolocationService.deleteUserLocationIfExists(userId);
-
-      // ✅ Insertar nueva ubicación
+      // ✅ Actualizar (o insertar) sin borrar, y preservando campos existentes
       await geolocationService.upsertUserLocation(
         userId: userId,
         userName: userName,
         latitude: position.latitude,
         longitude: position.longitude,
         books: librosDelUsuario,
+        geolocationEnabled: true,
       );
 
       print('Ubicación actualizada con éxito');
@@ -89,6 +86,14 @@ class GeolocationController extends BaseController{
 
   Future<bool> isAvailable(int bookId) async {
     return geolocationService.isAvailable(bookId);
+  }
+
+  Future<bool> isUserGeolocationEnabled(String userId) async {
+    return geolocationService.isUserGeolocationEnabled(userId);
+  }
+
+  Future<void> updateUserGeolocation(String userId, bool enabled) async {
+    await geolocationService.updateUserGeolocation(userId, enabled);
   }
 
   Future<Geolocation?> getUserGeolocation(String userId) async {

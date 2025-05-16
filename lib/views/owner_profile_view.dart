@@ -1,5 +1,6 @@
 import 'package:booknest/controllers/account_controller.dart';
 import 'package:booknest/controllers/book_controller.dart';
+import 'package:booknest/controllers/geolocation_controller.dart';
 import 'package:booknest/controllers/loan_controller.dart';
 import 'package:booknest/controllers/user_controller.dart';
 import 'package:booknest/entities/models/book_model.dart';
@@ -50,10 +51,13 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
   final BookController _bookController = BookController();
   List<Book> filteredBooks = [];
 
+  bool _isLocationEnabled = false;
+
   @override
   void initState() {
     super.initState();
     _fetchUserData();
+    _fetchUserGeolocation();
     _fetchUserCategoriesFromBooks();
     _fetchActiveLoans();
   }
@@ -101,6 +105,19 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
       });
     }
   }
+
+
+  Future<void> _fetchUserGeolocation() async {
+    try {
+      final isEnabled = await GeolocationController().isUserGeolocationEnabled(widget.userId);
+      setState(() {
+        _isLocationEnabled = isEnabled;
+      });
+    } catch (e) {
+      print("Error en _fetchUserGeolocation: $e");
+    }
+  }
+
 
   void _fetchUserCategoriesFromBooks() async {
     try {
@@ -214,8 +231,8 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
 
     // Filtramos los libros del propietario según el título o autor
     final filtered = userBooks.where((book) {
-      final title = (book.title ?? '').toString().toLowerCase();
-      final author = (book.author ?? '').toString().toLowerCase();
+      final title = (book.title).toString().toLowerCase();
+      final author = (book.author).toString().toLowerCase();
       return title.contains(normalizedQuery) || author.contains(normalizedQuery);
     }).toList();
 
@@ -372,6 +389,7 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
                             ? NetworkImage(currentImageUrl!)
                             : const AssetImage('assets/images/default.png') as ImageProvider,
                       ),
+                      
                       const SizedBox(width: 16),
                       Expanded(
                         child: GestureDetector(
@@ -410,6 +428,28 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
                           ),
                         ),
                       ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      const Text(
+                        'Ubicación',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                      ),
+                      const SizedBox(width: 8),
+                      Switch(
+                        value: _isLocationEnabled,
+                        onChanged: (bool newValue) async {
+                          setState(() {
+                            _isLocationEnabled = newValue;
+                          });
+
+                          await GeolocationController().updateUserGeolocation(widget.userId, newValue);
+                        },
+                        activeColor: const Color(0xFF112363),
+                      ),
+
                     ],
                   ),
                   const SizedBox(height: 50),

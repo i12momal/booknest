@@ -32,13 +32,66 @@ class _GeolocationMapState extends State<GeolocationMap> {
   final List<Book> availableBooks = [];
   final List<Book> loanBooks = [];
 
+  bool _isLocationEnabled = true;
+
   @override
   void initState() {
     super.initState();
     _focusedUser = widget.focusedUser;
-    _getUserLocation();
     _loadUserId();
+    _loadUserIdAndCheckGeolocation();
   }
+
+  void _loadUserIdAndCheckGeolocation() async {
+    final id = await AccountController().getCurrentUserId();
+    setState(() {
+      userId = id;
+    });
+
+    final isEnabled = await GeolocationController().isUserGeolocationEnabled(userId!);
+
+    if (!isEnabled) {
+      final activar = await _mostrarDialogoActivarGeolocalizacion();
+
+      if (!activar) {
+        Navigator.pop(context);
+        return;
+      }
+
+      // Si acepta, actualiza el valor en la base de datos
+     await geoController.guardarUbicacionYLibros(geolocationEnabled: true);
+      setState(() {
+        _isLocationEnabled = true;
+      });
+
+    }
+
+    // Si ya está activado o lo activó, continúa
+    _getUserLocation();
+  }
+
+  Future<bool> _mostrarDialogoActivarGeolocalizacion() async {
+    return await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text("Geolocalización desactivada", style: TextStyle(fontSize: 20)),
+        content: const Text("¿Deseas activar tu geolocalización para ver el mapa y los libros disponibles?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text("Cancelar"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text("Activar"),
+          ),
+        ],
+      ),
+    ) ?? false;
+  }
+
+
 
   Future<void> _getUserLocation() async {
     try {
@@ -46,8 +99,10 @@ class _GeolocationMapState extends State<GeolocationMap> {
       final position = await geoController.getUserLocation();
       final currentLocation = LatLng(position.latitude, position.longitude);
 
-      // Guardar libros y ubicación del usuario
-      await geoController.guardarUbicacionYLibros();
+      final isEnabled = await GeolocationController().isUserGeolocationEnabled(userId!);
+      if (isEnabled) {
+        await geoController.guardarUbicacionYLibros();
+      }
 
       // Obtener usuarios cercanos (excluyendo al actual)
       final users = await geoController.getNearbyUsers(position);
@@ -110,20 +165,33 @@ class _GeolocationMapState extends State<GeolocationMap> {
     });
   }
 
+  Future<void> _fetchUserGeolocation() async {
+    try {
+      final isEnabled = await GeolocationController().isUserGeolocationEnabled(userId!);
+      setState(() {
+        _isLocationEnabled = isEnabled;
+      });
+    } catch (e) {
+      print("Error en _fetchUserGeolocation: $e");
+    }
+  }
+
   void updateMarkers(List<Geolocation> nearbyUsers) {
-    _markers.clear(); // Limpiar marcadores anteriores
+    _markers.clear(); 
 
-    // Agregar marcador para la ubicación del usuario actual (solo "Tu ubicación")
-    _markers.add(Marker(
-      markerId: const MarkerId("user_location"),
-      position: _center,
-      infoWindow: const InfoWindow(title: "Tu ubicación"),
-      icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
-    ));
+    // Agregar marcador del usuario solo si tiene geolocalización habilitada
+    if (_isLocationEnabled) {
+      _markers.add(Marker(
+        markerId: const MarkerId("user_location"),
+        position: _center,
+        infoWindow: const InfoWindow(title: "Tu ubicación"),
+        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
+      ));
+    }
 
-    // Ahora solo agregamos los marcadores de los usuarios cercanos (si no es el mismo que el usuario actual)
+    // Agregar marcadores de usuarios cercanos
     for (var user in nearbyUsers) {
-      if (user.userId != userId && user.books.isNotEmpty) { 
+      if (user.userId != userId && user.books.isNotEmpty) {
         final isFocused = widget.focusedUser != null && widget.focusedUser!.userId == user.userId;
         final markerId = MarkerId(user.userId);
 
@@ -145,13 +213,11 @@ class _GeolocationMapState extends State<GeolocationMap> {
             },
           ),
         ));
-
-
       }
     }
-
     setState(() {});
   }
+
 
   void _showUserBooksDialog(Geolocation user) {
     showDialog(

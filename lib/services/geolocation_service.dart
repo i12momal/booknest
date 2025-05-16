@@ -6,14 +6,12 @@ import 'package:geolocator/geolocator.dart';
 class GeolocationService extends BaseService{
   
   Future<List<Geolocation>> getNearbyUsers(Position position) async {
-    final response = await BaseService.client.from('Geolocation').select('userId, userName, latitude, longitude, books');
+    final response = await BaseService.client.from('Geolocation').select('userId, userName, latitude, longitude, books').eq('geolocationEnabled', true);
 
     final List<dynamic> data = response;
 
-    // Convertir la lista JSON a objetos Geolocation
     List<Geolocation> allUsers = data.map((json) => Geolocation.fromJson(json)).toList();
 
-    // Filtrar los que están dentro de 100km
     return allUsers.where((user) {
       double distance = Geolocator.distanceBetween(
         position.latitude,
@@ -21,12 +19,14 @@ class GeolocationService extends BaseService{
         user.latitude,
         user.longitude,
       );
-      return distance <= 100000; // 100 km en metros
+      return distance <= 100000; // 100 km
     }).toList();
   }
 
 
- Future<void> upsertUserLocation({required String userId, required String userName, required double latitude, required double longitude, required List<Book> books}) async {
+
+
+ Future<void> upsertUserLocation({required String userId, required String userName, required double latitude, required double longitude, required List<Book> books, bool? geolocationEnabled}) async {
   final List<Map<String, dynamic>> booksJson = books.map((book) => {
     'id': book.id,
     'title': book.title,
@@ -44,17 +44,23 @@ class GeolocationService extends BaseService{
   }).toList();
 
   try {
-    final response = await BaseService.client
-        .from('Geolocation')
-        .upsert({
-          'userId': userId,
-          'userName': userName,
-          'latitude': latitude,
-          'longitude': longitude,
-          'books': booksJson,
-        });
+    await BaseService.client.from('Geolocation').delete().eq('userId', userId);
 
-    // Aquí simplemente imprimimos la respuesta, no intentamos acceder a response.error
+    final data = {
+      'userId': userId,
+      'userName': userName,
+      'latitude': latitude,
+      'longitude': longitude,
+      'books': booksJson,
+    };
+
+    if (geolocationEnabled != null) {
+      data['geolocationEnabled'] = geolocationEnabled;
+    }
+
+    // 🟢 Ahora sí insertamos (ya no habrá conflicto)
+    final response = await BaseService.client.from('Geolocation').insert(data);
+
     print('Ubicación y libros guardados correctamente. Respuesta: $response');
   } catch (e) {
     print('Excepción al guardar la ubicación y libros: $e');
@@ -94,6 +100,50 @@ class GeolocationService extends BaseService{
       return true;
     }
   }
+
+  Future<bool> isUserGeolocationEnabled(String userId) async {
+    try {
+      final response = await BaseService.client
+          .from('Geolocation')
+          .select('geolocationEnabled')
+          .eq('userId', userId)
+          .single();
+
+      return response['geolocationEnabled'] == true;
+    } catch (e) {
+      print("Error en isUserGeolocationEnabled: $e");
+      return false;
+    }
+  }
+
+  Future<void> updateUserGeolocation(String userId, bool enabled) async {
+    try {
+      // Obtener datos actuales del usuario
+      final existing = await BaseService.client
+          .from('Geolocation')
+          .select()
+          .eq('userId', userId)
+          .maybeSingle();
+
+      if (existing == null) {
+        print("No existe geolocalización previa para $userId");
+        return;
+      }
+
+      // Agregar el nuevo estado de geolocalización
+      existing['geolocationEnabled'] = enabled;
+
+      // Usar upsert para no perder el resto de los campos
+      await BaseService.client.from('Geolocation').upsert(existing);
+
+      print("Actualización exitosa de geolocalización para $userId");
+    } catch (e) {
+      print("Error actualizando geolocalización: $e");
+    }
+  }
+
+
+
 
   Future<Geolocation?> getUserGeolocation(String userId) async {
     try {

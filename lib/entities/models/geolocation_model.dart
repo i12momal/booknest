@@ -6,6 +6,7 @@ class Geolocation {
   final double latitude;
   final double longitude;
   final List<Book> books;
+  final bool geolocationEnabled;
 
   Geolocation({
     required this.userId,
@@ -13,6 +14,7 @@ class Geolocation {
     required this.latitude,
     required this.longitude,
     required this.books,
+    required this.geolocationEnabled,
   });
 
   factory Geolocation.fromJson(Map<String, dynamic> json) {
@@ -24,6 +26,7 @@ class Geolocation {
       books: (json['books'] as List? ?? [])
         .map((bookJson) => Book.fromJson(bookJson))
         .toList(),
+      geolocationEnabled: json['geolocationEnabled'] ?? false
     );
   }
 }
