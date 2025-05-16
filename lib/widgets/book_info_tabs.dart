@@ -184,7 +184,7 @@ class _BookDetailsTab extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (ownerGeo != null) ...[
+                if (ownerGeo != null && ownerGeo!.geolocationEnabled == true) ...[
                   const SizedBox(width: 8),
                   GestureDetector(
                     onTap: () {

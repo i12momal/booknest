@@ -250,11 +250,7 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
                       children: [
                         _BookHeader(book: book, isOwner: isOwner, loanedFormats: loanedFormats),
                         Expanded(
-                          child: BookInfoTabs(
-                            book: book,
-                            isOwner: isOwner,
-                            reloadReviews: _shouldReloadReviews,
-                          ),
+                          child: BookInfoTabs(book: book, isOwner: isOwner, reloadReviews: _shouldReloadReviews),
                         ),
                         if (!isOwner && (availabilityStatus != 'Prestado' || _loanRequestSent))
                           Padding(
