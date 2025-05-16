@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:booknest/controllers/account_controller.dart';
 import 'package:booknest/entities/models/book_model.dart';
 import 'package:booknest/widgets/book_cover_picker.dart';
 import 'package:file_picker/file_picker.dart';
@@ -21,6 +22,7 @@ class BookInfoFormEdit extends StatefulWidget {
   final void Function(File?) onFilePicked;
   final List<String> selectedFormats;
   final int bookId;
+  final String? originalTitle;
   
   final File? coverFile;
   final String? coverImageUrl; 
@@ -48,6 +50,7 @@ class BookInfoFormEdit extends StatefulWidget {
     this.coverImageUrl,
     this.selectedFormats = const [],
     required this.bookId,
+    this.originalTitle
   });
 
   @override
@@ -61,6 +64,7 @@ class _BookInfoFormEditState extends State<BookInfoFormEdit> {
   String? coverImageErrorMessage;
   String? fileErrorMessage;
   File? coverImageFile;
+  String? ownerId;
 
   // Variables de estado para los checkboxes
   bool isPhysicalSelected = false;
@@ -72,11 +76,22 @@ class _BookInfoFormEditState extends State<BookInfoFormEdit> {
 
   late final BookController bookController;
 
+  String? _titleValidationMessage;
+  late FocusNode _titleFocusNode;
+
   @override
   void initState() {
     super.initState();
+    _titleFocusNode = FocusNode();
     bookController = BookController();
     coverImageFile = widget.coverFile;
+    _loadUserId();
+
+    _titleFocusNode.addListener(() {
+      if (!_titleFocusNode.hasFocus) {
+        validateTitle(widget.titleController.text);
+      }
+    });
 
     // Si estamos en modo edición, cargamos los datos del libro (no actualizamos nada).
     if (widget.isEditMode) {
@@ -139,9 +154,8 @@ class _BookInfoFormEditState extends State<BookInfoFormEdit> {
         fileName = rawName;
       }
 
-  print("File name extracted: $fileName");
-}
-
+      print("File name extracted: $fileName");
+    }
 
     setState(() {
       isPhysicalSelected = formatoList.contains('físico');
@@ -163,6 +177,38 @@ class _BookInfoFormEditState extends State<BookInfoFormEdit> {
         }
       }
     });
+  }
+
+  void _loadUserId() async {
+    final id = await AccountController().getCurrentUserId();
+    setState(() {
+      ownerId = id;
+    });
+  }
+
+  @override
+  void dispose() {
+    _titleFocusNode.dispose();
+    super.dispose();
+  }
+
+  Future<void> validateTitle(String title) async {
+    final trimmed = title.trim();
+
+    if (trimmed.isEmpty) {
+      setState(() {
+        _titleValidationMessage = 'Por favor ingresa el título del libro';
+      });
+    } else if (trimmed == widget.originalTitle) {
+        setState(() {
+          _titleValidationMessage = null;
+        });
+      }else{
+        bool titleExists = await BookController().checkTitleExists(trimmed, ownerId!);
+        setState(() {
+          _titleValidationMessage = titleExists ? 'Ya tiene un libro con este título' : null;
+        });
+    }
   }
 
   @override
@@ -213,16 +259,16 @@ class _BookInfoFormEditState extends State<BookInfoFormEdit> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildTextField('Título', Icons.class_outlined, widget.titleController,
-                    (value) {
-                        final trimmed = value?.trim() ?? '';
-                        if (trimmed.isEmpty) {
-                          return 'Por favor ingresa el título del libro';
-                        } 
-                        return null;
+                    validator: (value) {
+                        return _titleValidationMessage;
                       },
+                      onChanged: (value) {
+                        validateTitle(value);
+                      },
+                      focusNode: _titleFocusNode,
                     ),
                     _buildTextField('Autor', Icons.person, widget.authorController,
-                    (value) {
+                    validator: (value) {
                         final trimmed = value?.trim() ?? '';
                         if (trimmed.isEmpty) {
                           return 'Por favor ingresa el autor del libro';
@@ -256,7 +302,7 @@ class _BookInfoFormEditState extends State<BookInfoFormEdit> {
                       ],
                     ),
                     _buildTextField('Número de páginas', Icons.insert_drive_file_outlined , widget.pagesNumberController,
-                    (value) {
+                    validator: (value) {
                       final trimmed = value?.trim() ?? '';
                       if (trimmed.isEmpty) {
                         return 'Por favor ingresa el número de páginas';
@@ -454,7 +500,7 @@ class _BookInfoFormEditState extends State<BookInfoFormEdit> {
                     Align(
                       alignment: Alignment.center,
                       child: ElevatedButton(
-                        onPressed: () {
+                        onPressed: () async {
                           // Resetear errores
                           setState(() {
                             coverImageErrorMessage = null;
@@ -462,6 +508,10 @@ class _BookInfoFormEditState extends State<BookInfoFormEdit> {
                             fileErrorMessage = null;
                             languageErrorMessage = null;
                           });
+
+                          await Future.wait([
+                            validateTitle(widget.titleController.text)
+                          ]);
 
                           // Validar formulario
                           final isFormValid = widget.formKey.currentState?.validate() ?? false;
@@ -493,7 +543,7 @@ class _BookInfoFormEditState extends State<BookInfoFormEdit> {
                           setState(() {});
 
                           // Avanzar solo si todo está válido
-                          if (isFormValid && hasCoverImage && hasFormat && !hasFileIfDigital) {
+                          if (isFormValid && hasCoverImage && hasFormat && !hasFileIfDigital && _titleValidationMessage == null) {
                             print("Formulario validado. Avanzando al siguiente paso.");
                             widget.onNext();
                           } else {
@@ -531,7 +581,7 @@ class _BookInfoFormEditState extends State<BookInfoFormEdit> {
     );
   }
 
-  Widget _buildTextField(String label, IconData? icon, TextEditingController controller, String? Function(String?)? validator) {
+  Widget _buildTextField(String label, IconData? icon, TextEditingController controller, {String? Function(String?)? validator, ValueChanged<String>? onChanged, FocusNode? focusNode}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -544,6 +594,8 @@ class _BookInfoFormEditState extends State<BookInfoFormEdit> {
           icon: icon,
           hint: '',
           controller: controller,
+          onChanged: onChanged,
+          focusNode: focusNode,
         ),
         const SizedBox(height: 15),
       ],

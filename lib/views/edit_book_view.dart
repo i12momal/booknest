@@ -58,6 +58,8 @@ class _EditBookViewState extends State<EditBookView> {
   File? coverImage;
   String? currentCoverImageUrl;
 
+  String? _originalTitle;
+
   @override
   void initState() {
     super.initState();
@@ -119,6 +121,7 @@ class _EditBookViewState extends State<EditBookView> {
           _bookStateController.text = bookData.state;
           _summaryController.text = bookData.summary;
           _stateController.text = bookData.state;
+          _originalTitle = bookData.title;
           
           // Cargar géneros seleccionados
         if (bookData.categories.isNotEmpty) {
@@ -357,6 +360,7 @@ class _EditBookViewState extends State<EditBookView> {
       languageController: _languageController,
       bookStateController: _bookStateController,
       selectedFormats: selectedFormat,
+      originalTitle: _originalTitle,
       onNext: nextPage,
       formKey: _formKey,
       onFormatChanged: (isPhysical, isDigital) {

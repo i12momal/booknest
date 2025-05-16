@@ -292,4 +292,8 @@ class BookController extends BaseController{
   Future<int?> getBookIdByTitleAndOwner(String title, String ownerId) async{
     return await bookService.getBookIdByTitleAndOwner(title, ownerId);
   }
+
+  Future<bool> checkTitleExists(String title, String ownerId) async {
+    return await bookService.checkTitleExists(title, ownerId);
+  }
 }

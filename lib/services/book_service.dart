@@ -571,4 +571,15 @@ class BookService extends BaseService{
   }
 
 
+  Future<bool> checkTitleExists(String title, String ownerId) async {
+    final response = await Supabase.instance.client
+      .from('Book')
+      .select('id')
+      .eq('title', title).eq('owner_id', ownerId)
+      .maybeSingle();
+
+    return response != null;
+  }
+
+
 }
