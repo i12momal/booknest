@@ -5,6 +5,7 @@ import 'package:booknest/views/favorites_view.dart';
 import 'package:booknest/views/geolocation_view.dart';
 import 'package:booknest/views/owner_profile_view.dart';
 import 'package:booknest/views/user_search_view.dart';
+import 'package:booknest/widgets/book_format_dropdown.dart';
 import 'package:booknest/widgets/category_selection_popup.dart';
 import 'package:booknest/widgets/footer.dart';
 import 'package:booknest/widgets/language_dropdown.dart';
@@ -26,6 +27,7 @@ class _HomeViewState extends State<HomeView> {
   String? selectedCategory;
   final TextEditingController _searchController = TextEditingController();
   final TextEditingController _languageFilterController = TextEditingController();
+  final TextEditingController _formatFilterController = TextEditingController();
 
   List<String> allCategories = [];
 
@@ -48,6 +50,7 @@ class _HomeViewState extends State<HomeView> {
   List<Map<String, dynamic>> allBooksIncludingUnavailable = [];
 
   String? selectedLanguage;
+  String? selectedFormat;
 
   Future<void> _loadCategoriesAndBooks() async {
     final userId = Supabase.instance.client.auth.currentUser?.id;
@@ -163,6 +166,29 @@ class _HomeViewState extends State<HomeView> {
                   },
                 ),
                 const SizedBox(height: 20),
+                const Text(
+                  'Filtrar por formato',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF112363),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                BookFormatDropdown(
+                  controller: _formatFilterController,
+                  formats: const ['All', 'Físico', 'Digital'],
+                  onChanged: (selected) {
+                    if (selected == 'All') {
+                      selectedFormat = null;
+                      _formatFilterController.clear();
+                    } else {
+                      selectedFormat = selected;
+                      _formatFilterController.text = selected!;
+                    }
+                  },
+                ),
+                const SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: () {
                     Navigator.pop(context);
@@ -208,6 +234,14 @@ class _HomeViewState extends State<HomeView> {
         return bookLanguage == selectedLanguage!.toLowerCase();
       }).toList();
     }
+
+    if (selectedFormat != null) {
+      books = books.where((book) {
+        final bookFormat = book['format']?.toString().toLowerCase() ?? '';
+        return bookFormat.split(',').map((f) => f.trim()).contains(selectedFormat!.toLowerCase());
+      }).toList();
+    }
+
 
     setState(() {
       filteredBooks = books;
