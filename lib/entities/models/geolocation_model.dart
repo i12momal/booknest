@@ -19,8 +19,8 @@ class Geolocation {
     return Geolocation(
       userId: json['userId'],
       userName: json['userName'],
-      latitude: json['latitude'],
-      longitude: json['longitude'],
+      latitude: (json['latitude'] as num).toDouble(),
+      longitude: (json['longitude'] as num).toDouble(),
       books: (json['books'] as List? ?? [])
         .map((bookJson) => Book.fromJson(bookJson))
         .toList(),

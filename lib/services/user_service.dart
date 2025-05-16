@@ -388,4 +388,44 @@ class UserService extends BaseService{
     return User.fromJson(response);
   }
 
+
+  Future<Map<String, dynamic>> getUserNameById(String userId) async {
+    try {
+      // Comprobamos si la conexión a Supabase está activa.
+      if (BaseService.client == null) {
+        return {
+          'success': false,
+          'message': 'Error de conexión a la base de datos.'
+        };
+      }
+
+      // Llamada a la base de datos para obtener los datos del usuario.
+      final response = await BaseService.client
+          .from('User')
+          .select('userName')
+          .eq('id', userId)
+          .maybeSingle();
+
+      // Verificamos si la respuesta contiene datos.
+      if (response != null && response.isNotEmpty) {
+        return {
+          'success': true,
+          'message': 'Usuario obtenido correctamente',
+          'data': response
+        };
+      } else {
+        return {
+          'success': false,
+          'message': 'No se ha encontrado el usuario'
+        };
+      }
+    } catch (ex) {
+      // Si ocurre alguna excepción, devolverla.
+      return {
+        'success': false,
+        'message': ex.toString()
+      };
+    }
+  }
+
 }

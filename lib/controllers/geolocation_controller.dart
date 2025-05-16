@@ -90,4 +90,23 @@ class GeolocationController extends BaseController{
   Future<bool> isAvailable(int bookId) async {
     return geolocationService.isAvailable(bookId);
   }
+
+  Future<Geolocation?> getUserGeolocation(String userId) async {
+    return await geolocationService.getUserGeolocation(userId);
+  }
+
+  Future<void> actualizarLibrosEnUbicacion() async {
+  try {
+    final userId = await AccountController().getCurrentUserIdNonNull();
+    final librosDelUsuario = await BookController().getUserPhysicalBooks(userId);
+
+    // ✅ Actualiza solo el campo de libros
+    await geolocationService.updateUserBooksInLocation(userId: userId, books: librosDelUsuario);
+
+    print("Libros actualizados en la ubicación con éxito");
+  } catch (e) {
+    print("Error al actualizar los libros en ubicación: $e");
+  }
+}
+
 }

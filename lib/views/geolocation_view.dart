@@ -8,7 +8,10 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter/material.dart';
 
 class GeolocationMap extends StatefulWidget {
-  const GeolocationMap({super.key});
+  final LatLng? focusLocation;
+  final Geolocation? focusedUser;
+
+  const GeolocationMap({super.key, this.focusLocation, this.focusedUser});
 
   @override
   State<GeolocationMap> createState() => _GeolocationMapState();
@@ -23,31 +26,41 @@ class _GeolocationMapState extends State<GeolocationMap> {
   GeolocationController geoController = GeolocationController();
   String? userId;
 
+  Geolocation? _focusedUser;
+  MarkerId? _focusedMarkerId;
+
   final List<Book> availableBooks = [];
   final List<Book> loanBooks = [];
 
   @override
   void initState() {
     super.initState();
+    _focusedUser = widget.focusedUser;
     _getUserLocation();
     _loadUserId();
   }
 
   Future<void> _getUserLocation() async {
     try {
+      // Obtener ubicación actual
       final position = await geoController.getUserLocation();
-      _center = LatLng(position.latitude, position.longitude);
+      final currentLocation = LatLng(position.latitude, position.longitude);
 
-      // Guarda la ubicación y libros del usuario (fuera de setState)
+      // Guardar libros y ubicación del usuario
       await geoController.guardarUbicacionYLibros();
 
-      // Luego obtén los usuarios cercanos, pero no agregamos el usuario actual a los marcadores
+      // Obtener usuarios cercanos (excluyendo al actual)
       final users = await geoController.getNearbyUsers(position);
 
-      for (var user in users){
-        for(var book in user.books){
+      // Limpiar listas anteriores
+      availableBooks.clear();
+      loanBooks.clear();
+
+      // Clasificar libros disponibles y prestados
+      for (var user in users) {
+        for (var book in user.books) {
           final isAvailable = await geoController.isAvailable(book.id);
-           if (isAvailable) {
+          if (isAvailable) {
             availableBooks.add(book);
           } else {
             loanBooks.add(book);
@@ -55,19 +68,40 @@ class _GeolocationMapState extends State<GeolocationMap> {
         }
       }
 
-      _nearbyUsers = users;
-
-      // Actualiza el estado visual con los marcadores
+      // Actualizar variables y marcadores en el estado
       setState(() {
+        _center = currentLocation;
+        _nearbyUsers = users;
         updateMarkers(_nearbyUsers);
       });
 
-      // Mueve la cámara al centro de la ubicación
-      mapController.animateCamera(CameraUpdate.newLatLng(_center));
+      // Mover la cámara del mapa a la ubicación actual
+      mapController.animateCamera(CameraUpdate.newLatLng(currentLocation));
+      // Si hay un usuario enfocado, mostrar su diálogo y mover la cámara a su ubicación
+      if (_focusedUser != null) {
+        final focused = _nearbyUsers.firstWhere(
+          (u) => u.userId == _focusedUser!.userId,
+          orElse: () => _focusedUser!,
+        );
+
+        // Mover la cámara al usuario enfocado
+        mapController.animateCamera(
+          CameraUpdate.newLatLng(
+            LatLng(focused.latitude, focused.longitude),
+          ),
+        );
+
+        // Mostrar el diálogo tras un breve delay (asegura que el mapa está listo)
+        Future.delayed(const Duration(milliseconds: 500), () {
+          _showUserBooksDialog(focused);
+        });
+      }
+
     } catch (e) {
       print("Error obteniendo la ubicación: $e");
     }
   }
+
 
   void _loadUserId() async {
     final id = await AccountController().getCurrentUserId();
@@ -90,18 +124,29 @@ class _GeolocationMapState extends State<GeolocationMap> {
     // Ahora solo agregamos los marcadores de los usuarios cercanos (si no es el mismo que el usuario actual)
     for (var user in nearbyUsers) {
       if (user.userId != userId && user.books.isNotEmpty) { 
+        final isFocused = widget.focusedUser != null && widget.focusedUser!.userId == user.userId;
+        final markerId = MarkerId(user.userId);
+
+        if (isFocused) {
+          _focusedMarkerId = markerId;
+        }
+
         _markers.add(Marker(
-          markerId: MarkerId(user.userId),
+          markerId: markerId,
           position: LatLng(user.latitude, user.longitude),
+          icon: BitmapDescriptor.defaultMarkerWithHue(
+            isFocused ? BitmapDescriptor.hueYellow : BitmapDescriptor.hueRed,
+          ),
           infoWindow: InfoWindow(
             title: user.userName,
             snippet: '${user.books.length} libros físicos',
             onTap: () {
-              // Mostrar el nombre de usuario y los libros disponibles en una ventana emergente
               _showUserBooksDialog(user);
             },
           ),
         ));
+
+
       }
     }
 
@@ -201,7 +246,17 @@ class _GeolocationMapState extends State<GeolocationMap> {
       body: GoogleMap(
         onMapCreated: (GoogleMapController controller) {
           mapController = controller;
+
+          if (_focusedMarkerId != null) {
+            Future.delayed(const Duration(milliseconds: 500), () {
+              final markerExists = _markers.any((m) => m.markerId == _focusedMarkerId);
+              if (markerExists) {
+                mapController.showMarkerInfoWindow(_focusedMarkerId!);
+              }
+            });
+          }
         },
+
         initialCameraPosition: CameraPosition(
           target: _center,
           zoom: 12,

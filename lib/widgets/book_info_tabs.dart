@@ -1,14 +1,19 @@
 import 'package:booknest/controllers/account_controller.dart';
+import 'package:booknest/controllers/geolocation_controller.dart';
 import 'package:booknest/controllers/review_controller.dart';
 import 'package:booknest/controllers/user_controller.dart';
 import 'package:booknest/entities/models/book_model.dart';
+import 'package:booknest/entities/models/geolocation_model.dart';
 import 'package:booknest/entities/models/review_model.dart';
 import 'package:booknest/entities/models/user_model.dart';
 import 'package:booknest/views/add_review_view.dart';
 import 'package:booknest/views/edit_review_view.dart';
+import 'package:booknest/views/geolocation_view.dart';
+import 'package:booknest/views/user_profile_view.dart';
 import 'package:booknest/widgets/review_item.dart';
 import 'package:booknest/widgets/success_dialog.dart';
 import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class BookInfoTabs extends StatefulWidget {
   final Book book;
@@ -29,6 +34,9 @@ class BookInfoTabs extends StatefulWidget {
 class _BookInfoTabsState extends State<BookInfoTabs> {
   late Future<List<Review>> _reviewsFuture;
   String? _userId;
+  String userName = '';
+
+  Geolocation? _ownerGeo;
 
   @override
   void initState() {
@@ -50,10 +58,30 @@ class _BookInfoTabsState extends State<BookInfoTabs> {
 
   void _loadUserId() async {
     final id = await AccountController().getCurrentUserId();
-    setState(() {
-      _userId = id;
-    });
+    final result = await UserController().getUserNameById(widget.book.ownerId);
+
+    if (result['success'] == true) {
+      Geolocation? geo;
+      try {
+        if (id != widget.book.ownerId) {
+          geo = await GeolocationController().getUserGeolocation(widget.book.ownerId);
+        }
+      } catch (e) {
+        print('Error al obtener geolocalización: $e');
+      }
+
+      setState(() {
+        _userId = id;
+        userName = result['data']['userName'];
+        _ownerGeo = geo;
+      });
+    } else {
+      print(result['message']);
+    }
   }
+
+
+
 
   Future<List<Review>> fetchReviews() async {
     return await ReviewController().getReviews(widget.book.id);
@@ -93,7 +121,7 @@ class _BookInfoTabsState extends State<BookInfoTabs> {
 
                 return TabBarView(
                   children: [
-                    _BookDetailsTab(book: widget.book),
+                    _BookDetailsTab(book: widget.book, userName: userName, currentUser: _userId, ownerGeo: _ownerGeo),
                     Stack(
                       children: [
                         Padding(
@@ -121,8 +149,11 @@ class _BookInfoTabsState extends State<BookInfoTabs> {
 
 class _BookDetailsTab extends StatelessWidget {
   final Book book;
+  final String userName;
+  final String? currentUser;
+  final Geolocation? ownerGeo;
 
-  const _BookDetailsTab({required this.book});
+  const _BookDetailsTab({required this.book, required this.userName, this.currentUser, this.ownerGeo});
 
   @override
   Widget build(BuildContext context) {
@@ -130,6 +161,49 @@ class _BookDetailsTab extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if(currentUser != book.ownerId)
+            Row(
+              children: [
+                const Icon(Icons.person, color: Colors.blue),
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => UserProfileView(userId: book.ownerId),
+                      ),
+                    );
+                  },
+                  child: Text(
+                    "Propietario: $userName",
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: Colors.black,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                ),
+                if (ownerGeo != null) ...[
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => GeolocationMap(
+                            focusLocation: LatLng(ownerGeo!.latitude, ownerGeo!.longitude),
+                            focusedUser: ownerGeo,
+                          ),
+                        ),
+                      );
+                    },
+                    child: const Icon(Icons.location_on, color: Colors.red),
+                  ),
+                ],
+              ],
+            ),
+            const SizedBox(height: 8),
           Row(
             children: [
               const Icon(Icons.menu_book, color: Colors.blue),

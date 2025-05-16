@@ -6,9 +6,7 @@ import 'package:geolocator/geolocator.dart';
 class GeolocationService extends BaseService{
   
   Future<List<Geolocation>> getNearbyUsers(Position position) async {
-    final response = await BaseService.client
-        .from('Geolocation')
-        .select('userId, userName, latitude, longitude, books');
+    final response = await BaseService.client.from('Geolocation').select('userId, userName, latitude, longitude, books');
 
     final List<dynamic> data = response;
 
@@ -67,10 +65,7 @@ class GeolocationService extends BaseService{
 
   Future<void> deleteUserLocationIfExists(String userId) async {
     try {
-      final response = await BaseService.client
-          .from('Geolocation')
-          .delete()
-          .eq('userId', userId);
+      final response = await BaseService.client.from('Geolocation').delete().eq('userId', userId);
 
       // Solo imprime la respuesta si es útil para debug
       print('Ubicación anterior eliminada. Respuesta: $response');
@@ -99,5 +94,54 @@ class GeolocationService extends BaseService{
       return true;
     }
   }
+
+  Future<Geolocation?> getUserGeolocation(String userId) async {
+    try {
+      final response = await BaseService.client.from('Geolocation').select().eq('userId', userId).maybeSingle();
+
+      if (response == null || response['latitude'] == null || response['longitude'] == null) {
+        print('Geolocalización no encontrada o incompleta para el usuario: $userId');
+        return null;
+      }
+
+      return Geolocation.fromJson(response);
+    } catch (e) {
+      print('Error al obtener geolocalización: $e');
+      return null;
+    }
+  }
+
+  Future<void> updateUserBooksInLocation({required String userId, required List<Book> books}) async {
+  final List<Map<String, dynamic>> booksJson = books.map((book) => {
+    'id': book.id,
+    'title': book.title,
+    'author': book.author,
+    'isbn': book.isbn,
+    'pagesNumber': book.pagesNumber,
+    'language': book.language,
+    'format': book.format,
+    'file': book.file,
+    'cover': book.cover,
+    'summary': book.summary,
+    'categories': book.categories,
+    'state': book.state,
+    'owner_id': book.ownerId,
+  }).toList();
+
+  try {
+    final response = await BaseService.client
+        .from('Geolocation')
+        .update({'books': booksJson})
+        .eq('userId', userId);
+
+    print('Libros actualizados correctamente en Geolocation. Respuesta: $response');
+  } catch (e) {
+    print('Excepción al actualizar solo los libros: $e');
+  }
+}
+
+
+
+
 
 }

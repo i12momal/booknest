@@ -201,4 +201,8 @@ class UserController extends BaseController{
     return await userService.getCurrentUser();
   }
 
+  Future<Map<String, dynamic>> getUserNameById(String userId) async {
+    return await userService.getUserNameById(userId);
+  }
+
 }

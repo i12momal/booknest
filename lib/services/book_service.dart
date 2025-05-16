@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:booknest/controllers/geolocation_controller.dart';
 import 'package:booknest/entities/models/book_model.dart';
 import 'package:booknest/entities/viewmodels/book_view_model.dart';
 import 'package:booknest/services/base_service.dart';
@@ -55,6 +56,14 @@ class BookService extends BaseService{
 
       if (response != null) {
         print("Libro registrado exitosamente");
+
+        // Actualizar ubicación y libros del usuario
+        try {
+          await GeolocationController().actualizarLibrosEnUbicacion();
+          print("Ubicación y libros actualizados correctamente.");
+        } catch (geoError) {
+          print("Error al guardar ubicación y libros: $geoError");
+        }
 
         return {
           'success': true,
@@ -297,6 +306,13 @@ class BookService extends BaseService{
       print("Respuesta de la actualización: $response");
 
       if (response != null) {
+        try {
+          await GeolocationController().actualizarLibrosEnUbicacion();
+          print("Ubicación y libros actualizados correctamente después de editar el libro.");
+        } catch (geoError) {
+          print("Error al actualizar ubicación y libros tras la edición: $geoError");
+        }
+
         return {'success': true, 'message': 'Libro actualizado exitosamente', 'data': response};
       } else {
         print("Error: No se pudo actualizar el libro");
