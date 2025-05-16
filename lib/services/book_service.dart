@@ -410,6 +410,30 @@ class BookService extends BaseService{
     }
   }
 
+  Future<List<Book>> getUserAvailablePhysicalBooks(String userId) async {
+    try {
+      final response = await BaseService.client
+          .from('Book')
+          .select()
+          .eq('owner_id', userId).eq('state', 'Disponible').like('format', '%Físico%');
+          //.eq('format', 'Físico');
+          //.like('format', '%Físico%');
+          
+
+      // Verificamos si la respuesta es nula o si no contiene datos
+      if (response == null || response.isEmpty) {
+        return [];
+      }
+
+      // Convertimos los datos en una lista de libros
+      List<dynamic> data = response;
+      return data.map((book) => Book.fromJson(book)).toList();
+    } catch (e) {
+      print('Error obteniendo libros: $e');
+      return [];
+    }
+  }
+
 
   // Obtener los libros de un usuario y filtrar por categoría
   Future<List<Book>> getBooksByCategoryForUser(String userId, String categoryName) async {
@@ -520,5 +544,31 @@ class BookService extends BaseService{
       print('Error al cambiar el estado de Book: $e');
     }
   }
+
+
+  Future<int?> getBookIdByTitleAndOwner(String title, String ownerId) async {
+    try {
+      print('🔍 Buscando libro con título: "$title", owner_id: "$ownerId"');
+
+      final response = await BaseService.client
+          .from('Book')
+          .select('id')
+          .eq('title', title.trim())
+          .eq('owner_id', ownerId)
+          .limit(1)
+          .maybeSingle(); // <- esto evita la excepción si no hay resultado
+
+      if (response == null) {
+        print('⚠️ No se encontró ningún libro con ese título y owner_id');
+        return null;
+      }
+
+      return response['id'] as int?;
+    } catch (e) {
+      print('❌ Error obteniendo ID del libro: $e');
+      return null;
+    }
+  }
+
 
 }

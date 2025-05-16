@@ -275,7 +275,21 @@ class BookController extends BaseController{
     }
   }
 
+  Future<List<Book>> getUserAvailablePhysicalBooks(String userId) async {
+    try {
+      // Llamamos al servicio para obtener los libros físicos disponibles filtrados
+      final books = await bookService.getUserAvailablePhysicalBooks(userId);
+      return books;
+    } catch (e) {
+      throw Exception('Error al obtener los libros del usuario desde el controlador: $e');
+    }
+  }
+
   Future<void> changeState(int bookId, String state) async {
     await bookService.changeState(bookId, state);
+  }
+
+  Future<int?> getBookIdByTitleAndOwner(String title, String ownerId) async{
+    return await bookService.getBookIdByTitleAndOwner(title, ownerId);
   }
 }

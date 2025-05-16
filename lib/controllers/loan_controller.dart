@@ -8,100 +8,110 @@ import 'package:booknest/entities/viewmodels/loan_view_model.dart';
 class LoanController extends BaseController{
 
   // Método asíncrono para solicitar el préstamo de un libro
-  Future<Map<String, dynamic>> requestLoan(Book book, String format) async {
-  try {
-    // Verificamos si el usuario está autenticado
-    final userId = await accountService.getCurrentUserId();
-    print('userId: $userId'); // Imprimir para verificar si el usuario está autenticado
-    if (userId == null) {
-      print('Usuario no autenticado'); // Si no está autenticado, regresamos un mensaje
-      return {'success': false, 'message': 'Usuario no autenticado'};
+    Future<Map<String, dynamic>> requestLoan(Book book, String format, List<Book>? selectedBooks) async {
+      try {
+        // Verificamos si el usuario está autenticado
+        final userId = await accountService.getCurrentUserId();
+        print('userId: $userId'); // Imprimir para verificar si el usuario está autenticado
+        if (userId == null) {
+          print('Usuario no autenticado'); // Si no está autenticado, regresamos un mensaje
+          return {'success': false, 'message': 'Usuario no autenticado'};
+        }
+
+        final DateTime startDate = DateTime.now();
+        final DateTime endDate = startDate.add(const Duration(days: 30));
+        print('startDate: $startDate, endDate: $endDate'); // Imprimir las fechas
+
+        final createLoanViewModel = CreateLoanViewModel(
+          ownerId: book.ownerId,
+          currentHolderId: userId,
+          bookId: book.id,
+          startDate: startDate.toIso8601String(),
+          endDate: endDate.toIso8601String(),
+          format: format,
+          state: "Pendiente",
+          currentPage: 0,
+        );
+
+        // Intentamos crear el préstamo
+        final response = await loanService.createLoan(createLoanViewModel);
+        print('createLoan response: $response'); // Imprimir la respuesta de la creación del préstamo
+
+        String? notificationId;
+
+        if (response['success'] && response['data'] != null) {
+          final loan = response['data'];
+          final bookTitle = book.title;
+          final ownerId = book.ownerId;
+
+          String? selectedBookTitles;
+
+          if (format.toLowerCase() == 'físico' && selectedBooks != null && selectedBooks.isNotEmpty) {
+            selectedBookTitles = selectedBooks.map((b) => '"${b.title}"').join(', ');
+          }
+
+          final notificationMessage = selectedBookTitles != null
+            ? 'Has recibido una nueva solicitud de préstamo para tu libro "$bookTitle". El usuario ha incluido los siguientes libros físicos como contraprestación: $selectedBookTitles'
+            : 'Has recibido una nueva solicitud de préstamo para tu libro "$bookTitle".';
+
+
+          final notificationResponse = await NotificationController().createNotification(
+            ownerId,
+            'Préstamo',
+            loan['id'],
+            notificationMessage
+          );
+          print('notificationResponse: $notificationResponse'); // Imprimir la respuesta de la notificación
+
+          if (notificationResponse['success'] && notificationResponse['data'] != null) {
+            notificationId = notificationResponse['data']['id']?.toString();
+            print('notificationId: $notificationId'); // Imprimir el ID de la notificación
+          }
+        }
+
+        final formats = book.format.split(',').map((f) => f.trim().toLowerCase()).toList();
+
+        final loanedFormats = await loanService.getLoanedFormatsAndStates(book.id);
+        final loanedFormatsNormalized = loanedFormats.map((format) => {
+          'format': format['format'].toString().trim().toLowerCase(),
+          'state': format['state'].toString().trim().toLowerCase(),
+        }).toList();
+
+        print('formats: $formats');
+        print('loanedFormatsNormalized: $loanedFormatsNormalized');
+
+        String estadoLibro = 'Disponible';
+
+        if (formats.length == 2) {
+          final acceptedCount = loanedFormatsNormalized.where((f) => f['state'] == 'aceptado').length;
+          final pendingCount = loanedFormatsNormalized.where((f) => f['state'] == 'pendiente').length;
+
+          print('Aceptados: $acceptedCount, Pendientes: $pendingCount');
+
+          // Casos en los que debe ser No Disponible
+          if ((acceptedCount == 2) || (pendingCount == 2) || (acceptedCount == 1 && pendingCount == 1)) {
+            estadoLibro = 'No Disponible';
+          }
+        } else if (formats.length == 1 && loanedFormatsNormalized.isNotEmpty) {
+          final state = loanedFormatsNormalized.first['state'];
+          if (state == 'pendiente' || state == 'aceptado') {
+            estadoLibro = 'Pendiente';
+          }
+        }
+
+        print('Estado final del libro: $estadoLibro');
+        await bookService.changeState(book.id, estadoLibro);
+
+      // Devuelve el response original y, si existe, el ID de la notificación
+      return {
+        ...response,
+        if (notificationId != null) 'notificationId': notificationId,
+      };
+    } catch (e) {
+      print('Error en requestLoan: $e'); // Si ocurre un error, lo imprimimos
+      return {'success': false, 'message': 'Error al realizar la solicitud de préstamo'};
     }
-
-    final DateTime startDate = DateTime.now();
-    final DateTime endDate = startDate.add(const Duration(days: 30));
-    print('startDate: $startDate, endDate: $endDate'); // Imprimir las fechas
-
-    final createLoanViewModel = CreateLoanViewModel(
-      ownerId: book.ownerId,
-      currentHolderId: userId,
-      bookId: book.id,
-      startDate: startDate.toIso8601String(),
-      endDate: endDate.toIso8601String(),
-      format: format,
-      state: "Pendiente",
-      currentPage: 0,
-    );
-
-    // Intentamos crear el préstamo
-    final response = await loanService.createLoan(createLoanViewModel);
-    print('createLoan response: $response'); // Imprimir la respuesta de la creación del préstamo
-
-    String? notificationId;
-
-    if (response['success'] && response['data'] != null) {
-      final loan = response['data'];
-      final bookTitle = book.title;
-      final ownerId = book.ownerId;
-
-      final notificationResponse = await NotificationController().createNotification(
-        ownerId,
-        'Préstamo',
-        loan['id'],
-        'Has recibido una nueva solicitud de préstamo para tu libro "$bookTitle".',
-      );
-      print('notificationResponse: $notificationResponse'); // Imprimir la respuesta de la notificación
-
-      if (notificationResponse['success'] && notificationResponse['data'] != null) {
-        notificationId = notificationResponse['data']['id']?.toString();
-        print('notificationId: $notificationId'); // Imprimir el ID de la notificación
-      }
-    }
-
-    final formats = book.format.split(',').map((f) => f.trim().toLowerCase()).toList();
-
-final loanedFormats = await loanService.getLoanedFormatsAndStates(book.id);
-final loanedFormatsNormalized = loanedFormats.map((format) => {
-  'format': format['format'].toString().trim().toLowerCase(),
-  'state': format['state'].toString().trim().toLowerCase(),
-}).toList();
-
-print('formats: $formats');
-print('loanedFormatsNormalized: $loanedFormatsNormalized');
-
-String estadoLibro = 'Disponible';
-
-if (formats.length == 2) {
-  final acceptedCount = loanedFormatsNormalized.where((f) => f['state'] == 'aceptado').length;
-  final pendingCount = loanedFormatsNormalized.where((f) => f['state'] == 'pendiente').length;
-
-  print('Aceptados: $acceptedCount, Pendientes: $pendingCount');
-
-  // Casos en los que debe ser No Disponible
-  if ((acceptedCount == 2) || (pendingCount == 2) || (acceptedCount == 1 && pendingCount == 1)) {
-    estadoLibro = 'No Disponible';
   }
-} else if (formats.length == 1 && loanedFormatsNormalized.isNotEmpty) {
-  final state = loanedFormatsNormalized.first['state'];
-  if (state == 'pendiente' || state == 'aceptado') {
-    estadoLibro = 'Pendiente';
-  }
-}
-
-print('Estado final del libro: $estadoLibro');
-await bookService.changeState(book.id, estadoLibro);
-
-
-    // Devuelve el response original y, si existe, el ID de la notificación
-    return {
-      ...response,
-      if (notificationId != null) 'notificationId': notificationId,
-    };
-  } catch (e) {
-    print('Error en requestLoan: $e'); // Si ocurre un error, lo imprimimos
-    return {'success': false, 'message': 'Error al realizar la solicitud de préstamo'};
-  }
-}
 
 
 
@@ -121,7 +131,7 @@ await bookService.changeState(book.id, estadoLibro);
   }
 
   // Cambiar el estado del préstamo
-  Future<void> updateLoanState(int loanId, String newState) async {
+  Future<void> updateLoanState(int loanId, String newState, {String? compensation}) async {
     try {
       final loanResponse = await loanService.getLoanById(loanId);
       if (loanResponse == null || loanResponse['data'] == null) {
@@ -152,7 +162,15 @@ await bookService.changeState(book.id, estadoLibro);
       await loanService.updateLoanState(loanId, newState);
 
       // Si el préstamo ha sido aceptado, se notifica al usuario que lo ha solicitado
-      if (newState == 'Aceptado') {
+      if (newState == 'Aceptado' && loan['format'].toString().toLowerCase().contains('físico')) {
+        String compensationText = compensation != null ? '\nContraprestación acordada: $compensation.' : '';
+        String message = 'Tu solicitud de préstamo para el libro "$bookName" en formato ${loan['format']} ha sido aceptada.$compensationText';
+
+        await NotificationController().createNotification(userId, 'Préstamo Aceptado', loanId, message);
+
+        // Se guarda la compensación
+        await loanService.updateCompensation(compensation, loan['id']);
+      } else if (newState == 'Aceptado') {
         String message = 'Tu solicitud de préstamo para el libro "$bookName" en formato ${loan['format']} ha sido aceptada.';
         await NotificationController().createNotification(userId, 'Préstamo Aceptado', loanId, message);
       }
@@ -322,4 +340,40 @@ await bookService.changeState(book.id, estadoLibro);
   }
 
   
+  Future<Map<String, dynamic>> requestOfferPhysicalBookLoan(Book book) async {
+      try {
+        final DateTime startDate = DateTime.now();
+        final DateTime endDate = startDate.add(const Duration(days: 30));
+
+        final createLoanViewModel = CreateLoanViewModel(
+          ownerId: book.ownerId,
+          currentHolderId: book.ownerId,
+          bookId: book.id,
+          startDate: startDate.toIso8601String(),
+          endDate: endDate.toIso8601String(),
+          format: 'Físico',
+          state: "Pendiente",
+          currentPage: 0,
+        );
+
+        // Intentamos crear el préstamo
+        final response = await loanService.createLoanOfferPhysicalBook(createLoanViewModel);
+        print('requestOfferPhysicalBookLoan response: $response');
+
+       return response;
+    } catch (e) {
+      print('Error en requestOfferPhysicalBookLoan: $e');
+      return {'success': false, 'message': 'Error al realizar la solicitud de préstamo'};
+    }
+  }
+
+  // Borra loan por libro y usuario (para los libros no seleccionados o si fue fianza)
+  Future<void> deleteLoanByBookAndUser(int bookId, String userId) async {
+    await loanService.deleteLoanByBookAndUser(bookId, userId);
+  }
+
+  Future<void> acceptCompensationLoan({required int bookId, required String userId, required String? newHolderId, required String compensation}) async {
+    await loanService.acceptCompensationLoan(bookId: bookId, userId: userId, newHolderId: newHolderId, compensation: compensation);
+  }
+
 }

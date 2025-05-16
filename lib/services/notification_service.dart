@@ -136,4 +136,24 @@ class NotificationService extends BaseService{
     }
   }
 
+
+   Future<List<Map<String, dynamic>>> getNotificationsByLoanId (int loanId) async {
+    try {
+      if (BaseService.client == null) {
+        return [];
+      }
+
+      final response = await BaseService.client
+          .from('Notifications')
+          .select()
+          .eq('relatedId', loanId);
+
+      print("Notificaciones del préstamo $loanId: $response ");
+
+      return response;
+    } catch (e) {
+      print('Error al obtener las notificaciones del préstamo $loanId: $e');
+      return [];
+    }
+  }
 }

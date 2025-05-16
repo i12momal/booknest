@@ -32,6 +32,77 @@ class _NotificationsViewState extends State<NotificationsView> {
     });
   }
 
+  List<String> _extractRelatedBooks(String message) {
+    final match = RegExp(r'los siguientes libros físicos como contraprestación: (.+)').firstMatch(message);
+    if (match != null) {
+      final books = match.group(1)!.split(',').map((b) => b.trim().replaceAll('"', '')).toList();
+      return books;
+    }
+    return [];
+  }
+
+  Future<bool?> _showCompensationDialog(Map<String, dynamic> notification, List<String> relatedBooks) async {
+    String? selected = notification['compensationSelected'];
+
+    return showDialog<bool>(
+      context: context,
+      builder: (_) {
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                side: const BorderSide(color: Color(0xFF112363), width: 2),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              title: const Text(
+                'Selecciona una contraprestación',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ...relatedBooks.map((book) => RadioListTile<String>(
+                          title: Text(book),
+                          value: book,
+                          groupValue: selected,
+                          onChanged: (value) => setStateDialog(() => selected = value),
+                        )),
+                    RadioListTile<String>(
+                      title: const Text('Fianza'),
+                      value: 'Fianza',
+                      groupValue: selected,
+                      onChanged: (value) => setStateDialog(() => selected = value),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text('Cancelar'),
+                ),
+                TextButton(
+                  onPressed: selected != null
+                      ? () {
+                          notification['compensationConfirmed'] = true;
+                          notification['compensationSelected'] = selected;
+                          Navigator.pop(context, true);
+                        }
+                      : null,
+                  child: const Text('Aceptar'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+
+
   Future<List<Map<String, dynamic>>> _loadNotifications() async {
     final userId = await AccountController().getCurrentUserId();
     if (userId == null) return [];
@@ -50,6 +121,15 @@ class _NotificationsViewState extends State<NotificationsView> {
           notification['format'] = loan['format'] ?? 'Desconocido';
           notification['state'] = loan['state'] ?? 'Desconocido';
           notification['loanId'] = loan['id'] ?? 0;
+          notification['message'] = notification['message'] ?? 'Sin mensaje';
+          print('Mensaje cargado: ${notification['message']}');
+
+
+          notification['compensationSelected'] = loan['compensation'];
+          notification['compensationConfirmed'] = loan['compensation'] != null;
+          notification['currentHolderId'] = loan['currentHolderId'];
+
+
         }
       }
     }
@@ -62,13 +142,45 @@ class _NotificationsViewState extends State<NotificationsView> {
     return allNotifications.sublist(start, end);
   }
 
-  Future<void> _updateLoanState(Map<String, dynamic> loan, String newState) async {
+ Future<void> _updateLoanState(Map<String, dynamic> loan, String newState, String? selectedCompensation, List<String> relatedBooks) async {
     final loanId = loan['loanId'];
-    await LoanController().updateLoanState(loanId, newState);
+    final currentHolderId = loan['currentHolderId'] as String?;
+    final requesterId = loan['currentHolderId']; // El que ha ofrecido los libros para intercambio
+
+    await LoanController().updateLoanState(loanId, newState, compensation: selectedCompensation);
+
+    if (newState == 'Aceptado' && currentHolderId != null && relatedBooks.isNotEmpty) {
+      for (final title in relatedBooks) {
+        final bookId = await BookController().getBookIdByTitleAndOwner(title, currentHolderId);
+        if (bookId == null || bookId == 0) continue;
+
+        final isSelected = selectedCompensation != null && title.trim().toLowerCase() == selectedCompensation.trim().toLowerCase();
+
+        if (selectedCompensation == 'Fianza') {
+          // Elimina todos los loans ofrecidos
+          await LoanController().deleteLoanByBookAndUser(bookId, requesterId);
+          await BookController().changeState(bookId, 'Disponible');
+        } else {
+          if (isSelected) {
+            // ACTUALIZA loan seleccionado: accepted + nuevo currentHolder
+            await LoanController().acceptCompensationLoan(bookId: bookId, userId: requesterId, newHolderId: currentHolderId, compensation: loan['bookName']);
+            await BookController().changeState(bookId, 'No Disponible');
+          } else {
+            // Elimina los loans no seleccionados
+            await LoanController().deleteLoanByBookAndUser(bookId, requesterId);
+            await BookController().changeState(bookId, 'Disponible');
+          }
+        }
+      }
+    }
+
     setState(() {
       loan['state'] = newState;
+      loan['compensationSelected'] = selectedCompensation;
+      loan['compensationConfirmed'] = (selectedCompensation != null);
     });
   }
+
 
   Future<void> _markAsRead(Map<String, dynamic> notification) async {
     if (!(notification['read'] ?? false)) {
@@ -293,6 +405,8 @@ class _NotificationsViewState extends State<NotificationsView> {
                               if (loan['type'] == 'Préstamo') ...[
                                 Text('Libro: ${loan['bookName']}', style: const TextStyle(fontWeight: FontWeight.bold)),
                                 Text('Solicitado por: ${loan['userName']}'),
+
+                                // Fila con formato, dropdown y ícono
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
@@ -301,28 +415,93 @@ class _NotificationsViewState extends State<NotificationsView> {
                                         ? LoanStateDropdown(
                                             selectedState: loan['state'],
                                             onChanged: (newState) {
+                                              final books = _extractRelatedBooks(loan['message'] ?? '');
                                               if (newState != null && newState != loan['state']) {
-                                                _updateLoanState(loan, newState);
+                                                _updateLoanState(loan, newState, loan['compensationSelected'], books);
                                               }
                                             },
+                                            disabledOptions: loan['format'] == 'Físico' && !loan['compensationConfirmed'] ? ['Aceptado'] : [],
                                           )
                                         : Text(
                                             loan['state'],
                                             style: TextStyle(color: _getStateColor(loan['state']), fontWeight: FontWeight.bold),
                                           ),
-                                    Icon(isRead ? Icons.mark_email_read : Icons.mark_email_unread,
-                                        color: isRead ? Colors.green : Colors.grey),
+                                    Icon(
+                                      isRead ? Icons.mark_email_read : Icons.mark_email_unread,
+                                      color: isRead ? Colors.green : Colors.grey,
+                                    ),
                                   ],
                                 ),
-                              ] else ...[
-                                Text(loan['message'], style: const TextStyle(fontSize: 14)),
-                                Align(
-                                  alignment: Alignment.bottomRight,
-                                  child: Icon(isRead ? Icons.mark_email_read : Icons.mark_email_unread,
-                                      color: isRead ? Colors.green : Colors.grey),
-                                )
+
+                                // Botón "Libros ofrecidos", debajo del Row
+                                if (loan['format'] == 'Físico') ...[
+                                  if (loan['state'] == 'Pendiente' || loan['state'] == 'Rechazado')...[
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 4),
+                                      child: Row(
+                                        children: [
+                                          TextButton.icon(
+                                            onPressed: loan['state'] == 'Pendiente'
+                                                ? () async {
+                                                    final books = _extractRelatedBooks(loan['message'] ?? '');
+                                                    final result = await _showCompensationDialog(loan, books);
+                                                    if (result == true) {
+                                                      setState(() {});
+                                                    }
+                                                  }
+                                                : null,
+                                            icon: Icon(Icons.book,
+                                                size: 18,
+                                                color: loan['state'] == 'Pendiente'
+                                                    ? const Color(0xFF112363)
+                                                    : Colors.grey),
+                                            label: Text(
+                                              'Libros ofrecidos',
+                                              style: TextStyle(
+                                                decoration: TextDecoration.underline,
+                                                color: loan['state'] == 'Pendiente'
+                                                    ? const Color(0xFF112363)
+                                                    : Colors.grey,
+                                              ),
+                                            ),
+                                            style: TextButton.styleFrom(
+                                              padding: EdgeInsets.zero,
+                                              minimumSize: const Size(0, 0),
+                                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                              alignment: Alignment.centerLeft,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    )
+                                  ]else...[
+                                    Text('Contraprestación: ${loan['compensationSelected']}', style: const TextStyle(fontStyle: FontStyle.italic, fontWeight: FontWeight.bold)),
+                                  ] 
+                                ]
+                              ] else if (loan['type'] == 'Préstamo Aceptado' || loan['type'] == 'Préstamo Rechazado' || loan['type'] == 'Préstamo Devuelto') ...[
+                                Stack(
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.only(bottom: 24),
+                                      child: Text(
+                                        loan['message'] ?? '',
+                                        style: const TextStyle(fontStyle: FontStyle.italic),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      bottom: 0,
+                                      right: 0,
+                                      child: Icon(
+                                        isRead ? Icons.mark_email_read : Icons.mark_email_unread,
+                                        color: isRead ? Colors.green : Colors.grey,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ]
+    
                             ],
+
                           ),
                         ),
                       ),

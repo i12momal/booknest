@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 class LoanStateDropdown extends StatefulWidget {
   final String selectedState;
   final ValueChanged<String?>? onChanged;
+  final List<String> disabledOptions;
 
   const LoanStateDropdown({
     super.key,
     required this.selectedState,
     this.onChanged,
+    this.disabledOptions = const [],
   });
 
   @override
@@ -64,12 +66,15 @@ class _LoanStateDropdownState extends State<LoanStateDropdown> {
         icon: const Icon(Icons.arrow_drop_down, color: Color(0xFF112363)),
         isExpanded: false,
         items: states.map((String state) {
+          final isDisabled = widget.disabledOptions.contains(state);
+
           return DropdownMenuItem<String>(
-            value: state,
+            value: isDisabled ? null : state,
+            enabled: !isDisabled,
             child: Text(
               state,
               style: TextStyle(
-                color: _getStateColor(state),
+                color: isDisabled ? Colors.grey : _getStateColor(state),
                 fontWeight: FontWeight.bold,
               ),
             ),

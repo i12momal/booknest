@@ -560,5 +560,103 @@ class LoanService extends BaseService{
     }
   }
 
+  Future<void> updateCompensation(String? compensation, int loanId) async {
+    try {
+      if (BaseService.client == null) {
+        return;
+      }
+      
+      final response = await BaseService.client
+          .from('Loan')
+          .update({
+            'compensation': compensation,
+          })
+          .eq('id', loanId)
+          .select();
+
+        
+      
+    } catch (e) {
+      print('Error al cambiar el estado de la contraprestación: $e');
+    }
+  }
+
+
+  Future<Map<String, dynamic>> createLoanOfferPhysicalBook(CreateLoanViewModel createLoanViewModel) async {
+    try {
+      if (BaseService.client == null) {
+        return {'success': false, 'message': 'Error de conexión a la base de datos.'};
+      }
+
+      // Crear el nuevo préstamo
+      final Map<String, dynamic> loanData = {
+        'ownerId': createLoanViewModel.ownerId,
+        'currentHolderId': createLoanViewModel.currentHolderId,
+        'bookId': createLoanViewModel.bookId,
+        'startDate': createLoanViewModel.startDate,
+        'endDate': createLoanViewModel.endDate,
+        'format': createLoanViewModel.format,
+        'state': createLoanViewModel.state,
+        'currentPage': createLoanViewModel.currentPage,
+      };
+
+      final response = await BaseService.client
+          .from('Loan')
+          .insert(loanData)
+          .select()
+          .single();
+
+      print("Respuesta del servicio Loan: $response");
+
+      if (response != null) {
+        return {
+          'success': true,
+          'message': 'Préstamo ofrecido registrado exitosamente',
+          'data': response
+        };
+      } else {
+        return {'success': false, 'message': 'Error al registrar el préstamo ofrecido'};
+      }
+    } catch (ex) {
+      return {'success': false, 'message': ex.toString()};
+    }
+  }
+
+
+  // Borra loan por libro y usuario (para los libros no seleccionados o si fue fianza)
+  Future<void> deleteLoanByBookAndUser(int bookId, String userId) async {
+    try {
+      await BaseService.client
+          .from('Loan')
+          .delete()
+          .eq('bookId', bookId)
+          .eq('ownerId', userId);
+      print('✅ Loan eliminado: libro $bookId, usuario $userId');
+    } catch (e) {
+      print('❌ Error al eliminar loan: $e');
+    }
+  }
+
+  // Acepta el libro seleccionado: actualiza estado y currentHolderId
+  Future<void> acceptCompensationLoan({required int bookId, required String userId, required String? newHolderId, required String compensation}) async {
+    try {
+      await BaseService.client
+          .from('Loan')
+          .update({
+            'state': 'Aceptado',
+            'currentHolderId': newHolderId,
+            'compensation': compensation
+          })
+          .eq('bookId', bookId)
+          .eq('ownerId', userId);
+      print('✅ Loan actualizado como aceptado: libro $bookId');
+    } catch (e) {
+      print('❌ Error al aceptar loan: $e');
+    }
+  }
+
+
+
+
 
 }

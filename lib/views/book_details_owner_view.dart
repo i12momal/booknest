@@ -4,6 +4,7 @@ import 'package:booknest/controllers/loan_controller.dart';
 import 'package:booknest/controllers/user_controller.dart';
 import 'package:booknest/entities/models/book_model.dart';
 import 'package:booknest/entities/models/user_model.dart';
+import 'package:booknest/views/add_book_view.dart';
 import 'package:booknest/views/edit_book_view.dart';
 import 'package:booknest/views/favorites_view.dart';
 import 'package:booknest/views/geolocation_view.dart';
@@ -247,7 +248,6 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
                     onBack: () => Navigator.pop(context),
                     child: Column(
                       children: [
-                        
                         _BookHeader(book: book, isOwner: isOwner, loanedFormats: loanedFormats),
                         Expanded(
                           child: BookInfoTabs(
@@ -261,100 +261,124 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
                             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
                             child: SizedBox(
                               width: double.infinity,
-                              child:  _loanRequestSent
-                              ? ElevatedButton(
-                                  onPressed: () async {
-                                    setState(() => _isDeletingRequest = true);
-                                    await _confirmDeleteLoanRequest(context, book.id, notificationId, _selectedFormat);
-                                    if (mounted) setState(() => _isDeletingRequest = false);
-                                  },
-
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFFAD0000),
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: screenWidth * 0.1,
-                                      vertical: screenHeight * 0.02,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(30),
-                                      side: const BorderSide(color: Color(0xFF700101), width: 3),
-                                    ),
-                                  ),
-                                  child: _isDeletingRequest
-                                    ? const CircularProgressIndicator(color: Colors.white)
-                                    : const Text(
-                                        "Eliminar Solicitud de Préstamo",
-                                        style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                              child: _loanRequestSent
+                                  ? ElevatedButton(
+                                      onPressed: () async {
+                                        setState(() => _isDeletingRequest = true);
+                                        await _confirmDeleteLoanRequest(context, book.id, notificationId, _selectedFormat);
+                                        if (mounted) setState(() => _isDeletingRequest = false);
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(0xFFAD0000),
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: screenWidth * 0.1,
+                                          vertical: screenHeight * 0.02,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(30),
+                                          side: const BorderSide(color: Color(0xFF700101), width: 3),
+                                        ),
                                       ),
+                                      child: _isDeletingRequest
+                                          ? const CircularProgressIndicator(color: Colors.white)
+                                          : const Text(
+                                              "Eliminar Solicitud de Préstamo",
+                                              style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                                            ),
+                                    )
+                                  : ElevatedButton(
+                                      onPressed: () async {
+                                        setState(() => _isSendingRequest = true);
 
-                              )
-                              : ElevatedButton(
-                                onPressed: () async {
-                                  setState(() => _isSendingRequest = true);
+                                        final formats = book.format.split(',').map((e) => e.trim()).toList();
+                                        List<String> availableFormats = await loancontroller.fetchAvailableFormats(book.id, formats);
 
-                                  // Obtener los formatos disponibles del libro (campo 'format' en la tabla Book)
-                                  final formats = book.format.split(',').map((e) => e.trim()).toList();
+                                        if (!context.mounted) return;
+                                        if (availableFormats.isEmpty) {
+                                          _showErrorDialog(context, 'No hay formatos disponibles para préstamo.');
+                                          setState(() => _isSendingRequest = false);
+                                          return;
+                                        }
 
-                                  // 1. Filtrar los formatos disponibles (es decir, los que no están prestados)
-                                  List<String> availableFormats = await loancontroller.fetchAvailableFormats(book.id, formats);
-                                  if (!context.mounted) return;
-                                  if (availableFormats.isEmpty) {
-                                    _showErrorDialog(context, 'No hay formatos disponibles para préstamo.');
-                                    setState(() => _isSendingRequest = false);
-                                    return;
-                                  }
+                                        String? selectedFormat;
+                                        if (availableFormats.length == 1) {
+                                          selectedFormat = availableFormats.first;
+                                        } else {
+                                          selectedFormat = await _showFormatDialog(context, availableFormats);
+                                          if (!context.mounted) return;
+                                          if (selectedFormat == null || selectedFormat.isEmpty) {
+                                            _showErrorDialog(context, 'Debes seleccionar un formato válido.');
+                                            setState(() => _isSendingRequest = false);
+                                            return;
+                                          }
+                                        }
 
-                                  // 2. Seleccionar el formato
-                                  String? selectedFormat;
-                                  if (availableFormats.length == 1) {
-                                    selectedFormat = availableFormats.first;
-                                  } else {
-                                    selectedFormat = await _showFormatDialog(context, availableFormats);
-                                    if (!context.mounted) return;
-                                    if (selectedFormat == null || selectedFormat.isEmpty) {
-                                      _showErrorDialog(context, 'Debes seleccionar un formato válido.');
-                                      setState(() => _isSendingRequest = false);
-                                      return;
-                                    }
-                                  }
+                                        if (selectedFormat.toLowerCase() == 'físico') {
+                                          final userBooks = await _controller.getUserAvailablePhysicalBooks(currentUserId!);
+                                          if (!context.mounted) return;
+                                          
+                                        final selectedBooks = await _showUserBookSelectionDialog(context, userBooks, widget.bookId);
+                                        if (!context.mounted) return;
+                                         if (selectedBooks == null) {
+                                          setState(() => _isSendingRequest = false);
+                                            return;
+                                          }
+                                          if (selectedBooks.isEmpty) {
+                                            _showErrorDialog(context, 'Debes seleccionar al menos un libro físico para continuar.');
+                                            setState(() => _isSendingRequest = false);
+                                            return;
+                                          }
 
-                                  // 3. Enviar la solicitud de préstamo
-                                  final response = await loancontroller.requestLoan(book, selectedFormat);
 
-                                  if (!context.mounted) return;
+                                          final response = await loancontroller.requestLoan(book, selectedFormat, selectedBooks);
+                                          if (!context.mounted) return;
 
-                                  if (response['success']) {
-                                    await _checkIfLoanRequestExists();
-                                    _showSuccessDialog(context);
-                                  } else {
-                                    _showErrorDialog(context, response['message']);
-                                  }
-                                  setState(() => _isSendingRequest = false);
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFFAD0000),
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: screenWidth * 0.1,
-                                    vertical: screenHeight * 0.02,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(30),
-                                    side: const BorderSide(color: Color(0xFF700101), width: 3),
-                                  ),
-                                ),
-                                child: _isSendingRequest
-                                  ? const CircularProgressIndicator(color: Colors.white)
-                                  : const Text(
-                                      "Solicitar Préstamo",
-                                      style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                                          if (response['success']) {
+                                            await _checkIfLoanRequestExists();
+                                            _showSuccessDialog(context);
+                                          } else {
+                                            _showErrorDialog(context, response['message']);
+                                          }
+                                          setState(() => _isSendingRequest = false);
+                                          return;
+                                        }
+
+                                        // Solicitud para formato digital u otro
+                                        final response = await loancontroller.requestLoan(book, selectedFormat, null);
+                                        if (!context.mounted) return;
+
+                                        if (response['success']) {
+                                          await _checkIfLoanRequestExists();
+                                          _showSuccessDialog(context);
+                                        } else {
+                                          _showErrorDialog(context, response['message']);
+                                        }
+                                        setState(() => _isSendingRequest = false);
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(0xFFAD0000),
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: screenWidth * 0.1,
+                                          vertical: screenHeight * 0.02,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(30),
+                                          side: const BorderSide(color: Color(0xFF700101), width: 3),
+                                        ),
+                                      ),
+                                      child: _isSendingRequest
+                                          ? const CircularProgressIndicator(color: Colors.white)
+                                          : const Text(
+                                              "Solicitar Préstamo",
+                                              style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                                            ),
                                     ),
-
-                              ),
                             ),
                           ),
                       ],
                     ),
                   ),
+
                   bottomNavigationBar: Footer(
                     selectedIndex: 0, 
                     onItemTapped: (index) {
@@ -401,6 +425,131 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
     );
   }
 }
+
+
+Future<List<Book>?> _showUserBookSelectionDialog(BuildContext context, List<Book> userBooks, int bookId) async {
+  final selected = <Book>{};
+
+  return await showDialog<List<Book>>(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: const BorderSide(color: Color(0xFF112363), width: 3),
+        ),
+        titlePadding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+        contentPadding: const EdgeInsets.fromLTRB(24, 10, 24, 24),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Expanded(
+              child: Text(
+                'Selecciona tus libros a ofrecer',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.add_circle_outline, color: Color(0xFF112363)),
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => AddBookView(origin: 'book_details', bookId: bookId),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+        content: SizedBox(
+          width: double.maxFinite,
+          height: 200,
+          child: userBooks.isEmpty
+              ? const Text('No tienes libros físicos disponibles para incluir en la solicitud.')
+              : ListView(
+                  shrinkWrap: true,
+                  children: userBooks.map((book) {
+                    return StatefulBuilder(
+                      builder: (context, setState) {
+                        final isSelected = selected.contains(book);
+                        return CheckboxListTile(
+                          controlAffinity: ListTileControlAffinity.leading,
+                          title: Text(book.title),
+                          value: isSelected,
+                          onChanged: (checked) {
+                            setState(() {
+                              checked! ? selected.add(book) : selected.remove(book);
+                            });
+                          },
+                        );
+                      },
+                    );
+                  }).toList(),
+                ),
+        ),
+        actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        actions: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, null),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFAD0000),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                    side: const BorderSide(color: Color(0xFF700101), width: 3),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 15),
+                ),
+                child: const Text(
+                  'Cancelar',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              if (userBooks.isNotEmpty)
+                ElevatedButton(
+                  onPressed: () {
+                    for (var book in selected) {
+                      BookController().changeState(book.id, 'Pendiente');
+                      LoanController().requestOfferPhysicalBookLoan(book);
+                    }
+                    Navigator.pop(context, selected.toList());
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFAD0000),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      side: const BorderSide(color: Color(0xFF700101), width: 3),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 15),
+                  ),
+                  child: const Text(
+                    'Aceptar',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ],
+      );
+    },
+  );
+}
+
+
 
 
 

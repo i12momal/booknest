@@ -43,4 +43,8 @@ class NotificationController extends BaseController{
     return await notificationService.deleteNotification(notificationId);
   }
 
+  Future<List<Map<String, dynamic>>> getNotificationsByLoanId(int loanId) async {
+    return await notificationService.getNotificationsByLoanId(loanId);
+  }
+
 }

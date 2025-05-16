@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:booknest/controllers/account_controller.dart';
 import 'package:booknest/controllers/categories_controller.dart';
 import 'package:booknest/controllers/book_controller.dart';
+import 'package:booknest/views/book_details_owner_view.dart';
 import 'package:booknest/views/owner_profile_view.dart';
 import 'package:booknest/widgets/background.dart';
 import 'package:booknest/widgets/page_navigation.dart';
@@ -12,7 +13,9 @@ import 'package:booknest/widgets/genre_and_summary_selection.dart';
 
 // Vista para la acción de Añadir un nuevo libro
 class AddBookView extends StatefulWidget{
-  const AddBookView ({super.key});
+  final String origin;
+  final int? bookId;
+  const AddBookView ({super.key, required this.origin, this.bookId});
 
   @override
   State<AddBookView> createState() => _AddBookViewState();
@@ -185,21 +188,31 @@ class _AddBookViewState extends State<AddBookView>{
   void _showSuccessDialog() {
     SuccessDialog.show(
       context,
-      'Creación Exitosa', 
+      'Creación Exitosa',
       '¡Tu libro ha sido creado con éxito!',
       () {
         Navigator.pop(context);
-          Future.microtask(() {
+        Future.microtask(() {
+          if (widget.origin == 'book_details') {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => BookDetailsOwnerView(bookId: widget.bookId!),
+              ),
+            );
+          } else if (widget.origin == 'profile') {
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
                 builder: (context) => OwnerProfileView(userId: userId!),
               ),
             );
-          });
+          }
+        });
       },
     );
   }
+
 
   @override
   Widget build(BuildContext context) {
