@@ -71,7 +71,7 @@ class _NotificationsViewState extends State<NotificationsView> {
                         )),
                     RadioListTile<String>(
                       title: const Text('Fianza'),
-                      value: 'Fianza',
+                      value: 'Fianza (10€)',
                       groupValue: selected,
                       onChanged: (value) => setStateDialog(() => selected = value),
                     ),
@@ -122,14 +122,14 @@ class _NotificationsViewState extends State<NotificationsView> {
           notification['state'] = loan['state'] ?? 'Desconocido';
           notification['loanId'] = loan['id'] ?? 0;
           notification['message'] = notification['message'] ?? 'Sin mensaje';
+          notification['ownerId'] = loan['ownerId'];
+
           print('Mensaje cargado: ${notification['message']}');
 
 
           notification['compensationSelected'] = loan['compensation'];
           notification['compensationConfirmed'] = loan['compensation'] != null;
           notification['currentHolderId'] = loan['currentHolderId'];
-
-
         }
       }
     }
@@ -142,12 +142,10 @@ class _NotificationsViewState extends State<NotificationsView> {
     return allNotifications.sublist(start, end);
   }
 
- Future<void> _updateLoanState(Map<String, dynamic> loan, String newState, String? selectedCompensation, List<String> relatedBooks) async {
+  Future<void> _updateLoanState(Map<String, dynamic> loan, String newState, String? selectedCompensation, List<String> relatedBooks, String newHolderId) async {
     final loanId = loan['loanId'];
     final currentHolderId = loan['currentHolderId'] as String?;
     final requesterId = loan['currentHolderId']; // El que ha ofrecido los libros para intercambio
-
-    await LoanController().updateLoanState(loanId, newState, compensation: selectedCompensation);
 
     if (newState == 'Aceptado' && currentHolderId != null && relatedBooks.isNotEmpty) {
       for (final title in relatedBooks) {
@@ -157,13 +155,16 @@ class _NotificationsViewState extends State<NotificationsView> {
         final isSelected = selectedCompensation != null && title.trim().toLowerCase() == selectedCompensation.trim().toLowerCase();
 
         if (selectedCompensation == 'Fianza') {
-          // Elimina todos los loans ofrecidos
+          // Elimina todos los loans ofrecidos y crea uno con compensation = fianza
           await LoanController().deleteLoanByBookAndUser(bookId, requesterId);
           await BookController().changeState(bookId, 'Disponible');
         } else {
           if (isSelected) {
             // ACTUALIZA loan seleccionado: accepted + nuevo currentHolder
-            await LoanController().acceptCompensationLoan(bookId: bookId, userId: requesterId, newHolderId: currentHolderId, compensation: loan['bookName']);
+            final selectedLoanId = await LoanController().acceptCompensationLoan(bookId: bookId, userId: requesterId, newHolderId: newHolderId, compensation: loan['bookName']);
+              if (selectedLoanId != null) {
+                loan['selectedLoanId'] = selectedLoanId;
+              }
             await BookController().changeState(bookId, 'No Disponible');
           } else {
             // Elimina los loans no seleccionados
@@ -174,6 +175,9 @@ class _NotificationsViewState extends State<NotificationsView> {
       }
     }
 
+    print('compensationLoanId ${loan['selectedLoanId']}');
+    await LoanController().updateLoanState(loanId, newState, compensation: selectedCompensation, compensationLoanId: loan['selectedLoanId']);
+    
     setState(() {
       loan['state'] = newState;
       loan['compensationSelected'] = selectedCompensation;
@@ -417,7 +421,8 @@ class _NotificationsViewState extends State<NotificationsView> {
                                             onChanged: (newState) {
                                               final books = _extractRelatedBooks(loan['message'] ?? '');
                                               if (newState != null && newState != loan['state']) {
-                                                _updateLoanState(loan, newState, loan['compensationSelected'], books);
+                                                final newHolderId = loan['ownerId'];
+                                                _updateLoanState(loan, newState, loan['compensationSelected'], books, newHolderId);
                                               }
                                             },
                                             disabledOptions: loan['format'] == 'Físico' && !loan['compensationConfirmed'] ? ['Aceptado'] : [],

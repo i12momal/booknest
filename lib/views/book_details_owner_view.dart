@@ -694,7 +694,7 @@ class _BookHeader extends StatelessWidget {
                                         const Text("Fecha de finalización del préstamo:", style: TextStyle(fontWeight: FontWeight.bold)),
                                         Text(formattedEnd),
 
-                                        if (loan['format'].toString().toLowerCase().trim() == 'físico')...[
+                                        /*if (loan['format'].toString().toLowerCase().trim() == 'físico')...[
                                           const SizedBox(height: 12),
                                           Center(
                                             child: ElevatedButton(
@@ -719,7 +719,7 @@ class _BookHeader extends StatelessWidget {
                                               ),
                                             ),
                                           ),
-                                        ]
+                                        ]*/
 
                                       ],
                                     );

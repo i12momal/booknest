@@ -1,4 +1,6 @@
+import 'package:booknest/controllers/account_controller.dart';
 import 'package:booknest/controllers/base_controller.dart';
+import 'package:booknest/controllers/chat_message_controller.dart';
 import 'package:booknest/controllers/notification_controller.dart';
 import 'package:booknest/controllers/reminder_controller.dart';
 import 'package:booknest/entities/models/book_model.dart';
@@ -131,7 +133,7 @@ class LoanController extends BaseController{
   }
 
   // Cambiar el estado del préstamo
-  Future<void> updateLoanState(int loanId, String newState, {String? compensation}) async {
+  Future<void> updateLoanState(int loanId, String newState, {String? compensation, int? compensationLoanId}) async {
     try {
       final loanResponse = await loanService.getLoanById(loanId);
       if (loanResponse == null || loanResponse['data'] == null) {
@@ -140,8 +142,6 @@ class LoanController extends BaseController{
       }
 
       final loan = loanResponse['data'];
-      print('loan: $loan');
-
      
       final bookResponse = await bookService.getBookById(loan['bookId']);
       if (bookResponse == null || bookResponse['data'] == null) {
@@ -168,6 +168,36 @@ class LoanController extends BaseController{
 
         await NotificationController().createNotification(userId, 'Préstamo Aceptado', loanId, message);
 
+        // Crear conversación
+        final ownerId = loan['ownerId'];
+        final requesterId = loan['currentHolderId'];
+
+        final ownerResponse = await userService.getUserById(ownerId);
+        final requesterResponse = await userService.getUserById(requesterId);
+
+        if (ownerResponse == null || requesterResponse == null) {
+          print('Error: No se pudo obtener información de los usuarios involucrados.');
+          return;
+        }
+
+        final ownerName = ownerResponse['data']['name'];
+        final owneruserName = ownerResponse['data']['userName'];
+        final ownerEmail = ownerResponse['data']['email'];
+
+        final requesterName = requesterResponse['data']['name'];
+        final requesteruserName = requesterResponse['data']['userName'];
+        final requesterEmail = requesterResponse['data']['email'];
+
+        // Crear mensajes personalizados para cada usuario
+        String chatMessageForOwner = 'Ha iniciado un nuevo intercambio con el usuario $requesterName ($requesteruserName): $bookName a cambio de $compensation. Póngase en contacto para acordar la fecha, hora y lugar de la quedada. Correo electrónico: $requesterEmail';
+        String chatMessageForRequester = 'Ha iniciado un nuevo intercambio con el usuario $ownerName ($owneruserName): $bookName a cambio de $compensation. Póngase en contacto para acordar la fecha, hora y lugar de la quedada. Correo electrónico: $ownerEmail';
+
+        // Crear chat (si no existe) y enviar mensajes a ambos
+        final chatId = await loanChatService.createChatIfNotExists(loan['id'], ownerId, requesterId, compensationLoanId);
+        
+        await ChatMessageController().createChatMessage(ownerId, chatId, chatMessageForOwner);
+        await ChatMessageController().createChatMessage(requesterId, chatId, chatMessageForRequester);
+
         // Se guarda la compensación
         await loanService.updateCompensation(compensation, loan['id']);
       } else if (newState == 'Aceptado') {
@@ -188,11 +218,7 @@ class LoanController extends BaseController{
         final allReminders = await ReminderController().getRemindersByBook(bookId);
 
         // Filtrar solo los que coinciden con el formato y no han sido notificados
-        final usersToNotify = allReminders
-            .where((r) => r.format.trim().toLowerCase() == format.trim().toLowerCase() && !r.notified)
-            .map((r) => r.userId)
-            .toSet()
-            .toList();
+        final usersToNotify = allReminders.where((r) => r.format.trim().toLowerCase() == format.trim().toLowerCase() && !r.notified).map((r) => r.userId).toSet().toList();
 
         if (usersToNotify.isNotEmpty) {
           final String messageReminder = 'El libro "$bookName" en formato $format vuelve a estar disponible.';
@@ -203,10 +229,7 @@ class LoanController extends BaseController{
             await ReminderController().markAsNotified(bookId, userId, format);
 
             // Verificar si TODOS los formatos ya están disponibles
-            final bookFormats = (bookResponse['data']['format'] as String)
-                .split(',')
-                .map((f) => f.trim())
-                .toList();
+            final bookFormats = (bookResponse['data']['format'] as String).split(',').map((f) => f.trim()).toList();
 
             final allAvailable = await loanService.areAllFormatsAvailable(bookId, bookFormats);
 
@@ -372,8 +395,21 @@ class LoanController extends BaseController{
     await loanService.deleteLoanByBookAndUser(bookId, userId);
   }
 
-  Future<void> acceptCompensationLoan({required int bookId, required String userId, required String? newHolderId, required String compensation}) async {
-    await loanService.acceptCompensationLoan(bookId: bookId, userId: userId, newHolderId: newHolderId, compensation: compensation);
+  Future<int?> acceptCompensationLoan({required int bookId, required String userId, required String? newHolderId, required String compensation}) async {
+   return await loanService.acceptCompensationLoan(bookId: bookId, userId: userId, newHolderId: newHolderId, compensation: compensation);
+  }
+
+  Future<String> getLoanStateForUser(int loanId, String userId) async {
+    return loanService.getLoanStateForUser(loanId, userId);
+  }
+
+  Future<int?> getActualLoanIdForUserAndBook(int loanId, String userId) async {
+    return await loanService.getActualLoanIdForUserAndBook(loanId, userId);
+  }
+
+  Future<void> updateLoanStateByUser(int loanId, int compensationLoanId, String newState) async {
+    String? userId = await AccountController().getCurrentUserId();
+    await loanService.updateLoanStateByUser(userId, loanId, compensationLoanId, newState);
   }
 
 }

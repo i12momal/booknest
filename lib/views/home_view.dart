@@ -343,6 +343,7 @@ class _HomeViewState extends State<HomeView> {
           body: Background(
             title: 'BookNest',
             onBack: null,
+            showChatIcon: true,
             showRowIcon: false,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

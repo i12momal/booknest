@@ -14,13 +14,19 @@ class LoanService extends BaseService{
       }
 
       // Buscar préstamos activos o pendientes para este usuario
-      final numberLoans = await BaseService.client.from('Loan').select().eq('currentHolderId', createLoanViewModel.currentHolderId).or('state.eq.Pendiente,state.eq.Aceptado');
+      if (createLoanViewModel.ownerId != createLoanViewModel.currentHolderId) {
+        final userLoans = await BaseService.client.from('Loan').select().eq('currentHolderId', createLoanViewModel.currentHolderId).or('state.eq.Pendiente,state.eq.Aceptado');
 
-      if(numberLoans.length == 3){
-        return {
-          'success': false,
-          'message': 'Ya dispones de tres solicitudes de préstamo Pendientes o Aceptadas.',
-        };
+        // Filtra solo los préstamos en los que el usuario está solicitando libros de otros (no ofreciendo)
+        final externalRequests = userLoans.where((loan) =>
+            loan['ownerId'] != createLoanViewModel.currentHolderId).toList();
+
+        if (externalRequests.length >= 3) {
+          return {
+            'success': false,
+            'message':'Ya dispones de tres solicitudes de préstamo Pendientes o Aceptadas.',
+          };
+        }
       }
 
       // Buscar préstamos activos o pendientes para este libro
@@ -247,7 +253,7 @@ class LoanService extends BaseService{
 
       final today = DateTime.now().toIso8601String();
 
-      final response = await BaseService.client!
+      final response = await BaseService.client
           .from('Loan')
           .select()
           .eq('currentHolderId', userId)
@@ -638,25 +644,129 @@ class LoanService extends BaseService{
   }
 
   // Acepta el libro seleccionado: actualiza estado y currentHolderId
-  Future<void> acceptCompensationLoan({required int bookId, required String userId, required String? newHolderId, required String compensation}) async {
+  Future<int?> acceptCompensationLoan({required int bookId, required String userId, required String? newHolderId, required String compensation,}) async {
     try {
-      await BaseService.client
+      final response = await BaseService.client
           .from('Loan')
           .update({
             'state': 'Aceptado',
             'currentHolderId': newHolderId,
-            'compensation': compensation
+            'compensation': compensation,
           })
           .eq('bookId', bookId)
-          .eq('ownerId', userId);
-      print('✅ Loan actualizado como aceptado: libro $bookId');
+          .eq('ownerId', userId)
+          .select('id')
+          .maybeSingle();
+
+      if (response != null && response['id'] != null) {
+        final loanId = response['id'] as int;
+        print('✅ Loan aceptado con id: $loanId');
+        return loanId;
+      } else {
+        print('⚠ No se encontró loan para actualizar.');
+        return null;
+      }
     } catch (e) {
       print('❌ Error al aceptar loan: $e');
+      return null;
     }
   }
 
 
+  Future<String> getLoanStateForUser(int loanId, String userId) async {
+    try {
+      final response = await BaseService.client
+          .from('Loan')
+          .select('state')
+          .eq('id', loanId)
+          .eq('ownerId', userId)
+          .maybeSingle();
 
+      // response es directamente un Map<String, dynamic> con los datos
+      if (response != null && response['state'] != null) {
+        return response['state'] as String;
+      } else {
+        return 'Unknown';
+      }
+    } catch (e) {
+      print('Exception fetching loan state: $e');
+      return 'Unknown';
+    }
+  }
+
+  Future<int?> getActualLoanIdForUserAndBook(int loanId, String userId) async {
+    try {
+      final response = await BaseService.client
+          .from('Loan')
+          .select()
+          .eq('id', loanId)
+          .eq('currentHolderId', userId)
+          .maybeSingle();
+
+      if (response == null) return null;
+
+      return response['id'] as int?;
+    } catch (e) {
+      print('Error al obtener el préstamo actual: $e');
+      return null;
+    }
+  }
+
+  Future<void> updateLoanStateByUser(String? userId, int loanId, int compensationLoanId, String newState,) async {
+    try {
+      if (BaseService.client == null || userId == null) {
+        return;
+      }
+
+      // Obtener los dos préstamos
+      final response = await BaseService.client
+          .from('Loan')
+          .select()
+          .filter('id', 'in', '($loanId,$compensationLoanId)') as List;
+
+      if (response.isEmpty) {
+        return;
+      }
+
+      print('Préstamos coincidentes: $response');
+
+      final loans = response.cast<Map<String, dynamic>>();
+
+      // Buscar el préstamo donde ownerId coincida con userId
+      final targetLoan = loans.firstWhere(
+        (loan) => loan['ownerId'] == userId,
+        orElse: () => <String, dynamic>{},
+      );
+
+      if (targetLoan.isEmpty) {
+        return;
+      }
+
+      // Actualizar el estado del préstamo
+      await BaseService.client
+          .from('Loan')
+          .update({
+            'state': newState,
+          })
+          .eq('id', targetLoan['id'])
+          .select();
+
+      // Obtener el bookId del préstamo para actualizar el libro correspondiente
+      final int bookId = targetLoan['bookId'];
+
+      // Actualizar estado en Book solo para ese bookId
+      await BaseService.client
+          .from('Book')
+          .update({
+            'state': 'Disponible',
+          })
+          .eq('id', bookId)
+          .select();
+
+    } catch (e) {
+      print('Error al cambiar el estado de la contraprestación: $e');
+    }
+  }
 
 
 }
