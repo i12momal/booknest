@@ -107,6 +107,12 @@ class _BackgroundState extends State<Background> {
     }
 
     final chats = await loanChatController.getUserLoanChats(currentUserId, _showArchived);
+    final filteredChats = chats.where((chat) {
+    final isHolder = chat.user_1 == currentUserId;
+    if (isHolder && chat.deleteByHolder == true) return false;
+    if (!isHolder && chat.deleteByOwner == true) return false;
+    return true;
+  }).toList();
     print('Loaded ${chats.length} chats for user $currentUserId');
 
     final Set<int> readIds = {};
@@ -131,7 +137,7 @@ class _BackgroundState extends State<Background> {
 
     if (mounted) {
       setState(() {
-        _loanChats = chats;
+        _loanChats = filteredChats;
         _readChatIds.addAll(readIds);
         _loanStates = loanStates;
         _isLoadingChats = false;
@@ -295,14 +301,57 @@ class _BackgroundState extends State<Background> {
                           child: SizedBox(width: 30),
                         ),
                         if (myLoanState == 'Devuelto')
-                          const TextSpan(
-                            text: 'Devuelto',
-                            style: TextStyle(
-                              color: Color.fromARGB(255, 105, 105, 105),
-                              fontWeight: FontWeight.normal,
-                              fontSize: 16,
+                          WidgetSpan(
+                            alignment: PlaceholderAlignment.middle,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Text(
+                                  'Devuelto',
+                                  style: TextStyle(
+                                    color: Color.fromARGB(255, 105, 105, 105),
+                                    fontWeight: FontWeight.normal,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                GestureDetector(
+                                 onTap: () async {
+                                    final confirm = await showDialog<bool>(
+                                      context: context,
+                                      builder: (context) => AlertDialog(
+                                        title: const Text('¿Eliminar chat?'),
+                                        content: const Text('¿Estás seguro de que deseas eliminar tu historial de mensajes de este préstamo?'),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () => Navigator.of(context).pop(false),
+                                            child: const Text('Cancelar'),
+                                          ),
+                                          TextButton(
+                                            onPressed: () => Navigator.of(context).pop(true),
+                                            child: const Text('Eliminar', style: TextStyle(color: Colors.red)),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+
+                                    if (confirm == true) {
+                                      final chatId = chat.id;
+                                      await ChatMessageController().deleteMessagesByUser(chatId, userId!);
+                                      await ChatMessageController().updateDeleteLoanChat(chatId, userId!);
+                                      setState(() {
+                                        _loanChats.removeWhere((c) => c.id == chatId);
+                                        _selectedChatIndex = null;
+                                      });
+                                    }
+                                  },
+
+                                  child: const Icon(Icons.delete, size: 18, color: Colors.redAccent),
+                                ),
+                              ],
                             ),
                           ),
+
                       ],
                     ),
                   ),

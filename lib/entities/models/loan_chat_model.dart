@@ -7,6 +7,8 @@ class LoanChat {
   final bool archivedByOwner;
   final bool archivedByHolder;
   final String content;
+  final bool deleteByOwner;
+  final bool deleteByHolder;
 
   LoanChat({
     required this.id,
@@ -16,7 +18,9 @@ class LoanChat {
     required this.user_2,
     required this.archivedByOwner,
     required this.archivedByHolder,
-    required this.content
+    required this.content,
+    required this.deleteByOwner,
+    required this.deleteByHolder
   });
 
   factory LoanChat.fromJson(Map<String, dynamic> json) {
@@ -28,6 +32,8 @@ class LoanChat {
       user_2: json['user_2'] ?? '',
       archivedByOwner: json['archivedByOwner'] ?? false,
       archivedByHolder: json['archivedByHolder'] ?? false,
+      deleteByOwner: json['deleteByOwner'] ?? false,
+      deleteByHolder: json['deleteByHolder'] ?? false,
       content: json['content'] ?? '',
     );
   }

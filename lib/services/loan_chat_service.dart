@@ -20,6 +20,8 @@ class LoanChatService extends BaseService {
           'user_2': requesterId,
           'archivedByOwner': false,
           'archivedByHolder': false,
+          'deleteByHolder': false,
+          'deleteByOwner': false,
         })
         .select('id')
         .single();

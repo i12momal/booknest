@@ -30,4 +30,12 @@ class ChatMessageController extends BaseController{
     await chatMessageService.markMessageAsRead(chatId, userId);
   }
 
+  Future<void> deleteMessagesByUser(int chatId, String userId) async {
+    await chatMessageService.deleteMessagesByUser(chatId, userId);
+  }
+
+  Future<void> updateDeleteLoanChat(int chatId, String userId) async {
+    await chatMessageService.updateDeleteLoanChat(chatId, userId);
+  }
+
 }

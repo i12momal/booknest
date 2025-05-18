@@ -70,5 +70,71 @@ class ChatMessageService extends BaseService{
     }
   }
 
+  Future<Map<String, dynamic>> deleteMessagesByUser(int chatId, String userId) async {
+    try {
+      final response = await BaseService.client
+          .from('ChatMessage')
+          .delete()
+          .eq('chatId', chatId)
+          .eq('userId', userId)
+          .select();
+
+      if (response != null && response.isNotEmpty) {
+        return {'success': true};
+      } else {
+        return {
+          'success': false,
+          'message': 'Mensaje no encontrado o no se pudo eliminar'
+        };
+      }
+
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Error al eliminar el mensaje: $e'
+      };
+    }
+  }
+
+
+  Future<Map<String, dynamic>> updateDeleteLoanChat(int chatId, String userId) async {
+    try {
+      final response = await BaseService.client
+          .from('LoanChat')
+          .select()
+          .eq('id', chatId)
+          .maybeSingle();
+
+      if (response == null) {
+        return {
+          'success': false,
+          'message': 'Chat no encontrado',
+        };
+      }
+
+      if (response['user_1'] == userId) {
+        await BaseService.client
+            .from('LoanChat')
+            .update({'deleteByHolder': true})
+            .eq('id', chatId);
+      } else if (response['user_2'] == userId) {
+        await BaseService.client
+            .from('LoanChat')
+            .update({'deleteByOwner': true})
+            .eq('id', chatId);
+      }
+
+      return {
+        'success': true,
+        'message': 'Chat actualizado correctamente',
+      };
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Error al eliminar el mensaje: $e',
+      };
+    }
+  }
+
 
 }
