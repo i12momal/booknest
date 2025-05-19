@@ -100,6 +100,9 @@ serve(async (_req) => {
       const loanDateStr = normalizeDate(loanEndDate);
 
       if (loanDateStr <= nowDateStr) {
+        // Solo aplicar devolución automática si es formato Digital
+        if (loan.format !== "Digital") continue;
+        
         await supabase.from("Loan").update({ state: "Devuelto" }).eq("id", loan.id);
 
         const bookResponse = await supabase
