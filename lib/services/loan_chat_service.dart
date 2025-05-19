@@ -32,9 +32,6 @@ class LoanChatService extends BaseService {
   }
 
 
-
-  
-
   Future<List<LoanChat>> getUserLoanChats(String userId, bool archived) async {
     final response = await BaseService.client.from('LoanChat').select().then((data) => data as List<dynamic>);
 

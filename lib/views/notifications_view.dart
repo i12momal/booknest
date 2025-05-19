@@ -70,8 +70,8 @@ class _NotificationsViewState extends State<NotificationsView> {
                           onChanged: (value) => setStateDialog(() => selected = value),
                         )),
                     RadioListTile<String>(
-                      title: const Text('Fianza'),
-                      value: 'Fianza (10€)',
+                      title: const Text('Fianza (10€)'),
+                      value: 'Fianza',
                       groupValue: selected,
                       onChanged: (value) => setStateDialog(() => selected = value),
                     ),
@@ -148,26 +148,55 @@ class _NotificationsViewState extends State<NotificationsView> {
     final requesterId = loan['currentHolderId']; // El que ha ofrecido los libros para intercambio
 
     if (newState == 'Aceptado' && currentHolderId != null && relatedBooks.isNotEmpty) {
-      for (final title in relatedBooks) {
-        final bookId = await BookController().getBookIdByTitleAndOwner(title, currentHolderId);
-        if (bookId == null || bookId == 0) continue;
+      if (selectedCompensation == 'Fianza') {
+        // Elimina todos los loans ofrecidos y crea uno con compensation = fianza
+        for (final title in relatedBooks) {
+          final bookId = await BookController().getBookIdByTitleAndOwner(title, currentHolderId);
+          if (bookId == null || bookId == 0) continue;
 
-        final isSelected = selectedCompensation != null && title.trim().toLowerCase() == selectedCompensation.trim().toLowerCase();
-
-        if (selectedCompensation == 'Fianza') {
-          // Elimina todos los loans ofrecidos y crea uno con compensation = fianza
           await LoanController().deleteLoanByBookAndUser(bookId, requesterId);
           await BookController().changeState(bookId, 'Disponible');
-        } else {
+        }
+        
+        final String bookTitle = loan['bookName'];
+        final userId = loan['userId'];
+        final int? bookId = await BookController().getBookIdByTitleAndOwner(bookTitle, userId);
+
+        if (bookId == null || bookId == 0) {
+          print('Error: no se encontró el bookId para el título "$bookTitle" y el usuario "$requesterId"');
+          return;
+        }
+
+        final book = await BookController().getBookById(bookId);
+        if (book == null) {
+          print('Error: no se encontró el libro con ID $bookId');
+          return;
+        }
+
+        final response = await LoanController().createLoanFianza(bookId, requesterId, newHolderId, book.title);
+        print('CONTENIDO DE RESPONSE $response');
+        loan['selectedLoanId'] = response['data']['id'];
+      } else {
+        for (final title in relatedBooks) {
+          final bookId = await BookController().getBookIdByTitleAndOwner(title, currentHolderId);
+          if (bookId == null || bookId == 0) continue;
+
+          final isSelected = title.trim().toLowerCase() == selectedCompensation?.trim().toLowerCase();
+
           if (isSelected) {
-            // ACTUALIZA loan seleccionado: accepted + nuevo currentHolder
-            final selectedLoanId = await LoanController().acceptCompensationLoan(bookId: bookId, userId: requesterId, newHolderId: newHolderId, compensation: loan['bookName']);
-              if (selectedLoanId != null) {
-                loan['selectedLoanId'] = selectedLoanId;
-              }
+            final selectedLoanId = await LoanController().acceptCompensationLoan(
+              bookId: bookId,
+              userId: requesterId,
+              newHolderId: newHolderId,
+              compensation: loan['bookName'],
+            );
+
+            if (selectedLoanId != null) {
+              loan['selectedLoanId'] = selectedLoanId;
+            }
+
             await BookController().changeState(bookId, 'No Disponible');
           } else {
-            // Elimina los loans no seleccionados
             await LoanController().deleteLoanByBookAndUser(bookId, requesterId);
             await BookController().changeState(bookId, 'Disponible');
           }

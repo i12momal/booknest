@@ -637,17 +637,17 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
                                           textAlign: TextAlign.center,
                                         ),
                                       ),
-                                      const SizedBox(height: 4),
-                                      SizedBox(
-                                        width: 150,
-                                        child: Text(
-                                          "Vencimiento: " + formattedEnd,
-                                          style: const TextStyle(fontSize: 10),
-                                          textAlign: TextAlign.center,
+                                      if(loanData['format'] == 'Digital')...[
+                                       const SizedBox(height: 4),
+                                        SizedBox(
+                                          width: 150,
+                                          child: Text(
+                                            "Vencimiento: " + formattedEnd,
+                                            style: const TextStyle(fontSize: 10),
+                                            textAlign: TextAlign.center,
+                                          ),
                                         ),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      if(loanData['format'] == 'Digital')
+                                        const SizedBox(height: 8),
                                         ElevatedButton(
                                         onPressed: _isReturning
                                             ? null
@@ -682,7 +682,7 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
                                                   fontWeight: FontWeight.bold,
                                                 ),
                                               ),
-                                      ),
+                                      ),]
 
                                     ],
                                   ),

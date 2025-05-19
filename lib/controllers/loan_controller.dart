@@ -412,4 +412,31 @@ class LoanController extends BaseController{
     await loanService.updateLoanStateByUser(userId, loanId, compensationLoanId, newState);
   }
 
+  Future<Map<String, dynamic>> createLoanFianza(int bookId, String ownerId, String currentHolderId, String bookTitle) async {
+      try {
+        final DateTime startDate = DateTime.now();
+        final DateTime endDate = startDate.add(const Duration(days: 30));
+
+        final createLoanViewModel = CreateLoanViewModel(
+          ownerId: ownerId,
+          currentHolderId: currentHolderId,
+          bookId: 0,
+          startDate: startDate.toIso8601String(),
+          endDate: endDate.toIso8601String(),
+          format: 'Físico',
+          state: "Aceptado",
+          currentPage: 0
+        );
+
+        // Intentamos crear el préstamo
+        final response = await loanService.createLoanFianza(createLoanViewModel, bookTitle);
+        print('requestOfferPhysicalBookLoan response: $response');
+
+       return response;
+    } catch (e) {
+      print('Error en requestOfferPhysicalBookLoan: $e');
+      return {'success': false, 'message': 'Error al realizar la solicitud de préstamo'};
+    }
+  }
+
 }

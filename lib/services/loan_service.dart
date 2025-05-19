@@ -769,4 +769,47 @@ class LoanService extends BaseService{
   }
 
 
+  Future<Map<String, dynamic>> createLoanFianza(CreateLoanViewModel createLoanViewModel, String bookTitle) async {
+    try {
+      if (BaseService.client == null) {
+        return {'success': false, 'message': 'Error de conexión a la base de datos.'};
+      }
+
+      // Crear el nuevo préstamo
+      final Map<String, dynamic> loanData = {
+        'ownerId': createLoanViewModel.ownerId,
+        'currentHolderId': createLoanViewModel.currentHolderId,
+        'bookId': createLoanViewModel.bookId,
+        'startDate': createLoanViewModel.startDate,
+        'endDate': createLoanViewModel.endDate,
+        'format': createLoanViewModel.format,
+        'state': createLoanViewModel.state,
+        'currentPage': createLoanViewModel.currentPage,
+        'compensation': bookTitle
+      };
+
+      final response = await BaseService.client
+          .from('Loan')
+          .insert(loanData)
+          .select()
+          .single();
+
+      print("Respuesta del servicio Loan: $response");
+
+      if (response != null) {
+        return {
+          'success': true,
+          'message': 'Préstamo ofrecido registrado exitosamente',
+          'data': response
+        };
+      } else {
+        return {'success': false, 'message': 'Error al registrar el préstamo ofrecido'};
+      }
+    } catch (ex) {
+      return {'success': false, 'message': ex.toString()};
+    }
+  }
+
+
+
 }
