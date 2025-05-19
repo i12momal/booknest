@@ -10,6 +10,10 @@ import 'package:booknest/views/home_view.dart';
 import 'package:booknest/views/notifications_view.dart';
 import 'package:booknest/widgets/success_dialog.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_html/flutter_html.dart';
+import 'package:html/dom.dart' as dom;
+import 'package:url_launcher/url_launcher.dart';
+
 
 class Background extends StatefulWidget {
   final Widget child;
@@ -54,6 +58,25 @@ class _BackgroundState extends State<Background> {
     _notificationCount = _fetchNotificationCount();
     _loadUserId();
   }
+
+  Future<void> _launchUrlExternally(String url) async {
+    final uri = Uri.parse(url);
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (e) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Error'),
+          content: Text('No se pudo abrir el enlace: $url'),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cerrar')),
+          ],
+        ),
+      );
+    }
+  }
+
 
   void _toggleChatMenu() {
     setState(() {
@@ -369,6 +392,13 @@ class _BackgroundState extends State<Background> {
                 userId!,
               ),
               builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return const Center(child: Text('Error al cargar mensajes'));
+                }
+
                 final messages = snapshot.data ?? [];
                 final chat = _loanChats[_selectedChatIndex!];
                 
@@ -454,13 +484,15 @@ class _BackgroundState extends State<Background> {
                                     color: isMe ? Colors.blue[100] : Colors.grey[200],
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: Text(
-                                    msg.content,
-                                    style: const TextStyle(fontSize: 16),
-                                  ),
+                                  child: Html(
+                                    data: msg.content,
+                                    onLinkTap: (String? url, Map<String, String> attributes, dom.Element? element) {
+                                      if (url != null) {
+                                        _launchUrlExternally(url);
+                                      }
+                                    },
+                                  )
                                 ),
-
-                            
                                 // Mostramos el botón solo si el mensaje es del usuario
                                 if (isMe && myLoanState != 'Devuelto') ...[
                                   const SizedBox(height: 8),
@@ -516,198 +548,208 @@ class _BackgroundState extends State<Background> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              border: Border.all(color: const Color(0xFF112363), width: 3),
-            ),
-            child: Column(
-              children: [
-                PreferredSize(
-                  preferredSize: const Size.fromHeight(kToolbarHeight),
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Color(0xFF112363), Color(0xFF2140AF)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.centerRight,
-                        stops: [0.42, 0.74],
-                      ),
-                      borderRadius: BorderRadius.only(
-                        bottomLeft: Radius.circular(12),
-                        bottomRight: Radius.circular(12),
-                      ),
-                    ),
-                    child: AppBar(
-                      automaticallyImplyLeading: false,
-                      title: Text(
-                        widget.title,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
+      body: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: () {
+          if (_showChatMenu) {
+            setState(() {
+              _showChatMenu = false;
+            });
+          }
+        },
+        child: Stack(
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: const Color(0xFF112363), width: 3),
+              ),
+              child: Column(
+                children: [
+                  PreferredSize(
+                    preferredSize: const Size.fromHeight(kToolbarHeight),
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Color(0xFF112363), Color(0xFF2140AF)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.centerRight,
+                          stops: [0.42, 0.74],
+                        ),
+                        borderRadius: BorderRadius.only(
+                          bottomLeft: Radius.circular(12),
+                          bottomRight: Radius.circular(12),
                         ),
                       ),
-                      centerTitle: true,
-                      backgroundColor: Colors.transparent,
-                      elevation: 0,
-                      leading: widget.showExitIcon
-                          ? IconButton(
-                              icon: const Icon(Icons.logout_sharp),
-                              color: Colors.white,
-                              onPressed: () => _confirmLogout(context),
-                            )
-                          : (widget.onBack != null && widget.showRowIcon)
-                              ? IconButton(
-                                  icon: const Icon(Icons.arrow_back),
-                                  color: Colors.white,
-                                  onPressed: () => widget.onBack?.call(),
-                                )
-                              : null,
-                      actions: [
-                        if (widget.showChatIcon)
-                          IconButton(
-                            icon: const Icon(Icons.chat_bubble_outline),
+                      child: AppBar(
+                        automaticallyImplyLeading: false,
+                        title: Text(
+                          widget.title,
+                          style: const TextStyle(
                             color: Colors.white,
-                            onPressed: _toggleChatMenu,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
                           ),
-                        if (widget.showNotificationIcon)
-                          FutureBuilder<int>(
-                            future: _notificationCount,
-                            builder: (context, snapshot) {
-                              final count = snapshot.data ?? 0;
-                              return Stack(
-                                alignment: Alignment.center,
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(Icons.notifications_none),
+                        ),
+                        centerTitle: true,
+                        backgroundColor: Colors.transparent,
+                        elevation: 0,
+                        leading: widget.showExitIcon
+                            ? IconButton(
+                                icon: const Icon(Icons.logout_sharp),
+                                color: Colors.white,
+                                onPressed: () => _confirmLogout(context),
+                              )
+                            : (widget.onBack != null && widget.showRowIcon)
+                                ? IconButton(
+                                    icon: const Icon(Icons.arrow_back),
                                     color: Colors.white,
-                                    onPressed: () async {
-                                      await Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => const NotificationsView(),
-                                        ),
-                                      );
-                                      setState(() {
-                                        _notificationCount = _fetchNotificationCount();
-                                      });
-                                    },
-                                  ),
-                                  if (count > 0)
-                                    Positioned(
-                                      right: 6,
-                                      top: 8,
-                                      child: Container(
-                                        padding: const EdgeInsets.all(5),
-                                        decoration: const BoxDecoration(
-                                          color: Colors.red,
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: Text(
-                                          '$count',
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.bold,
+                                    onPressed: () => widget.onBack?.call(),
+                                  )
+                                : null,
+                        actions: [
+                          if (widget.showChatIcon)
+                            IconButton(
+                              icon: const Icon(Icons.chat_bubble_outline),
+                              color: Colors.white,
+                              onPressed: _toggleChatMenu,
+                            ),
+                          if (widget.showNotificationIcon)
+                            FutureBuilder<int>(
+                              future: _notificationCount,
+                              builder: (context, snapshot) {
+                                final count = snapshot.data ?? 0;
+                                return Stack(
+                                  alignment: Alignment.center,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.notifications_none),
+                                      color: Colors.white,
+                                      onPressed: () async {
+                                        await Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => const NotificationsView(),
+                                          ),
+                                        );
+                                        setState(() {
+                                          _notificationCount = _fetchNotificationCount();
+                                        });
+                                      },
+                                    ),
+                                    if (count > 0)
+                                      Positioned(
+                                        right: 6,
+                                        top: 8,
+                                        child: Container(
+                                          padding: const EdgeInsets.all(5),
+                                          decoration: const BoxDecoration(
+                                            color: Colors.red,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Text(
+                                            '$count',
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                                ],
-                              );
-                            },
-                          ),
+                                  ],
+                                );
+                              },
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.only(
+                          bottomLeft: Radius.circular(15),
+                          bottomRight: Radius.circular(15),
+                        ),
+                      ),
+                      child: widget.child,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (_showChatMenu)
+              Positioned(
+                top: kToolbarHeight + 20,
+                left: 16,
+                right: 16,
+                child: Material(
+                  elevation: 8,
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    height: 300,
+                    padding: const EdgeInsets.fromLTRB(12, 6, 12, 10),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            IconButton(
+                              icon: Icon(
+                                Icons.chat,
+                                color: !_showArchived ? Colors.blue : Colors.grey,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _showArchived = false;
+                                  _selectedChatIndex = null;
+                                });
+                                _loadChats();
+                              },
+                            ),
+                            IconButton(
+                              icon: Icon(
+                                Icons.archive_outlined,
+                                color: _showArchived ? Colors.blue : Colors.grey,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _showArchived = true;
+                                  _selectedChatIndex = null;
+                                });
+                                _loadChats();
+                              },
+                            ),
+                          ],
+                        ),
+                        Expanded(
+                          child: _isLoadingChats
+                              ? const Center(child: CircularProgressIndicator())
+                              : _loanChats.isEmpty
+                                  ? Center(
+                                      child: Text(
+                                        _showArchived
+                                            ? 'No tienes conversaciones archivadas.'
+                                            : 'No tienes conversaciones abiertas.',
+                                        style: const TextStyle(color: Colors.grey),
+                                      ),
+                                    )
+                                  : _buildChatList(),
+                        ),
                       ],
                     ),
                   ),
                 ),
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.only(
-                        bottomLeft: Radius.circular(15),
-                        bottomRight: Radius.circular(15),
-                      ),
-                    ),
-                    child: widget.child,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (_showChatMenu)
-            Positioned(
-              top: kToolbarHeight + 20,
-              left: 16,
-              right: 16,
-              child: Material(
-                elevation: 8,
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  height: 300,
-                  padding: const EdgeInsets.fromLTRB(12, 6, 12, 10),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          IconButton(
-                            icon: Icon(
-                              Icons.chat,
-                              color: !_showArchived ? Colors.blue : Colors.grey,
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                _showArchived = false;
-                                _selectedChatIndex = null;
-                              });
-                              _loadChats();
-                            },
-                          ),
-                          IconButton(
-                            icon: Icon(
-                              Icons.archive_outlined,
-                              color: _showArchived ? Colors.blue : Colors.grey,
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                _showArchived = true;
-                                _selectedChatIndex = null;
-                              });
-                              _loadChats();
-                            },
-                          ),
-                        ],
-                      ),
-                      Expanded(
-                        child: _isLoadingChats
-                            ? const Center(child: CircularProgressIndicator())
-                            : _loanChats.isEmpty
-                                ? Center(
-                                    child: Text(
-                                      _showArchived
-                                          ? 'No tienes conversaciones archivadas.'
-                                          : 'No tienes conversaciones abiertas.',
-                                      style: const TextStyle(color: Colors.grey),
-                                    ),
-                                  )
-                                : _buildChatList(),
-                      ),
-                    ],
-                  ),
-                ),
               ),
-            ),
-        ],
-      ),
+          ],
+        ),
+      )
     );
   }
 }

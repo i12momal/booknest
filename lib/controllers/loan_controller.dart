@@ -188,9 +188,9 @@ class LoanController extends BaseController{
         final requesteruserName = requesterResponse['data']['userName'];
         final requesterEmail = requesterResponse['data']['email'];
 
-        // Crear mensajes personalizados para cada usuario
-        String chatMessageForOwner = 'Ha iniciado un nuevo intercambio con el usuario $requesterName ($requesteruserName): $bookName a cambio de $compensation. Póngase en contacto para acordar la fecha, hora y lugar de la quedada. Correo electrónico: $requesterEmail';
-        String chatMessageForRequester = 'Ha iniciado un nuevo intercambio con el usuario $ownerName ($owneruserName): $bookName a cambio de $compensation. Póngase en contacto para acordar la fecha, hora y lugar de la quedada. Correo electrónico: $ownerEmail';
+       // Crear mensajes personalizados para cada usuario
+        String chatMessageForOwner = 'Ha iniciado un nuevo intercambio con el usuario $requesterName ($requesteruserName): $bookName a cambio de $compensation. Póngase en contacto para acordar la fecha, hora y lugar de la quedada. Correo electrónico: <a href="https://mail.google.com/mail/?view=cm&fs=1&to=$requesterEmail">$requesterEmail</a>';
+        String chatMessageForRequester = 'Ha iniciado un nuevo intercambio con el usuario $ownerName ($owneruserName): $bookName a cambio de $compensation. Póngase en contacto para acordar la fecha, hora y lugar de la quedada. Correo electrónico: <a href="https://mail.google.com/mail/?view=cm&fs=1&to=$ownerEmail">$ownerEmail</a>';
 
         // Crear chat (si no existe) y enviar mensajes a ambos
         final chatId = await loanChatService.createChatIfNotExists(loan['id'], ownerId, requesterId, compensationLoanId);

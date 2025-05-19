@@ -22,6 +22,7 @@ class _NotificationsViewState extends State<NotificationsView> {
 
   bool isSelectionMode = false;
   Set<int> selectedNotificationIds = {};
+  final Set<int> _loadingLoanIds = {};
 
   @override
   void initState() {
@@ -147,6 +148,10 @@ class _NotificationsViewState extends State<NotificationsView> {
     final currentHolderId = loan['currentHolderId'] as String?;
     final requesterId = loan['currentHolderId']; // El que ha ofrecido los libros para intercambio
 
+    setState(() {
+      _loadingLoanIds.add(loanId);
+    });
+
     if (newState == 'Aceptado' && currentHolderId != null && relatedBooks.isNotEmpty) {
       if (selectedCompensation == 'Fianza') {
         // Elimina todos los loans ofrecidos y crea uno con compensation = fianza
@@ -208,6 +213,7 @@ class _NotificationsViewState extends State<NotificationsView> {
     await LoanController().updateLoanState(loanId, newState, compensation: selectedCompensation, compensationLoanId: loan['selectedLoanId']);
     
     setState(() {
+      _loadingLoanIds.remove(loanId);
       loan['state'] = newState;
       loan['compensationSelected'] = selectedCompensation;
       loan['compensationConfirmed'] = (selectedCompensation != null);
@@ -445,7 +451,13 @@ class _NotificationsViewState extends State<NotificationsView> {
                                   children: [
                                     Text('Formato: ${loan['format']}', style: const TextStyle(fontStyle: FontStyle.italic)),
                                     loan['state'] == 'Pendiente'
-                                        ? LoanStateDropdown(
+                                         ? (_loadingLoanIds.contains(loan['loanId'])
+                                          ? const SizedBox(
+                                              width: 24,
+                                              height: 24,
+                                              child: CircularProgressIndicator(strokeWidth: 2),
+                                            )
+                                         : LoanStateDropdown(
                                             selectedState: loan['state'],
                                             onChanged: (newState) {
                                               final books = _extractRelatedBooks(loan['message'] ?? '');
@@ -456,6 +468,7 @@ class _NotificationsViewState extends State<NotificationsView> {
                                             },
                                             disabledOptions: loan['format'] == 'Físico' && !loan['compensationConfirmed'] ? ['Aceptado'] : [],
                                           )
+                                        )
                                         : Text(
                                             loan['state'],
                                             style: TextStyle(color: _getStateColor(loan['state']), fontWeight: FontWeight.bold),
