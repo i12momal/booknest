@@ -81,7 +81,7 @@ class NotificationService extends BaseService{
       final response = await BaseService.client
           .from('Notifications')
           .select()
-          .eq('userId', userId);
+          .eq('userId', userId).order('created_at', ascending: false);
 
       print("Notificaciones del usuario: $response ");
 

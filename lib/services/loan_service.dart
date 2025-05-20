@@ -644,8 +644,9 @@ class LoanService extends BaseService{
   }
 
   // Acepta el libro seleccionado: actualiza estado y currentHolderId
-  Future<int?> acceptCompensationLoan({required int bookId, required String userId, required String? newHolderId, required String compensation,}) async {
+  Future<int?> acceptCompensationLoan({required int bookId, required String userId, required String? newHolderId, required String compensation}) async {
     try {
+      print('Valores del acceptCompensationLoan $bookId, $userId, $newHolderId, $compensation');
       final response = await BaseService.client
           .from('Loan')
           .update({

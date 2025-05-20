@@ -33,6 +33,7 @@ class _GeolocationMapState extends State<GeolocationMap> {
   final List<Book> loanBooks = [];
 
   bool _isLocationEnabled = true;
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -128,6 +129,7 @@ class _GeolocationMapState extends State<GeolocationMap> {
         _center = currentLocation;
         _nearbyUsers = users;
         updateMarkers(_nearbyUsers);
+        _isLoading = false;
       });
 
       // Mover la cámara del mapa a la ubicación actual
@@ -309,8 +311,22 @@ class _GeolocationMapState extends State<GeolocationMap> {
           child: Text("Mapa de Ubicación"),
         ),
       ),
-      body: GoogleMap(
-        onMapCreated: (GoogleMapController controller) {
+      body: _isLoading
+    ? const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text(
+              'Cargando mapa...',
+              style: TextStyle(fontSize: 16),
+            ),
+          ],
+        ),
+      )
+      : GoogleMap(
+        /*onMapCreated: (GoogleMapController controller) {
           mapController = controller;
 
           if (_focusedMarkerId != null) {
@@ -321,8 +337,44 @@ class _GeolocationMapState extends State<GeolocationMap> {
               }
             });
           }
-        },
+           setState(() {
+            _isLoading = false;
+          });
+        },*/
 
+        onMapCreated: (GoogleMapController controller) async {
+          mapController = controller;
+
+          if (_focusedUser != null) {
+            // Espera un poco a que los marcadores estén en el mapa
+            await Future.delayed(const Duration(milliseconds: 300));
+
+            final focused = _nearbyUsers.firstWhere(
+              (u) => u.userId == _focusedUser!.userId,
+              orElse: () => _focusedUser!,
+            );
+
+            final focusLatLng = LatLng(focused.latitude, focused.longitude);
+
+            await mapController.animateCamera(CameraUpdate.newLatLngZoom(focusLatLng, 14));
+
+            // Muestra el diálogo tras un pequeño delay para asegurar visibilidad
+            Future.delayed(const Duration(milliseconds: 500), () {
+              _showUserBooksDialog(focused);
+            });
+          }
+
+          if (_focusedMarkerId != null) {
+            final markerExists = _markers.any((m) => m.markerId == _focusedMarkerId);
+            if (markerExists) {
+              mapController.showMarkerInfoWindow(_focusedMarkerId!);
+            }
+          }
+
+          setState(() {
+            _isLoading = false;
+          });
+        },
         initialCameraPosition: CameraPosition(
           target: _center,
           zoom: 12,

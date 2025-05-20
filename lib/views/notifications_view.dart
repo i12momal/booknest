@@ -3,7 +3,13 @@ import 'package:booknest/controllers/book_controller.dart';
 import 'package:booknest/controllers/loan_controller.dart';
 import 'package:booknest/controllers/notification_controller.dart';
 import 'package:booknest/controllers/user_controller.dart';
+import 'package:booknest/views/favorites_view.dart';
+import 'package:booknest/views/geolocation_view.dart';
+import 'package:booknest/views/home_view.dart';
+import 'package:booknest/views/owner_profile_view.dart';
+import 'package:booknest/views/user_search_view.dart';
 import 'package:booknest/widgets/background.dart';
+import 'package:booknest/widgets/footer.dart';
 import 'package:booknest/widgets/loan_state.dart';
 import 'package:flutter/material.dart';
 
@@ -19,6 +25,7 @@ class _NotificationsViewState extends State<NotificationsView> {
   int currentPage = 1;
   final int notificationsPerPage = 20;
   List<Map<String, dynamic>> allNotifications = [];
+  String? userId;
 
   bool isSelectionMode = false;
   Set<int> selectedNotificationIds = {};
@@ -27,9 +34,17 @@ class _NotificationsViewState extends State<NotificationsView> {
   @override
   void initState() {
     super.initState();
+    _loadUserId();
     _notificationsFuture = _loadNotifications().then((notifications) {
       allNotifications = notifications;
       return notifications;
+    });
+  }
+
+  void _loadUserId() async {
+    final id = await AccountController().getCurrentUserId();
+    setState(() {
+      userId = id;
     });
   }
 
@@ -124,6 +139,7 @@ class _NotificationsViewState extends State<NotificationsView> {
           notification['loanId'] = loan['id'] ?? 0;
           notification['message'] = notification['message'] ?? 'Sin mensaje';
           notification['ownerId'] = loan['ownerId'];
+          notification['bookId'] = book!.id;
 
           print('Mensaje cargado: ${notification['message']}');
 
@@ -152,6 +168,7 @@ class _NotificationsViewState extends State<NotificationsView> {
       _loadingLoanIds.add(loanId);
     });
 
+    // CASO: ACEPTADO
     if (newState == 'Aceptado' && currentHolderId != null && relatedBooks.isNotEmpty) {
       if (selectedCompensation == 'Fianza') {
         // Elimina todos los loans ofrecidos y crea uno con compensation = fianza
@@ -195,6 +212,7 @@ class _NotificationsViewState extends State<NotificationsView> {
               newHolderId: newHolderId,
               compensation: loan['bookName'],
             );
+            print('Aceptando contraprestación de $isSelected. Loan completo $selectedLoanId');
 
             if (selectedLoanId != null) {
               loan['selectedLoanId'] = selectedLoanId;
@@ -206,6 +224,16 @@ class _NotificationsViewState extends State<NotificationsView> {
             await BookController().changeState(bookId, 'Disponible');
           }
         }
+      }
+    }// Caso: RECHAZADO
+    else if (newState == 'Rechazado' && currentHolderId != null && relatedBooks.isNotEmpty) {
+      await BookController().changeState(loan['bookId'], 'Disponible');
+      for (final title in relatedBooks) {
+        final bookId = await BookController().getBookIdByTitleAndOwner(title, currentHolderId);
+        if (bookId == null || bookId == 0) continue;
+
+        await LoanController().deleteLoanByBookAndUser(bookId, requesterId);
+        await BookController().changeState(bookId, 'Disponible');
       }
     }
 
@@ -311,276 +339,325 @@ class _NotificationsViewState extends State<NotificationsView> {
 
   @override
   Widget build(BuildContext context) {
-    return Background(
-      title: isSelectionMode
-          ? '${selectedNotificationIds.length} seleccionadas'
-          : 'Notificaciones',
-      onBack: () {
-        if (isSelectionMode) {
-          setState(() {
-            selectedNotificationIds.clear();
-            isSelectionMode = false;
-          });
-        } else {
-          Navigator.pop(context);
-        }
+    return WillPopScope(
+      onWillPop: () async {
+        return false;
       },
-      showRowIcon: true,
-      showNotificationIcon: false,
-      child: FutureBuilder<List<Map<String, dynamic>>>(
-        future: _notificationsFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      child: GestureDetector(
+        onTap: () {
+          FocusScope.of(context).unfocus();
+        },
+        child: Scaffold( 
+          body: Background(
+            title: isSelectionMode
+                ? '${selectedNotificationIds.length} seleccionadas'
+                : 'Notificaciones',
+            onBack: () {
+              if (isSelectionMode) {
+                setState(() {
+                  selectedNotificationIds.clear();
+                  isSelectionMode = false;
+                });
+              } else {
+                Navigator.pop(context);
+              }
+            },
+            showRowIcon: false,
+            showNotificationIcon: false,
+            child: FutureBuilder<List<Map<String, dynamic>>>(
+              future: _notificationsFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-          if (allNotifications.isEmpty) {
-            return const Center(child: Text('No tienes notificaciones.'));
-          }
+                if (allNotifications.isEmpty) {
+                  return const Center(child: Text('No tienes notificaciones.'));
+                }
 
-          final loans = paginatedNotifications;
+                final loans = paginatedNotifications;
 
-          return Column(
-            children: [
-              // Opciones de selección arriba
-              if (isSelectionMode) ...[
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Checkbox(
-                            value: paginatedNotifications.every((n) => selectedNotificationIds.contains(n['id'])),
-                            onChanged: (value) {
-                              setState(() {
-                                final idsOnPage = paginatedNotifications.map((n) => n['id'] as int).toSet();
+                return Column(
+                  children: [
+                    // Opciones de selección arriba
+                    if (isSelectionMode) ...[
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                Checkbox(
+                                  value: paginatedNotifications.every((n) => selectedNotificationIds.contains(n['id'])),
+                                  onChanged: (value) {
+                                    setState(() {
+                                      final idsOnPage = paginatedNotifications.map((n) => n['id'] as int).toSet();
 
-                                final allSelected = idsOnPage.every((id) => selectedNotificationIds.contains(id));
+                                      final allSelected = idsOnPage.every((id) => selectedNotificationIds.contains(id));
 
-                                if (allSelected) {
-                                  selectedNotificationIds.removeAll(idsOnPage);
-                                  if (selectedNotificationIds.isEmpty) isSelectionMode = false;
-                                } else {
-                                  selectedNotificationIds.addAll(idsOnPage);
-                                  isSelectionMode = true;
-                                }
-                              });
-                            },
+                                      if (allSelected) {
+                                        selectedNotificationIds.removeAll(idsOnPage);
+                                        if (selectedNotificationIds.isEmpty) isSelectionMode = false;
+                                      } else {
+                                        selectedNotificationIds.addAll(idsOnPage);
+                                        isSelectionMode = true;
+                                      }
+                                    });
+                                  },
 
-                          ),
-                          const Text('Seleccionar todo', style: TextStyle(fontWeight: FontWeight.bold)),
-                        ],
-                      ),
-                      Row(
-                        children: [
-                          IconButton(
-                            tooltip: 'Marcar como leídas',
-                            icon: const Icon(Icons.mark_email_read, color: Colors.blue),
-                            onPressed: _confirmMarkAsRead,
-                          ),
-                          IconButton(
-                            tooltip: 'Eliminar',
-                            icon: const Icon(Icons.delete, color: Colors.red),
-                            onPressed: _confirmDelete,
-                          ),
-                        ],
+                                ),
+                                const Text('Seleccionar todo', style: TextStyle(fontWeight: FontWeight.bold)),
+                              ],
+                            ),
+                            Row(
+                              children: [
+                                IconButton(
+                                  tooltip: 'Marcar como leídas',
+                                  icon: const Icon(Icons.mark_email_read, color: Colors.blue),
+                                  onPressed: _confirmMarkAsRead,
+                                ),
+                                IconButton(
+                                  tooltip: 'Eliminar',
+                                  icon: const Icon(Icons.delete, color: Colors.red),
+                                  onPressed: _confirmDelete,
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ],
-                  ),
-                ),
-              ],
 
-              // Lista de notificaciones
-              Expanded(
-                child: ListView.builder(
-                  itemCount: loans.length,
-                  itemBuilder: (context, index) {
-                    final loan = loans[index];
-                    final isRead = loan['read'] ?? false;
-                    final isSelected = selectedNotificationIds.contains(loan['id']);
+                    // Lista de notificaciones
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: loans.length,
+                        itemBuilder: (context, index) {
+                          final loan = loans[index];
+                          final isRead = loan['read'] ?? false;
+                          final isSelected = selectedNotificationIds.contains(loan['id']);
 
-                    return GestureDetector(
-                      onTap: () {
-                        if (isSelectionMode) {
-                          setState(() {
-                            isSelected
-                                ? selectedNotificationIds.remove(loan['id'])
-                                : selectedNotificationIds.add(loan['id']);
-                            if (selectedNotificationIds.isEmpty) isSelectionMode = false;
-                          });
-                        } else {
-                          _markAsRead(loan);
-                        }
-                      },
-                      onLongPress: () {
-                        setState(() {
-                          isSelectionMode = true;
-                          selectedNotificationIds.add(loan['id']);
-                        });
-                      },
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        margin: const EdgeInsets.symmetric(vertical: 8.0),
-                        padding: const EdgeInsets.all(12.0),
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: isRead ? Colors.grey.withAlpha(100) : const Color(0xFF112363),
-                            width: 2,
-                          ),
-                          borderRadius: BorderRadius.circular(8),
-                          color: isSelected
-                              ? Colors.blue.withOpacity(0.3)
-                              : isRead
-                                  ? Colors.grey.withAlpha(50)
-                                  : Colors.white,
-                        ),
-                        child: Opacity(
-                          opacity: isRead ? 0.5 : 1.0,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (loan['type'] == 'Préstamo') ...[
-                                Text('Libro: ${loan['bookName']}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                                Text('Solicitado por: ${loan['userName']}'),
-
-                                // Fila con formato, dropdown y ícono
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text('Formato: ${loan['format']}', style: const TextStyle(fontStyle: FontStyle.italic)),
-                                    loan['state'] == 'Pendiente'
-                                         ? (_loadingLoanIds.contains(loan['loanId'])
-                                          ? const SizedBox(
-                                              width: 24,
-                                              height: 24,
-                                              child: CircularProgressIndicator(strokeWidth: 2),
-                                            )
-                                         : LoanStateDropdown(
-                                            selectedState: loan['state'],
-                                            onChanged: (newState) {
-                                              final books = _extractRelatedBooks(loan['message'] ?? '');
-                                              if (newState != null && newState != loan['state']) {
-                                                final newHolderId = loan['ownerId'];
-                                                _updateLoanState(loan, newState, loan['compensationSelected'], books, newHolderId);
-                                              }
-                                            },
-                                            disabledOptions: loan['format'] == 'Físico' && !loan['compensationConfirmed'] ? ['Aceptado'] : [],
-                                          )
-                                        )
-                                        : Text(
-                                            loan['state'],
-                                            style: TextStyle(color: _getStateColor(loan['state']), fontWeight: FontWeight.bold),
-                                          ),
-                                    Icon(
-                                      isRead ? Icons.mark_email_read : Icons.mark_email_unread,
-                                      color: isRead ? Colors.green : Colors.grey,
-                                    ),
-                                  ],
+                          return GestureDetector(
+                            onTap: () {
+                              if (isSelectionMode) {
+                                setState(() {
+                                  isSelected
+                                      ? selectedNotificationIds.remove(loan['id'])
+                                      : selectedNotificationIds.add(loan['id']);
+                                  if (selectedNotificationIds.isEmpty) isSelectionMode = false;
+                                });
+                              } else {
+                                _markAsRead(loan);
+                              }
+                            },
+                            onLongPress: () {
+                              setState(() {
+                                isSelectionMode = true;
+                                selectedNotificationIds.add(loan['id']);
+                              });
+                            },
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 300),
+                              margin: const EdgeInsets.symmetric(vertical: 8.0),
+                              padding: const EdgeInsets.all(12.0),
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: isRead ? Colors.grey.withAlpha(100) : const Color(0xFF112363),
+                                  width: 2,
                                 ),
+                                borderRadius: BorderRadius.circular(8),
+                                color: isSelected
+                                    ? Colors.blue.withOpacity(0.3)
+                                    : isRead
+                                        ? Colors.grey.withAlpha(50)
+                                        : Colors.white,
+                              ),
+                              child: Opacity(
+                                opacity: isRead ? 0.5 : 1.0,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    if (loan['type'] == 'Préstamo') ...[
+                                      Text('Libro: ${loan['bookName']}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                      Text('Solicitado por: ${loan['userName']}'),
 
-                                // Botón "Libros ofrecidos", debajo del Row
-                                if (loan['format'] == 'Físico') ...[
-                                  if (loan['state'] == 'Pendiente' || loan['state'] == 'Rechazado')...[
-                                    Padding(
-                                      padding: const EdgeInsets.only(top: 4),
-                                      child: Row(
+                                      // Fila con formato, dropdown y ícono
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
-                                          TextButton.icon(
-                                            onPressed: loan['state'] == 'Pendiente'
-                                                ? () async {
+                                          Text('Formato: ${loan['format']}', style: const TextStyle(fontStyle: FontStyle.italic)),
+                                          loan['state'] == 'Pendiente'
+                                              ? (_loadingLoanIds.contains(loan['loanId'])
+                                                ? const SizedBox(
+                                                    width: 24,
+                                                    height: 24,
+                                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                                  )
+                                              : LoanStateDropdown(
+                                                  selectedState: loan['state'],
+                                                  onChanged: (newState) {
                                                     final books = _extractRelatedBooks(loan['message'] ?? '');
-                                                    final result = await _showCompensationDialog(loan, books);
-                                                    if (result == true) {
-                                                      setState(() {});
+                                                    if (newState != null && newState != loan['state']) {
+                                                      final newHolderId = loan['ownerId'];
+                                                      _updateLoanState(loan, newState, loan['compensationSelected'], books, newHolderId);
                                                     }
-                                                  }
-                                                : null,
-                                            icon: Icon(Icons.book,
-                                                size: 18,
-                                                color: loan['state'] == 'Pendiente'
-                                                    ? const Color(0xFF112363)
-                                                    : Colors.grey),
-                                            label: Text(
-                                              'Libros ofrecidos',
-                                              style: TextStyle(
-                                                decoration: TextDecoration.underline,
-                                                color: loan['state'] == 'Pendiente'
-                                                    ? const Color(0xFF112363)
-                                                    : Colors.grey,
-                                              ),
+                                                  },
+                                                  disabledOptions: loan['format'] == 'Físico' && !loan['compensationConfirmed'] ? ['Aceptado'] : [],
+                                                )
+                                              )
+                                              : Text(
+                                                  loan['state'],
+                                                  style: TextStyle(color: _getStateColor(loan['state']), fontWeight: FontWeight.bold),
+                                                ),
+                                          Icon(
+                                            isRead ? Icons.mark_email_read : Icons.mark_email_unread,
+                                            color: isRead ? Colors.green : Colors.grey,
+                                          ),
+                                        ],
+                                      ),
+
+                                      // Botón "Libros ofrecidos", debajo del Row
+                                      if (loan['format'] == 'Físico') ...[
+                                        if (loan['state'] == 'Pendiente' || loan['state'] == 'Rechazado')...[
+                                          Padding(
+                                            padding: const EdgeInsets.only(top: 4),
+                                            child: Row(
+                                              children: [
+                                                TextButton.icon(
+                                                  onPressed: loan['state'] == 'Pendiente'
+                                                      ? () async {
+                                                          final books = _extractRelatedBooks(loan['message'] ?? '');
+                                                          final result = await _showCompensationDialog(loan, books);
+                                                          if (result == true) {
+                                                            setState(() {});
+                                                          }
+                                                        }
+                                                      : null,
+                                                  icon: Icon(Icons.book,
+                                                      size: 18,
+                                                      color: loan['state'] == 'Pendiente'
+                                                          ? const Color(0xFF112363)
+                                                          : Colors.grey),
+                                                  label: Text(
+                                                    'Libros ofrecidos',
+                                                    style: TextStyle(
+                                                      decoration: TextDecoration.underline,
+                                                      color: loan['state'] == 'Pendiente'
+                                                          ? const Color(0xFF112363)
+                                                          : Colors.grey,
+                                                    ),
+                                                  ),
+                                                  style: TextButton.styleFrom(
+                                                    padding: EdgeInsets.zero,
+                                                    minimumSize: const Size(0, 0),
+                                                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                                    alignment: Alignment.centerLeft,
+                                                  ),
+                                                ),
+                                              ],
                                             ),
-                                            style: TextButton.styleFrom(
-                                              padding: EdgeInsets.zero,
-                                              minimumSize: const Size(0, 0),
-                                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                              alignment: Alignment.centerLeft,
+                                          )
+                                        ]else...[
+                                          Text('Contraprestación: ${loan['compensationSelected']}', style: const TextStyle(fontStyle: FontStyle.italic, fontWeight: FontWeight.bold)),
+                                        ] 
+                                      ]
+                                    ] else if (loan['type'] == 'Préstamo Aceptado' || loan['type'] == 'Préstamo Rechazado' || loan['type'] == 'Préstamo Devuelto' || loan['type'] == 'Recordatorio') ...[
+                                      Stack(
+                                        children: [
+                                          Padding(
+                                            padding: const EdgeInsets.only(bottom: 24),
+                                            child: Text(
+                                              loan['message'] ?? '',
+                                              style: const TextStyle(fontStyle: FontStyle.italic),
+                                            ),
+                                          ),
+                                          Positioned(
+                                            bottom: 0,
+                                            right: 0,
+                                            child: Icon(
+                                              isRead ? Icons.mark_email_read : Icons.mark_email_unread,
+                                              color: isRead ? Colors.green : Colors.grey,
                                             ),
                                           ),
                                         ],
                                       ),
-                                    )
-                                  ]else...[
-                                    Text('Contraprestación: ${loan['compensationSelected']}', style: const TextStyle(fontStyle: FontStyle.italic, fontWeight: FontWeight.bold)),
-                                  ] 
-                                ]
-                              ] else if (loan['type'] == 'Préstamo Aceptado' || loan['type'] == 'Préstamo Rechazado' || loan['type'] == 'Préstamo Devuelto') ...[
-                                Stack(
-                                  children: [
-                                    Padding(
-                                      padding: const EdgeInsets.only(bottom: 24),
-                                      child: Text(
-                                        loan['message'] ?? '',
-                                        style: const TextStyle(fontStyle: FontStyle.italic),
-                                      ),
-                                    ),
-                                    Positioned(
-                                      bottom: 0,
-                                      right: 0,
-                                      child: Icon(
-                                        isRead ? Icons.mark_email_read : Icons.mark_email_unread,
-                                        color: isRead ? Colors.green : Colors.grey,
-                                      ),
-                                    ),
+                                    ]
+          
                                   ],
+
                                 ),
-                              ]
-    
-                            ],
-
-                          ),
-                        ),
+                              ),
+                            ),
+                          );
+                        },
                       ),
-                    );
-                  },
-                ),
-              ),
-
-              // Paginador
-              Padding(
-                padding: const EdgeInsets.only(top: 10),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.arrow_back),
-                      onPressed: currentPage > 1 ? () => setState(() => currentPage--) : null,
                     ),
-                    Text('Página $currentPage de ${((allNotifications.length) / notificationsPerPage).ceil()}'),
-                    IconButton(
-                      icon: const Icon(Icons.arrow_forward),
-                      onPressed: currentPage * notificationsPerPage < allNotifications.length
-                          ? () => setState(() => currentPage++)
-                          : null,
+
+                    // Paginador
+                    Padding(
+                      padding: const EdgeInsets.only(top: 10),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.arrow_back),
+                            onPressed: currentPage > 1 ? () => setState(() => currentPage--) : null,
+                          ),
+                          Text('Página $currentPage de ${((allNotifications.length) / notificationsPerPage).ceil()}'),
+                          IconButton(
+                            icon: const Icon(Icons.arrow_forward),
+                            onPressed: currentPage * notificationsPerPage < allNotifications.length
+                                ? () => setState(() => currentPage++)
+                                : null,
+                          ),
+                        ],
+                      ),
                     ),
                   ],
-                ),
-              ),
-            ],
-          );
-        },
-      ),
+                );
+              },
+            ),
+          ),
+          bottomNavigationBar: Footer(
+            selectedIndex: 0, 
+            onItemTapped: (index) {
+              switch (index) {
+                case 0:
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const HomeView()),
+                  );
+                  break;
+                case 1:
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const UserSearchView()),
+                  );
+                  break;
+                case 2:
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const GeolocationMap()),
+                  );
+                  break;
+                case 3:
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const FavoritesView()),
+                  );
+                  break;
+                case 4:
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => OwnerProfileView(userId: userId!)),
+                  );
+                  break;
+              }
+            },
+          ),
+        ),
+      )
     );
   }
 }

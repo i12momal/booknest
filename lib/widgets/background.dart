@@ -6,9 +6,7 @@ import 'package:booknest/controllers/notification_controller.dart';
 import 'package:booknest/entities/models/chat_message_model.dart';
 import 'package:booknest/entities/models/loan_chat_model.dart';
 import 'package:booknest/main.dart';
-import 'package:booknest/views/home_view.dart';
 import 'package:booknest/views/notifications_view.dart';
-import 'package:booknest/widgets/success_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:html/dom.dart' as dom;
@@ -51,6 +49,7 @@ class _BackgroundState extends State<Background> {
 
   final Set<int> _readChatIds = {};
   Map<int, String> _loanStates = {};
+  bool _isReturningBook = false;
 
   @override
   void initState() {
@@ -64,6 +63,7 @@ class _BackgroundState extends State<Background> {
     try {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } catch (e) {
+      //if (!mounted) return;
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
@@ -86,15 +86,19 @@ class _BackgroundState extends State<Background> {
   }
 
   void _loadUserId() async {
+    if (userId != null) return;
+
     final id = await AccountController().getCurrentUserId();
+    if (!mounted || id == null) return;
+
+    userId = id;
+
+    await _loadChats(id);
+
     if (!mounted) return;
-
-    setState(() {
-      userId = id;
-    });
-
-    _loadChats();
+    setState(() {});
   }
+
 
   Future<bool?> _showConfirmReturnDialog(BuildContext context) {
     return showDialog<bool>(
@@ -120,10 +124,9 @@ class _BackgroundState extends State<Background> {
   }
 
 
-  Future<void> _loadChats() async {
-    setState(() => _isLoadingChats = true);
+  Future<void> _loadChats(String currentUserId) async {
+    //setState(() => _isLoadingChats = true);
 
-    final currentUserId = await AccountController().getCurrentUserId();
     if (currentUserId == null) {
       setState(() => _isLoadingChats = false);
       return;
@@ -152,11 +155,13 @@ class _BackgroundState extends State<Background> {
 
       // Obtener estado del préstamo
       final loan = await LoanController().getLoanById(chat.loanId);
+      print('COMPENSATION LOAN ${loan['data']['state']}');
       loanStates[chat.loanId] = loan['data']['state'];
+
       final compensationLoan = await LoanController().getLoanById(chat.loanCompensationId);
+      print('COMPENSATION LOAN ${compensationLoan['data']['state']}');
       loanStates[chat.loanCompensationId] = compensationLoan['data']['state'];
     }
-
 
     if (mounted) {
       setState(() {
@@ -174,14 +179,9 @@ class _BackgroundState extends State<Background> {
     if (userId == null) return 0;
 
     final response = await NotificationController().getUnreadUserNotifications(userId);
-    if (mounted) {
-      setState(() {
-        _notificationCount = Future.value(response.length);
-      });
-    }
-
     return response.length;
   }
+
 
   void _confirmLogout(BuildContext context) async {
     final confirmed = await showDialog<bool>(
@@ -243,40 +243,28 @@ class _BackgroundState extends State<Background> {
       await loanChatController.toggleArchiveStatus(chat.id, userId!, !_showArchived); // Para archivar
 
       // Recargar los chats actualizados
-      _loadChats();
+      _loadChats(userId!);
     }
   }
 
-  void showSuccessDialog(BuildContext outerContext, int bookId) {
-    SuccessDialog.show(
-      outerContext,
-      'Operación Exitosa',
-      '¡El libro ha sido devuelto con éxito!',
-      () {
-        Navigator.pop(outerContext);  // cerrar diálogo
-        
-        Future.delayed(Duration.zero, () {
-          // Aquí simplemente haces push, no pushReplacement
-          Navigator.push(
-            outerContext,
-            MaterialPageRoute(builder: (_) => const HomeView()),
-          );
-        });
-      },
+  Future<void> showSuccessDialog(BuildContext context, int bookId) async {
+    if (!context.mounted) return;
+
+    await showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Operación Exitosa'),
+        content: const Text('¡El libro ha sido devuelto con éxito!'),
+        actions: [
+          TextButton(
+            child: const Text('Aceptar'),
+            onPressed: () {
+              Navigator.of(ctx).pop();
+            },
+          ),
+        ],
+      ),
     );
-  }
-
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        setState(() {
-          _notificationCount = _fetchNotificationCount();
-        });
-      }
-    });
   }
 
   Widget _buildChatList() {
@@ -309,75 +297,68 @@ class _BackgroundState extends State<Background> {
                     ),
                   ),
   
-                  title: RichText(
-                    text: TextSpan(
-                      children: [
-                        TextSpan(
-                          text: 'Préstamo #${chat.loanId} ', // Puedes mostrar `myLoanId` si quieres más precisión
-                          style: const TextStyle(
-                            color: Colors.black,
-                            fontWeight: FontWeight.normal,
-                            fontSize: 16,
-                          ),
+                  title: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Préstamo #${chat.loanId}',
+                        style: const TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.normal,
+                          fontSize: 16,
                         ),
-                        const WidgetSpan(
-                          child: SizedBox(width: 30),
-                        ),
-                        if (myLoanState == 'Devuelto')
-                          WidgetSpan(
-                            alignment: PlaceholderAlignment.middle,
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Text(
-                                  'Devuelto',
-                                  style: TextStyle(
-                                    color: Color.fromARGB(255, 105, 105, 105),
-                                    fontWeight: FontWeight.normal,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                GestureDetector(
-                                 onTap: () async {
-                                    final confirm = await showDialog<bool>(
-                                      context: context,
-                                      builder: (context) => AlertDialog(
-                                        title: const Text('¿Eliminar chat?'),
-                                        content: const Text('¿Estás seguro de que deseas eliminar tu historial de mensajes de este préstamo?'),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () => Navigator.of(context).pop(false),
-                                            child: const Text('Cancelar'),
-                                          ),
-                                          TextButton(
-                                            onPressed: () => Navigator.of(context).pop(true),
-                                            child: const Text('Eliminar', style: TextStyle(color: Colors.red)),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-
-                                    if (confirm == true) {
-                                      final chatId = chat.id;
-                                      await ChatMessageController().deleteMessagesByUser(chatId, userId!);
-                                      await ChatMessageController().updateDeleteLoanChat(chatId, userId!);
-                                      setState(() {
-                                        _loanChats.removeWhere((c) => c.id == chatId);
-                                        _selectedChatIndex = null;
-                                      });
-                                    }
-                                  },
-
-                                  child: const Icon(Icons.delete, size: 18, color: Colors.redAccent),
-                                ),
-                              ],
+                      ),
+                      if (myLoanState == 'Devuelto')
+                        Row(
+                          children: [
+                            const Text(
+                              'Devuelto',
+                              style: TextStyle(
+                                color: Color.fromARGB(255, 105, 105, 105),
+                                fontWeight: FontWeight.normal,
+                                fontSize: 14,
+                              ),
                             ),
-                          ),
+                            const SizedBox(width: 10),
+                            GestureDetector(
+                              onTap: () async {
+                                final confirm = await showDialog<bool>(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    title: const Text('¿Eliminar chat?'),
+                                    content: const Text('¿Estás seguro de que deseas eliminar tu historial de mensajes de este préstamo?'),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.of(context).pop(false),
+                                        child: const Text('Cancelar'),
+                                      ),
+                                      TextButton(
+                                        onPressed: () => Navigator.of(context).pop(true),
+                                        child: const Text('Eliminar',
+                                            style: TextStyle(color: Colors.red)),
+                                      ),
+                                    ],
+                                  ),
+                                );
 
-                      ],
-                    ),
+                                if (confirm == true) {
+                                  final chatId = chat.id;
+                                  await ChatMessageController().deleteMessagesByUser(chatId, userId!);
+                                  await ChatMessageController().updateDeleteLoanChat(chatId, userId!);
+                                  setState(() {
+                                    _loanChats.removeWhere((c) => c.id == chatId);
+                                    _selectedChatIndex = null;
+                                  });
+                                }
+                              },
+                              child:
+                                  const Icon(Icons.delete, size: 18, color: Colors.redAccent),
+                            ),
+                          ],
+                        ),
+                    ],
                   ),
+
 
                   trailing: const Icon(Icons.arrow_forward_ios),
                   onTap: () => setState(() => _selectedChatIndex = index),
@@ -498,24 +479,36 @@ class _BackgroundState extends State<Background> {
                                   const SizedBox(height: 8),
                                   ElevatedButton(
                                     onPressed: () async {
-                                      bool? confirm = await _showConfirmReturnDialog(context);
-                                      if (confirm == true) {
-                                        final chat = _loanChats[_selectedChatIndex!];
-      
-                                        // Marcar chat como leído (si no lo está)
-                                        if (!_readChatIds.contains(chat.id)) {
-                                          await ChatMessageController().markMessageAsRead(chat.id, userId!);
-                                          setState(() {
-                                            _readChatIds.add(chat.id);
-                                          });
-                                        }
-                                        await _returnPhysicalBookByUser(chat.loanId, chat.loanCompensationId);
-                                        showSuccessDialog(context, chat.loanId);
+                                      if (!mounted) return;
+
+                                      final confirmed = await _showConfirmReturnDialog(context);
+                                      if (confirmed != true || !mounted) return;
+
+                                      setState(() => _isReturningBook = true);
+
+                                      final chat = _loanChats[_selectedChatIndex!];
+
+                                      if (!_readChatIds.contains(chat.id)) {
+                                        await ChatMessageController().markMessageAsRead(chat.id, userId!);
+                                        if (!mounted) return;
                                         setState(() {
-                                          _loanStates[myLoanId] = 'Devuelto';
+                                          _readChatIds.add(chat.id);
                                         });
                                       }
+
+                                      await _returnPhysicalBookByUser(chat.loanId, chat.loanCompensationId);
+                                      await _loadChats(userId!);
+                                      await _fetchNotificationCount();
+
+                                      if (!mounted) return;
+                                      await showSuccessDialog(context, chat.loanId);
+
+                                      if (!mounted) return;
+                                      setState(() => _isReturningBook = false);
+
                                     },
+
+
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: const Color(0xFF112363),
                                       shape: RoundedRectangleBorder(
@@ -551,6 +544,7 @@ class _BackgroundState extends State<Background> {
       body: GestureDetector(
         behavior: HitTestBehavior.translucent,
         onTap: () {
+          FocusScope.of(context).unfocus();
           if (_showChatMenu) {
             setState(() {
               _showChatMenu = false;
@@ -710,7 +704,7 @@ class _BackgroundState extends State<Background> {
                                   _showArchived = false;
                                   _selectedChatIndex = null;
                                 });
-                                _loadChats();
+                                _loadChats(userId!);
                               },
                             ),
                             IconButton(
@@ -723,13 +717,13 @@ class _BackgroundState extends State<Background> {
                                   _showArchived = true;
                                   _selectedChatIndex = null;
                                 });
-                                _loadChats();
+                                _loadChats(userId!);
                               },
                             ),
                           ],
                         ),
                         Expanded(
-                          child: _isLoadingChats
+                          child: _isLoadingChats || _isReturningBook
                               ? const Center(child: CircularProgressIndicator())
                               : _loanChats.isEmpty
                                   ? Center(

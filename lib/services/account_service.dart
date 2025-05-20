@@ -79,7 +79,7 @@ class AccountService extends BaseService {
       return {'success': true, 'message': 'Login exitoso', 'data': userResponse};
     } catch (e) {
       print('Error en loginUser: $e');
-      return {'success': false, 'message': 'Error de conexión: no se pudo establecer conexión con el servidor de autenticación. Verifica tu conexión a internet o intenta nuevamente más tarde.'};
+      return {'success': false, 'message': 'Error de autenticación. Verifica tu conexión a internet y que los datos introducidos son correctos.'};
     }
   }
 
