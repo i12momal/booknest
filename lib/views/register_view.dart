@@ -7,7 +7,6 @@ import 'package:booknest/widgets/background.dart';
 import 'package:booknest/widgets/page_navigation.dart';
 import 'package:booknest/widgets/genre_selection_register.dart';
 import 'package:booknest/widgets/personal_info_form.dart';
-import 'package:flutter/services.dart';
 
 // Vista para la acción de Registro de Usuario 
 class RegisterView extends StatefulWidget {

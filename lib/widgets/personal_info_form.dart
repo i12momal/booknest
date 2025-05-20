@@ -241,6 +241,7 @@ class _PersonalInfoFormState extends State<PersonalInfoForm> {
                         validateEmail(value);
                       },
                       focusNode: _emailFocusNode,
+                      readOnly: true, 
                     ),
                     _buildTextField(
                       'Usuario', 
@@ -397,7 +398,7 @@ class _PersonalInfoFormState extends State<PersonalInfoForm> {
     );
   }
 
-  Widget _buildTextField(String label, IconData icon, TextEditingController controller, {bool isPassword = false, String? Function(String?)? validator, ValueChanged<String>? onChanged, FocusNode? focusNode}) {
+  Widget _buildTextField(String label, IconData icon, TextEditingController controller, {bool isPassword = false, String? Function(String?)? validator, ValueChanged<String>? onChanged, FocusNode? focusNode, bool readOnly = false}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -413,6 +414,7 @@ class _PersonalInfoFormState extends State<PersonalInfoForm> {
           controller: controller,
           onChanged: onChanged,
           focusNode: focusNode,
+          readOnly: readOnly,
         ),
         const SizedBox(height: 15),
       ],

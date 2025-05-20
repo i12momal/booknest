@@ -316,13 +316,13 @@ class _EditBookViewState extends State<EditBookView> {
         Navigator.pop(context); // Cierra el diálogo
 
         Future.microtask(() {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => BookDetailsOwnerView(bookId: widget.bookId),
-              ),
-            );
-          });
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => BookDetailsOwnerView(bookId: widget.bookId),
+            ),
+          );
+        });
       },
     );
   }

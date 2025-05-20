@@ -1,6 +1,7 @@
 import 'package:booknest/entities/models/user_model.dart';
 import 'package:booknest/entities/viewmodels/user_view_model.dart';
 import 'package:booknest/services/base_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show UserAttributes;
 
 // Servicio con los métodos de negocio de la entidad Usuario.
 class UserService extends BaseService{
@@ -426,6 +427,10 @@ class UserService extends BaseService{
         'message': ex.toString()
       };
     }
+  }
+
+  Future<void> updatePasswordSupabaseAuth(String password) async{
+    await BaseService.client.auth.updateUser(UserAttributes(password: password));
   }
 
 }

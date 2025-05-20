@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:booknest/entities/models/user_model.dart';
 import 'package:booknest/views/login_view.dart';
+import 'package:booknest/views/owner_profile_view.dart';
 import 'package:flutter/material.dart';
 import 'package:booknest/controllers/user_controller.dart';
 import 'package:booknest/controllers/categories_controller.dart';
@@ -173,7 +174,7 @@ class _EditUserViewState extends State<EditUserView> {
         _currentPage--;
       });
     } else {
-      Navigator.pop(context); // Sale de la pantalla si ya estás en la primera página
+      Navigator.pop(context);
     }
   }
 
@@ -242,10 +243,14 @@ class _EditUserViewState extends State<EditUserView> {
       '¡Tus datos han sido actualizados correctamente!',
       () {
         Navigator.pop(context);
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const LoginView()),
-        );
+        Future.microtask(() {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => OwnerProfileView(userId: widget.userId),
+            ),
+          );
+        });
       },
     );
   }

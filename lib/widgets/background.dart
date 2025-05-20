@@ -5,7 +5,6 @@ import 'package:booknest/controllers/loan_controller.dart';
 import 'package:booknest/controllers/notification_controller.dart';
 import 'package:booknest/entities/models/chat_message_model.dart';
 import 'package:booknest/entities/models/loan_chat_model.dart';
-import 'package:booknest/main.dart';
 import 'package:booknest/views/login_view.dart';
 import 'package:booknest/views/notifications_view.dart';
 import 'package:flutter/material.dart';

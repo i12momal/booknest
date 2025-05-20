@@ -113,7 +113,12 @@ class GenreSelectionRegisterWidget extends StatelessWidget {
                       ),
                       const SizedBox(height: 10),
                       ElevatedButton(
-                        onPressed: isLoading ?null : onRegister,
+                        onPressed: isLoading ? null : () async { 
+                          onRegister();
+                          if (context.mounted) {
+                            Navigator.pop(context); 
+                          }
+                        },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFAD0000),
                           shape: RoundedRectangleBorder(

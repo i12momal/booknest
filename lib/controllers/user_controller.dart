@@ -42,7 +42,18 @@ class UserController extends BaseController{
       if (password != confirmPassword) {
         return {'success': false, 'message': 'Las contraseñas no coinciden'};
       }
-      passwordHash = AccountController().generatePasswordHash(password);
+
+     try {
+        await userService.updatePasswordSupabaseAuth(password);
+
+        // Si se actualiza correctamente en Supabase Auth, actualizamos también nuestra tabla
+        passwordHash = AccountController().generatePasswordHash(password);
+      } catch (e) {
+        return {
+          'success': false,
+          'message': 'No se pudo actualizar la contraseña. Intenta nuevamente.'
+        };
+      }
     }
 
     // Si el usuario sube una imagen, la subimos a Supabase

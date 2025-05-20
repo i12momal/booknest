@@ -61,12 +61,10 @@ class _CustomTextFieldState extends State<CustomTextField> {
                   });
                 },
               )
-            : (widget.icon != null
-                ? Icon(widget.icon, color: const Color.fromRGBO(184, 184, 184, 100))
-                : null),
+            : (widget.icon != null ? Icon(widget.icon, color: const Color.fromRGBO(184, 184, 184, 100)) : null),
         hintText: widget.hint,
         hintStyle: const TextStyle(
-          color: Color.fromRGBO(164, 164, 164, 100),
+          color: Color.fromRGBO(189, 189, 189, 0.612),
           fontSize: 13,
         ),
         enabledBorder: OutlineInputBorder(
