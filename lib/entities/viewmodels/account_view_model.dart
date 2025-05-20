@@ -24,7 +24,6 @@ class RegisterUserViewModel {
   final String? image;
   final String genres;
   final String role;
-  final String pinRecuperacion;
   final String? description;
 
 //All required fields from class User
@@ -40,7 +39,6 @@ class RegisterUserViewModel {
     required this.image,
     required this.genres,
     required this.role,
-    required this.pinRecuperacion,
     this.description,
     }
   );

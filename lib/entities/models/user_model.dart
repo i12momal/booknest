@@ -11,7 +11,6 @@ class User {
   final String? image;
   final List<String> genres;
   final String role;
-  final String pinRecuperacion;
   final List<String> favorites;
   final String? description;
 
@@ -29,7 +28,6 @@ class User {
     required this.image,
     required this.genres,
     required this.role,
-    required this.pinRecuperacion,
     this.favorites = const [],
     this.description = '',
     }
@@ -50,7 +48,6 @@ class User {
         ? json['genres'].split(', ')
         : List<String>.from(json['genres'] ?? []),
       role: json['role'],
-      pinRecuperacion: json['pinRecuperacion'],
       favorites: json['favorites'] is String
         ? json['favorites'].split(',').map((e) => e.trim()).toList()
         : List<String>.from(json['favorites'] ?? []),

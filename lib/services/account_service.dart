@@ -96,7 +96,6 @@ class AccountService extends BaseService {
       print("Nombre de usuario: ${registerUserViewModel.userName}");
       print("Email: ${registerUserViewModel.email}");
       print("Contraseña original: ${registerUserViewModel.password}");
-      print("Pin recuperacion: ${registerUserViewModel.pinRecuperacion}");
 
       // Verificar si el usuario ya existe
       final existingUsers = await BaseService.client
@@ -145,7 +144,6 @@ class AccountService extends BaseService {
         'image': registerUserViewModel.image,
         'genres': registerUserViewModel.genres,
         'role': registerUserViewModel.role,
-        'pinRecuperacion': registerUserViewModel.pinRecuperacion,
         'description': registerUserViewModel.description,
       };
       print("Datos a insertar: $userData");
@@ -178,77 +176,6 @@ class AccountService extends BaseService {
     } catch (ex) {
       print("Error en registerUser: $ex");
       return {'success': false, 'message': ex.toString()};
-    }
-  }
-
-  // Método asíncrono para comprobar si el email y el pin proporcionados en la recuepración de contraseña son correctos
-  Future<Map<String, dynamic>> verifyEmailAndPin(String email, String pin) async {
-    try {
-      if (BaseService.client == null) {
-        return {'success': false, 'message': 'Error de conexión a la base de datos.'};
-      }
-
-      // Obtener el usuario completo de la tabla User
-      final userResponse = await BaseService.client
-          .from('User')
-          .select()
-          .eq('email', email)
-          .single();
-
-      if (userResponse == null) {
-        return {'success': false, 'message': 'Usuario no encontrado'};
-      }
-
-      // Verificar si el pin coincide
-      if (userResponse['pinRecuperacion'] != pin) {
-        print("El pin no coincide");
-        // Aquí solo devolvemos un error genérico
-        return {'success': false, 'message': 'Error de verificación. Los datos ingresados no son correctos.'};
-      }
-
-      return {'success': true, 'message': 'El email y el pin coinciden', 'data': userResponse};
-    } catch (e) {
-      print('Error en verifyEmailAndPin: $e');
-      return {'success': false, 'message': 'Error de verificación. Los campos ingresados son incorrectos.'};
-    }
-  }
-
-
-  // Función para actualizar la contraseña en caso de pérdida
-  Future<Map<String, dynamic>> updatePassword(String email, String pin, String newPassword) async {
-    try {
-      if (BaseService.client == null) {
-        return {'success': false, 'message': 'Error de conexión a la base de datos.'};
-      }
-
-      final userResponse = await BaseService.client
-          .from('User')
-          .select()
-          .eq('email', email)
-          .single();
-
-      if (userResponse == null) {
-        return {'success': false, 'message': 'Usuario no encontrado'};
-      }
-
-      if (userResponse['pinRecuperacion'] != pin) {
-        return {'success': false, 'message': 'PIN incorrecto'};
-      }
-
-      // Crear el hash de la nueva contraseña
-      final bytes = utf8.encode(newPassword);
-      final hash = sha256.convert(bytes).toString();
-
-      // Actualizar la contraseña en la base de datos
-      final updateResponse = await BaseService.client
-          .from('User')
-          .update({'password': hash, 'confirmPassword': hash})
-          .eq('email', email);
-
-      return {'success': true, 'message': 'Contraseña actualizada con éxito'};
-    } catch (e) {
-      print('Error en updatePassword: $e');
-      return {'success': false, 'message': 'Error al actualizar la contraseña'};
     }
   }
 

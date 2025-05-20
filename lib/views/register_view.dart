@@ -136,48 +136,19 @@ class _RegisterViewState extends State<RegisterView> {
         _message = '';
       });
 
-      String recoveryPin = result['pinRecuperacion'];
-      _showSuccessDialog(recoveryPin);
+      _showSuccessDialog();
     }
   }
 
   // Función que muestra el dialogo de éxito al registrar un usuario
-  void _showSuccessDialog(String pin) {
+  void _showSuccessDialog() {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Registro Exitoso'),
-        content: Column(
+        content: const Column(
           mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('¡Tu cuenta ha sido creada con éxito!'),
-            const SizedBox(height: 12),
-            const Text('Tu PIN de recuperación es:'),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: SelectableText(
-                    pin,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.copy),
-                  onPressed: () {
-                    Clipboard.setData(ClipboardData(text: pin));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('PIN copiado al portapapeles')),
-                    );
-                  },
-                )
-              ],
-            ),
-          ],
+          children: [Text('¡Tu cuenta ha sido creada con éxito!')],
         ),
         actions: [
           TextButton(

@@ -88,8 +88,6 @@ class AccountController extends BaseController{
       }
     }
 
-    final String pinRecuperacion = DateTime.now().millisecondsSinceEpoch.toString();
-
     // Creación del viewModel
     final registerUserViewModel = RegisterUserViewModel(
       name: name,
@@ -102,58 +100,14 @@ class AccountController extends BaseController{
       image: imageUrl,
       genres: genres,
       role: 'usuario',
-      pinRecuperacion: pinRecuperacion,
       description: description,
     );
     
     // Llamada al servicio para registrar al usuario
     final response = await accountService.registerUser(registerUserViewModel);
-    response['pinRecuperacion'] = pinRecuperacion;
     return response;
   }
 
-  // Método asíncrono para comprobar si el email y el pin proporcionados en la recuepración de contraseña son correctos
-  Future<Map<String, dynamic>> verifyEmailAndPin(String email, String pin) async {
-    // Validar que ambos campos estén llenos
-    if (email.isEmpty || pin.isEmpty) {
-      return {'success': false, 'message': 'Por favor ingrese todos los campos'};
-    }
-
-    // Validar formato del correo
-    if (!_isValidEmail(email)) {
-      return {'success': false, 'message': 'Por favor ingrese un correo válido'};
-    }
-
-    // Limpiar mensaje de error antes de hacer la verificación
-    errorMessage.value = '';
-
-    // Llamar al servicio para verificar el correo y PIN
-    final result = await accountService.verifyEmailAndPin(email, pin);
-
-    if (result['success']) {
-      return {'success': true, 'message': 'Email y PIN verificados correctamente'};
-    } else {
-      return {'success': false, 'message': result['message']};
-    }
-  }
-
-  bool _isValidEmail(String email) {
-    final regex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
-    return regex.hasMatch(email);
-  }
-
-
-
-  Future<bool> updatePassword(String email, String pin, String newPassword) async {
-    final result = await accountService.updatePassword(email, pin, newPassword);
-    if (!result['success']) {
-      errorMessage.value = result['message'];
-      Future.delayed(const Duration(seconds: 5), () {
-        errorMessage.value = '';
-      });
-    }
-    return result['success'];
-  }
 
 
   /* Método para guardar una imagen en Supabase.

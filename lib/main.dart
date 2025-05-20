@@ -43,18 +43,11 @@ class _MyAppState extends State<MyApp> {
 
   Future<void> _processUri(Uri? uri) async {
     if (uri != null && uri.scheme == 'booknest' && uri.host == 'reset-password') {
-      if (uri.fragment.contains('refresh_token')) {
-        final fragmentParams = Uri.splitQueryString(uri.fragment);
-        final refreshToken = fragmentParams['refresh_token'];
-
-        if (refreshToken != null) {
-          try {
-            await Supabase.instance.client.auth.setSession(refreshToken);
-            debugPrint('Sesión iniciada correctamente con refresh token');
-          } catch (e) {
-            debugPrint('Error al establecer la sesión: $e');
-          }
-        }
+      try {
+        await Supabase.instance.client.auth.getSessionFromUrl(uri);
+        debugPrint('Sesión iniciada desde el enlace');
+      } catch (e) {
+        debugPrint('Error al obtener la sesión: $e');
       }
 
       navigatorKey.currentState?.push(
@@ -62,8 +55,6 @@ class _MyAppState extends State<MyApp> {
       );
     }
   }
-
-
 
   @override
   Widget build(BuildContext context) {
