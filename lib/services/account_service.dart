@@ -23,13 +23,12 @@ class AccountService extends BaseService {
   Future<Map<String, dynamic>> loginUser(LoginUserViewModel loginUserViewModel) async {
     try {
       print('Verificando el login para: ${loginUserViewModel.userName}');
-      print('Contraseña proporcionada: ${loginUserViewModel.password}');
-      
+
       if (BaseService.client == null) {
         return {'success': false, 'message': 'Error de conexión a la base de datos.'};
       }
 
-      // Obtener el usuario completo de la tabla User
+      // Buscar el usuario por nombre de usuario en tu tabla
       final userResponse = await BaseService.client
           .from('User')
           .select()
@@ -40,43 +39,31 @@ class AccountService extends BaseService {
         return {'success': false, 'message': 'Usuario no encontrado'};
       }
 
-      print("Datos del usuario encontrados: $userResponse");
+      final String email = userResponse['email'];
+      final String userId = userResponse['id'];
 
+      // Iniciar sesión en Supabase Auth usando el email y la contraseña original
+      try {
+        final AuthResponse authResponse = await BaseService.client.auth.signInWithPassword(
+          email: email,
+          password: loginUserViewModel.password,
+        );
+        print("Sesión iniciada en Supabase Auth: ${authResponse.user?.id}");
 
-      // Generar el hash de la contraseña proporcionada
-      final String inputPasswordHash = generatePasswordHash(loginUserViewModel.password);
-      print("Hash de la contraseña proporcionada: $inputPasswordHash");
-      print("Hash almacenado: ${userResponse['password']}");
+        // Guardar el ID del usuario en sesión
+        await UserSession.setUserId(userId);
+        print("User ID guardado en SharedPreferences: $userId");
 
-
-      // Verificar si la contraseña coincide
-      if (userResponse['password'] != inputPasswordHash) {
-        print("Las contraseñas no coinciden");
+        return {
+          'success': true,
+          'message': 'Login exitoso',
+          'data': userResponse
+        };
+      } catch (authError) {
+        print("Error de autenticación en Supabase Auth: $authError");
         return {'success': false, 'message': 'Usuario o contraseña incorrectos'};
       }
 
-      // Si la contraseña coincide, obtener el ID del usuario
-      final String userId = userResponse['id'];
-      print('Usuario autenticado con ID: $userId');
-
-      // Iniciar sesión en Supabase Auth
-      try {
-        final AuthResponse res = await BaseService.client.auth.signInWithPassword(
-          email: userResponse['email'],
-          password: userResponse['password'],
-        );
-        print("Sesión iniciada en Supabase Auth: ${res.user?.id}");
-      } catch (authError) {
-        print("Error al iniciar sesión en Supabase Auth: $authError");
-        // Si falla la autenticación en Supabase, aún permitimos el login
-        // ya que la contraseña es correcta en nuestra base de datos
-      }
-
-      // Almacenar el userId cuando el login es exitoso
-      await UserSession.setUserId(userId);
-      print("User ID guardado en SharedPreferences: $userId");
-      
-      return {'success': true, 'message': 'Login exitoso', 'data': userResponse};
     } catch (e) {
       print('Error en loginUser: $e');
       return {'success': false, 'message': 'Error de autenticación. Verifica tu conexión a internet y que los datos introducidos son correctos.'};
@@ -131,7 +118,7 @@ class AccountService extends BaseService {
       try {
         final AuthResponse authResponse = await BaseService.client.auth.signUp(
           email: registerUserViewModel.email,
-          password: passwordHash,
+          password: registerUserViewModel.password,
         );
         authUserId = authResponse.user?.id;
         print("Usuario creado en Supabase Auth: $authUserId");

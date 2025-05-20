@@ -6,6 +6,7 @@ import 'package:booknest/controllers/notification_controller.dart';
 import 'package:booknest/entities/models/chat_message_model.dart';
 import 'package:booknest/entities/models/loan_chat_model.dart';
 import 'package:booknest/main.dart';
+import 'package:booknest/views/login_view.dart';
 import 'package:booknest/views/notifications_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
@@ -206,7 +207,7 @@ class _BackgroundState extends State<Background> {
       await AccountController().logout();
       if (context.mounted) {
         Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const MyHomePage(title: '')),
+          MaterialPageRoute(builder: (context) => const LoginView()),
           (route) => false,
         );
       }
