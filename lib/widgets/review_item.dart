@@ -4,17 +4,17 @@ class ReviewItem extends StatelessWidget {
   final String name;
   final int rating;
   final String comment;
-  final String imageUrl;
-  final bool isOwner; // Para saber si el usuario es el dueño de la reseña
-  final VoidCallback onEdit; // Callback para editar
-  final VoidCallback onDelete; // Callback para eliminar
+  final ImageProvider imageProvider;
+  final bool isOwner;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
 
   const ReviewItem({
     super.key,
     required this.name,
     required this.rating,
     required this.comment,
-    required this.imageUrl,
+    required this.imageProvider,
     required this.isOwner,
     required this.onEdit,
     required this.onDelete,
@@ -36,7 +36,7 @@ class ReviewItem extends StatelessWidget {
             child: Row(
               children: [
                 CircleAvatar(
-                  backgroundImage: NetworkImage(imageUrl),
+                  backgroundImage: imageProvider,
                   radius: 30,
                 ),
                 const SizedBox(width: 10),
@@ -70,9 +70,9 @@ class ReviewItem extends StatelessWidget {
               padding: const EdgeInsets.only(left: 8.0, right: 8.0, top: 8.0),
               child: Text(comment),
             ),
-          
-          // Botones de editar y eliminar, se muestran solo si es el dueño de la reseña
-          if (isOwner) 
+
+          // Botones de editar y eliminar, solo si es el dueño de la reseña
+          if (isOwner)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8.0),
               child: Row(

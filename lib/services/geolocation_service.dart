@@ -107,9 +107,9 @@ class GeolocationService extends BaseService{
           .from('Geolocation')
           .select('geolocationEnabled')
           .eq('userId', userId)
-          .single();
+          .maybeSingle();
 
-      return response['geolocationEnabled'] == true;
+      return response != null && response['geolocationEnabled'] == true;
     } catch (e) {
       print("Error en isUserGeolocationEnabled: $e");
       return false;

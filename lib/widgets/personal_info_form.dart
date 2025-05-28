@@ -230,19 +230,34 @@ class _PersonalInfoFormState extends State<PersonalInfoForm> {
                         return null;
                       },
                     ),
-                    _buildTextField(
-                      'Correo Electrónico', 
-                      Icons.email, 
-                      widget.emailController, 
-                      validator: (value) {
-                        return _emailValidationMessage;
-                      },
-                      onChanged: (value) {
-                        validateEmail(value);
-                      },
-                      focusNode: _emailFocusNode,
-                      readOnly: true, 
-                    ),
+                    if(widget.isEditMode)...[
+                      _buildTextField(
+                        'Correo Electrónico', 
+                        Icons.email, 
+                        widget.emailController, 
+                        validator: (value) {
+                          return _emailValidationMessage;
+                        },
+                        onChanged: (value) {
+                          validateEmail(value);
+                        },
+                        focusNode: _emailFocusNode,
+                        readOnly: true, 
+                      ),
+                    ]else...[
+                       _buildTextField(
+                        'Correo Electrónico', 
+                        Icons.email, 
+                        widget.emailController, 
+                        validator: (value) {
+                          return _emailValidationMessage;
+                        },
+                        onChanged: (value) {
+                          validateEmail(value);
+                        },
+                        focusNode: _emailFocusNode,
+                      ),
+                    ],
                     _buildTextField(
                       'Usuario', 
                       Icons.account_circle, 

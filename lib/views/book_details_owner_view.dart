@@ -255,78 +255,74 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
                         if (!isOwner && (availabilityStatus != 'Prestado' || _loanRequestSent))
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-                            child: SizedBox(
-                              width: double.infinity,
-                              child: _loanRequestSent
-                                  ? ElevatedButton(
-                                      onPressed: () async {
-                                        setState(() => _isDeletingRequest = true);
-                                        await _confirmDeleteLoanRequest(context, book.id, notificationId, _selectedFormat);
-                                        if (mounted) setState(() => _isDeletingRequest = false);
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: const Color(0xFFAD0000),
-                                        padding: EdgeInsets.symmetric(
-                                          horizontal: screenWidth * 0.1,
-                                          vertical: screenHeight * 0.02,
-                                        ),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(30),
-                                          side: const BorderSide(color: Color(0xFF700101), width: 3),
-                                        ),
-                                      ),
-                                      child: _isDeletingRequest
-                                          ? const CircularProgressIndicator(color: Colors.white)
-                                          : const Text(
-                                              "Eliminar Solicitud de Préstamo",
-                                              style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
-                                            ),
-                                    )
-                                  : ElevatedButton(
-                                      onPressed: () async {
-                                        setState(() => _isSendingRequest = true);
-
-                                        final formats = book.format.split(',').map((e) => e.trim()).toList();
-                                        List<String> availableFormats = await loancontroller.fetchAvailableFormats(book.id, formats);
-
-                                        if (!context.mounted) return;
-                                        if (availableFormats.isEmpty) {
-                                          _showErrorDialog(context, 'No hay formatos disponibles para préstamo.');
-                                          setState(() => _isSendingRequest = false);
-                                          return;
+                            child: Center(
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  maxWidth: screenWidth < 600 ? double.infinity : 500,
+                                ),
+                                child: ElevatedButton(
+                                  onPressed: _loanRequestSent
+                                      ? () async {
+                                          setState(() => _isDeletingRequest = true);
+                                          await _confirmDeleteLoanRequest(context, book.id, notificationId, _selectedFormat);
+                                          if (mounted) setState(() => _isDeletingRequest = false);
                                         }
+                                      : () async {
+                                          setState(() => _isSendingRequest = true);
 
-                                        String? selectedFormat;
-                                        if (availableFormats.length == 1) {
-                                          selectedFormat = availableFormats.first;
-                                        } else {
-                                          selectedFormat = await _showFormatDialog(context, availableFormats);
-                                          if (!context.mounted) return;
-                                          if (selectedFormat == null || selectedFormat.isEmpty) {
-                                            _showErrorDialog(context, 'Debes seleccionar un formato válido.');
-                                            setState(() => _isSendingRequest = false);
-                                            return;
-                                          }
-                                        }
+                                          final formats = book.format.split(',').map((e) => e.trim()).toList();
+                                          List<String> availableFormats = await loancontroller.fetchAvailableFormats(book.id, formats);
 
-                                        if (selectedFormat.toLowerCase() == 'físico') {
-                                          final userBooks = await _controller.getUserAvailablePhysicalBooks(currentUserId!);
                                           if (!context.mounted) return;
-                                          
-                                        final selectedBooks = await _showUserBookSelectionDialog(context, userBooks, widget.bookId);
-                                        if (!context.mounted) return;
-                                         if (selectedBooks == null) {
-                                          setState(() => _isSendingRequest = false);
-                                            return;
-                                          }
-                                          if (selectedBooks.isEmpty) {
-                                            _showErrorDialog(context, 'Debes seleccionar al menos un libro físico para continuar.');
+                                          if (availableFormats.isEmpty) {
+                                            _showErrorDialog(context, 'No hay formatos disponibles para préstamo.');
                                             setState(() => _isSendingRequest = false);
                                             return;
                                           }
 
+                                          String? selectedFormat;
+                                          if (availableFormats.length == 1) {
+                                            selectedFormat = availableFormats.first;
+                                          } else {
+                                            selectedFormat = await _showFormatDialog(context, availableFormats);
+                                            if (!context.mounted) return;
+                                            if (selectedFormat == null || selectedFormat.isEmpty) {
+                                              _showErrorDialog(context, 'Debes seleccionar un formato válido.');
+                                              setState(() => _isSendingRequest = false);
+                                              return;
+                                            }
+                                          }
 
-                                          final response = await loancontroller.requestLoan(book, selectedFormat, selectedBooks);
+                                          if (selectedFormat.toLowerCase() == 'físico') {
+                                            final userBooks = await _controller.getUserAvailablePhysicalBooks(currentUserId!);
+                                            if (!context.mounted) return;
+
+                                            final selectedBooks = await _showUserBookSelectionDialog(context, userBooks, widget.bookId);
+                                            if (!context.mounted) return;
+                                            if (selectedBooks == null) {
+                                              setState(() => _isSendingRequest = false);
+                                              return;
+                                            }
+                                            if (selectedBooks.isEmpty) {
+                                              _showErrorDialog(context, 'Debes seleccionar al menos un libro físico para continuar.');
+                                              setState(() => _isSendingRequest = false);
+                                              return;
+                                            }
+
+                                            final response = await loancontroller.requestLoan(book, selectedFormat, selectedBooks);
+                                            if (!context.mounted) return;
+
+                                            if (response['success']) {
+                                              await _checkIfLoanRequestExists();
+                                              _showSuccessDialog(context);
+                                            } else {
+                                              _showErrorDialog(context, response['message']);
+                                            }
+                                            setState(() => _isSendingRequest = false);
+                                            return;
+                                          }
+
+                                          final response = await loancontroller.requestLoan(book, selectedFormat, null);
                                           if (!context.mounted) return;
 
                                           if (response['success']) {
@@ -336,39 +332,33 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
                                             _showErrorDialog(context, response['message']);
                                           }
                                           setState(() => _isSendingRequest = false);
-                                          return;
-                                        }
-
-                                        // Solicitud para formato digital u otro
-                                        final response = await loancontroller.requestLoan(book, selectedFormat, null);
-                                        if (!context.mounted) return;
-
-                                        if (response['success']) {
-                                          await _checkIfLoanRequestExists();
-                                          _showSuccessDialog(context);
-                                        } else {
-                                          _showErrorDialog(context, response['message']);
-                                        }
-                                        setState(() => _isSendingRequest = false);
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: const Color(0xFFAD0000),
-                                        padding: EdgeInsets.symmetric(
-                                          horizontal: screenWidth * 0.1,
-                                          vertical: screenHeight * 0.02,
-                                        ),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(30),
-                                          side: const BorderSide(color: Color(0xFF700101), width: 3),
-                                        ),
-                                      ),
-                                      child: _isSendingRequest
+                                        },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFFAD0000),
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 30,
+                                      vertical: screenHeight * 0.020,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(30),
+                                      side: const BorderSide(color: Color(0xFF700101), width: 3),
+                                    ),
+                                  ),
+                                  child: (_loanRequestSent
+                                      ? (_isDeletingRequest
+                                          ? const CircularProgressIndicator(color: Colors.white)
+                                          : const Text(
+                                              "Eliminar Solicitud de Préstamo",
+                                              style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                                            ))
+                                      : (_isSendingRequest
                                           ? const CircularProgressIndicator(color: Colors.white)
                                           : const Text(
                                               "Solicitar Préstamo",
                                               style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
-                                            ),
-                                    ),
+                                            ))),
+                                ),
+                              ),
                             ),
                           ),
                       ],
@@ -513,7 +503,7 @@ Future<List<Book>?> _showUserBookSelectionDialog(BuildContext context, List<Book
               ),
               if (userBooks.isNotEmpty)
                 ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async{
                     for (var book in selected) {
                       BookController().changeState(book.id, 'Pendiente');
                       LoanController().requestOfferPhysicalBookLoan(book);
@@ -547,14 +537,6 @@ Future<List<Book>?> _showUserBookSelectionDialog(BuildContext context, List<Book
 
 
 
-
-
-
-
-
-
-
-
 class _BookHeader extends StatelessWidget {
   final Book book;
   final bool isOwner;
@@ -567,68 +549,61 @@ class _BookHeader extends StatelessWidget {
   });
 
   Future<bool?> _showLoanInfoPopup(BuildContext context) async {
-    List<Map<String, dynamic>> loans = await LoanController().getLoansByBookId(book.id);
+  List<Map<String, dynamic>> loans = await LoanController().getLoansByBookId(book.id);
 
-    if (loans.isEmpty) return false;
+  if (loans.isEmpty) return false;
 
-    final PageController pageController = PageController();
-    int currentPage = 0;
+  final PageController pageController = PageController();
+  int currentPage = 0;
 
-    void showSuccessDialog(BuildContext context, int bookId) {
-      SuccessDialog.show(
-        context,
-        'Operación Exitosa',
-        '¡El libro ha sido devuelto con éxito!',
-        () {
-          Navigator.pop(context);
-          Future.microtask(() {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => BookDetailsOwnerView(bookId: bookId),
+  showDialog(
+    context: context,
+    builder: (context) {
+      return StatefulBuilder(
+        builder: (context, setState) {
+          return Dialog(
+            backgroundColor: Colors.transparent,
+            insetPadding: const EdgeInsets.all(16),
+            child: Container(
+              width: 320,
+              height: 360,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF709DFF), Color(0xFF0D1C5A)],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+                borderRadius: BorderRadius.circular(20),
               ),
-            );
-          });
-        },
-      );
-    }
-
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return Dialog(
-              insetPadding: const EdgeInsets.all(16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-                side: const BorderSide(color: Color(0xFF112363), width: 3),
-              ),
-              child: SizedBox(
-                width: 320,
-                height: 340,
-                child: Stack(
-                  children: [
-                    Column(
+              child: Stack(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
                       children: [
                         const SizedBox(height: 12),
-                        // Línea de progreso centrada y ajustada dentro del borde
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 24),
-                          child: Row(
-                            children: List.generate(
-                              loans.length,
-                              (index) => Expanded(
-                                child: Container(
-                                  height: 6,
-                                  margin: const EdgeInsets.symmetric(horizontal: 2),
-                                  decoration: BoxDecoration(
-                                    color: index <= currentPage
-                                        ? const Color(0xFF700101)
-                                        : Colors.grey.shade300,
-                                    borderRadius: BorderRadius.circular(3),
-                                  ),
+                        const Text(
+                          "Información del préstamo",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        // Indicadores de progreso
+                        Row(
+                          children: List.generate(
+                            loans.length,
+                            (index) => Expanded(
+                              child: Container(
+                                height: 6,
+                                margin: const EdgeInsets.symmetric(horizontal: 2),
+                                decoration: BoxDecoration(
+                                  color: index <= currentPage
+                                      ? const Color(0xFF700101)
+                                      : Colors.white.withOpacity(0.3),
+                                  borderRadius: BorderRadius.circular(3),
                                 ),
                               ),
                             ),
@@ -649,131 +624,122 @@ class _BookHeader extends StatelessWidget {
                               final formattedStart = loan['startDate'].split('T').first;
                               final formattedEnd = loan['endDate'].split('T').first;
 
-                              return Padding(
-                                padding: const EdgeInsets.all(16.0),
-                                child: FutureBuilder<User?>(
-                                  future: isOwner
-                                      ? UserController().getUserById(loan['currentHolderId'].toString())
-                                      : Future.value(null),
-                                  builder: (context, userSnapshot) {
-                                    final borrowerName = isOwner
-                                        ? (userSnapshot.data?.userName ?? 'Desconocido')
-                                        : null;
+                              return FutureBuilder<User?>(
+                                future: isOwner
+                                    ? UserController().getUserById(loan['currentHolderId'].toString())
+                                    : Future.value(null),
+                                builder: (context, userSnapshot) {
+                                  final borrowerName = isOwner
+                                      ? (userSnapshot.data?.userName ?? 'Desconocido')
+                                      : null;
 
-                                    return Column(
+                                  return SingleChildScrollView(
+                                    child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
-                                      mainAxisAlignment: MainAxisAlignment.center,
                                       children: [
                                         if (isOwner) ...[
-                                          const Text(
-                                            "Prestado al usuario:",
-                                            style: TextStyle(fontWeight: FontWeight.bold),
-                                          ),
-                                           GestureDetector(
-                                            onTap: () {
-                                              // Si quieres redirigir al perfil del usuario cuando se hace clic en el userName
-                                              if (userSnapshot.hasData && userSnapshot.data != null) {
-                                                final userId = userSnapshot.data!.id;
-                                                Navigator.push(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                    builder: (context) => UserProfileView(userId: userId),
-                                                  ),
-                                                );
-                                              }
-                                            },
-                                          child: Text(borrowerName ?? '', style: const TextStyle(color: Color(0xFF112363), fontWeight: FontWeight.bold, decoration: TextDecoration.underline),),),
-                                          const SizedBox(height: 12),
-                                        ],
-                                        const Text("Formato:", style: TextStyle(fontWeight: FontWeight.bold)),
-                                        Text(loan['format']),
-                                        const SizedBox(height: 12),
-                                        const Text("Fecha de inicio del préstamo:", style: TextStyle(fontWeight: FontWeight.bold)),
-                                        Text(formattedStart),
-                                        const SizedBox(height: 12),
-                                        const Text("Fecha de finalización del préstamo:", style: TextStyle(fontWeight: FontWeight.bold)),
-                                        Text(formattedEnd),
-
-                                        /*if (loan['format'].toString().toLowerCase().trim() == 'físico')...[
-                                          const SizedBox(height: 12),
-                                          Center(
-                                            child: ElevatedButton(
-                                              onPressed: () async {
-                                                bool? confirm = await _showConfirmReturnDialog(context);
-                                                if (confirm == true) {
-                                                  _returnPhysicalBook(loan['id']);
-                                                  showSuccessDialog(context, loan['bookId']);
-                                                }
-                                              },
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: const Color(0xFF700101),
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius: BorderRadius.circular(30),
-                                                  side: const BorderSide(color: Color(0xFF700101), width: 3),
+                                          const Text("Prestado a:",
+                                            style: TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold)),
+                                        const SizedBox(height: 4),
+                                        GestureDetector(
+                                          onTap: () {
+                                            if (userSnapshot.hasData && userSnapshot.data != null) {
+                                              final userId = userSnapshot.data!.id;
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) => UserProfileView(userId: userId),
                                                 ),
-                                                padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 7),
-                                              ),
-                                              child: const Text(
-                                                "Marcar como devuelto",
-                                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                              );
+                                            }
+                                          },
+                                          child: Container(
+                                            width: double.infinity,
+                                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              borderRadius: BorderRadius.circular(8),
+                                            ),
+                                            child: Text(
+                                              borrowerName ?? '',
+                                              style: const TextStyle(
+                                                color: Colors.blue, // Indicador clickeable
+                                                decoration: TextDecoration.underline,
+                                                fontWeight: FontWeight.bold,
                                               ),
                                             ),
                                           ),
-                                        ]*/
-
+                                        ),
+                                          const SizedBox(height: 12),
+                                        ],
+                                        const Text("Fecha Inicio Préstamo",
+                                            style: TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold)),
+                                        const SizedBox(height: 4),
+                                        _styledInput(formattedStart),
+                                        const SizedBox(height: 12),
+                                        const Text("Fecha Fin Préstamo",
+                                            style: TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold)),
+                                        const SizedBox(height: 4),
+                                        _styledInput(formattedEnd),
+                                        const SizedBox(height: 12),
+                                        const Text("Formato",
+                                            style: TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold)),
+                                        const SizedBox(height: 4),
+                                        _styledInput(loan['format']),
                                       ],
-                                    );
-                                  },
-                                ),
+                                    ),
+                                  );
+                                },
                               );
                             },
                           ),
                         ),
                       ],
                     ),
-                    // Botón de cierre (X)
-                    Positioned(
-                      top: 4,
-                      right: 4,
-                      child: IconButton(
-                        icon: const Icon(Icons.close, size: 20, color: Color(0xFF112363)),
-                        onPressed: () => Navigator.of(context).pop(),
-                      ),
+                  ),
+                  Positioned(
+                    top: 6,
+                    right: 6,
+                    child: GestureDetector(
+                      onTap: () => Navigator.of(context).pop(),
+                      child: const Icon(Icons.close, color: Colors.red, size: 20),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            );
-          },
-        );
-      },
-    );
-    return null;
-  }
+            ),
+          );
+        },
+      );
+    },
+  );
+  return null;
+}
 
-  Future<bool?> _showConfirmReturnDialog(BuildContext context) {
-    return showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("¿Estás seguro de que deseas marcar este libro como devuelto?"),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text("Cancelar"),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text("Sí, devolver"),
-          ),
-        ],
-      ),
-    );
-  }
+// Widget para mostrar los campos de texto como en el diseño
+Widget _styledInput(String text) {
+  return Container(
+    width: double.infinity,
+    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+    ),
+    child: Text(
+      text,
+      style: const TextStyle(color: Colors.black87),
+    ),
+  );
+}
 
-  void _returnPhysicalBook(int loanId) async {
-    await LoanController().updateLoanState(loanId, 'Devuelto');
-  }
-  
 
   @override
   Widget build(BuildContext context) {
@@ -782,7 +748,7 @@ class _BookHeader extends StatelessWidget {
 
     final List<String> acceptedFormats = loanedFormats.where((entry) => entry['state'] == 'Aceptado').map((entry) => entry['format']!).toList();
 
-    final List<String> pendingFormats = loanedFormats.where((entry) => entry['state'] == 'Pendiente').map((entry) => entry['format']!).toList();
+    final List<String> pendingFormats = loanedFormats.where((entry) => entry['state'] == 'Pendiente' && !acceptedFormats.contains(entry['format'])).map((entry) => entry['format']!).toList();
 
     final List<String> availableFormats = allFormats.where((f) => !acceptedFormats.contains(f) && !pendingFormats.contains(f)).toList();
 
@@ -978,8 +944,8 @@ class _BookHeader extends StatelessWidget {
                     ),
                     if (!isOwner)
                       Positioned(
-                        bottom: -14,
-                        right: -14,
+                        bottom: -10, //-14
+                        right: -10,
                         child: FavoriteIcon(book: book),
                       ),
                     if (isOwner) // La papelera solo se muestra si ERES el propietario

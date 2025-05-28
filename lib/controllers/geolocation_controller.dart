@@ -11,11 +11,14 @@ class GeolocationController extends BaseController{
   Future<Position> getUserLocation() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      serviceEnabled = await Geolocator.openLocationSettings();
+      await Geolocator.openLocationSettings();
+      // No puedes saber si lo habilitó o no, así que vuelve a verificar
+      serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
         throw Exception('Los servicios de localización están deshabilitados');
       }
     }
+
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
@@ -24,8 +27,13 @@ class GeolocationController extends BaseController{
       }
     }
 
+    if (permission == LocationPermission.deniedForever) {
+      throw Exception('Permiso de ubicación denegado permanentemente. Debes ir a Ajustes > Aplicaciones > Permisos para habilitarlo.');
+    }
+
     return await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high);
+      desiredAccuracy: LocationAccuracy.high,
+    );
   }
 
 
@@ -55,9 +63,27 @@ class GeolocationController extends BaseController{
 
   Future<List<Book>> guardarUbicacionYLibros({bool? geolocationEnabled}) async {
     try {
-      final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
+      // ✅ Verifica permisos correctamente
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        await Geolocator.openLocationSettings();
+        serviceEnabled = await Geolocator.isLocationServiceEnabled();
+        if (!serviceEnabled) throw Exception('Servicios de ubicación desactivados');
+      }
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          throw Exception('Permisos de ubicación denegados');
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        throw Exception('Permisos de ubicación denegados permanentemente');
+      }
+
+      final position = await getUserLocation();
 
       String userId = await AccountController().getCurrentUserIdNonNull();
       user.User currentUser = await accountService.getCurrentUser();
@@ -65,7 +91,6 @@ class GeolocationController extends BaseController{
 
       final List<Book> librosDelUsuario = await BookController().getUserPhysicalBooks(userId);
 
-      // ✅ Actualizar (o insertar) sin borrar, y preservando campos existentes
       await geolocationService.upsertUserLocation(
         userId: userId,
         userName: userName,

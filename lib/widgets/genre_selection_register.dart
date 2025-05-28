@@ -45,7 +45,7 @@ class GenreSelectionRegisterWidget extends StatelessWidget {
 
               // Contenedor desplazable
               SizedBox(
-                height: 300, // Altura máxima antes de permitir el scroll
+                height: 450, // Altura máxima antes de permitir el scroll
                 child: Container(
                   width: constraints.maxWidth,
                   decoration: BoxDecoration(
@@ -113,11 +113,8 @@ class GenreSelectionRegisterWidget extends StatelessWidget {
                       ),
                       const SizedBox(height: 10),
                       ElevatedButton(
-                        onPressed: isLoading ? null : () async { 
+                        onPressed: isLoading ? null : () async {
                           onRegister();
-                          if (context.mounted) {
-                            Navigator.pop(context); 
-                          }
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFAD0000),

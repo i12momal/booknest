@@ -102,9 +102,17 @@ class _UserProfileViewState extends State<UserProfileView> {
     }
   }
 
- @override
+  @override
   Widget build(BuildContext context) {
-    final hasDescription = _descriptionController.text.trim().isNotEmpty && _descriptionController.text.trim().toLowerCase() != 'null';
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    bool isMobile = screenWidth < 600;
+    bool isTablet = screenWidth >= 600 && screenWidth < 1024;
+    bool isDesktop = screenWidth >= 1024;
+
+    final hasDescription = _descriptionController.text.trim().isNotEmpty &&
+        _descriptionController.text.trim().toLowerCase() != 'null';
+
     return FutureBuilder<String?>(
       future: AccountController().getCurrentUserId(),
       builder: (context, snapshot) {
@@ -125,6 +133,56 @@ class _UserProfileViewState extends State<UserProfileView> {
         }
 
         _currentUserId = snapshot.data;
+
+        // RESPONSIVE CATEGORY LAYOUT
+        Widget categoryLayout;
+
+        if (categories.isEmpty) {
+          categoryLayout = const Center(child: Text('No tiene libros subidos actualmente.'));
+        } else if (isMobile) {
+          categoryLayout = categories.length > 4
+              ? GridView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: categories.length,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 20,
+                    childAspectRatio: 0.8,
+                  ),
+                  itemBuilder: (context, index) {
+                    final category = categories[index];
+                    return _buildCategoryItem(category);
+                  },
+                )
+              : SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: categories.map((category) {
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 20),
+                        child: _buildCategoryItem(category),
+                      );
+                    }).toList(),
+                  ),
+                );
+        } else {
+          // Tablets y ordenadores
+          categoryLayout = SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 220),
+              child: Wrap(
+                spacing: 20,
+                runSpacing: 20,
+                children: categories.map((category) {
+                  return _buildCategoryItem(category);
+                }).toList(),
+              ),
+            ),
+          );
+
+        }
 
         return Scaffold(
           body: Background(
@@ -180,109 +238,33 @@ class _UserProfileViewState extends State<UserProfileView> {
                   const SizedBox(height: 16),
                   const Divider(thickness: 1, color: Color(0xFF112363)),
 
-                  // Contenedor con Scroll Horizontal para categorías
+                  // Categorías según tipo de dispositivo
                   SizedBox(
-                    height: categories.length > 4 ? 200 : 100,
-                    child: categories.isEmpty
-                        ? const Center(child: Text('No tiene libros subidos actualmente.'))
-                        : categories.length > 4
-                        ? GridView.builder(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: categories.length,
-                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              mainAxisSpacing: 12,
-                              crossAxisSpacing: 20,
-                              childAspectRatio: 0.8,
-                            ),
-                            itemBuilder: (context, index) {
-                              final category = categories[index];
-                              return GestureDetector(
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => CategoryView(
-                                        categoryName: category.name,
-                                        categoryImageUrl: category.image,
-                                        userId: widget.userId,
-                                      ),
-                                    ),
-                                  );
-                                },
-                                child: _CategoryItem(
-                                  label: category.name,
-                                  imageUrl: category.image,
-                                ),
-                              );
-                            },
-                          )
-                        : SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Row(
-                              children: categories.map((category) {
-                                return Padding(
-                                  padding: const EdgeInsets.only(right: 20),
-                                  child: GestureDetector(
-                                    onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => CategoryView(
-                                            categoryName: category.name,
-                                            categoryImageUrl: category.image,
-                                            userId: widget.userId,
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                    child: _CategoryItem(
-                                      label: category.name,
-                                      imageUrl: category.image,
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-                          ),
+                    height: isMobile ? (categories.length > 4 ? 200 : 100) : null,
+                    child: categoryLayout,
                   ),
                 ],
               ),
             ),
           ),
           bottomNavigationBar: Footer(
-            selectedIndex: 0, 
+            selectedIndex: 0,
             onItemTapped: (index) {
               switch (index) {
                 case 0:
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const HomeView()),
-                  );
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const HomeView()));
                   break;
                 case 1:
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const UserSearchView()),
-                  );
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const UserSearchView()));
                   break;
                 case 2:
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const GeolocationMap()),
-                  );
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const GeolocationMap()));
                   break;
                 case 3:
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const FavoritesView()),
-                  );
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const FavoritesView()));
                   break;
                 case 4:
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => OwnerProfileView(userId: _currentUserId!)),
-                  );
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => OwnerProfileView(userId: _currentUserId!)));
                   break;
               }
             },
@@ -291,6 +273,29 @@ class _UserProfileViewState extends State<UserProfileView> {
       },
     );
   }
+
+  // Helper para evitar repetición
+  Widget _buildCategoryItem(Category category) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => CategoryView(
+              categoryName: category.name,
+              categoryImageUrl: category.image,
+              userId: widget.userId,
+            ),
+          ),
+        );
+      },
+      child: _CategoryItem(
+        label: category.name,
+        imageUrl: category.image,
+      ),
+    );
+  }
+
 }
 
 class _CategoryItem extends StatelessWidget {

@@ -122,8 +122,7 @@ class _RegisterViewState extends State<RegisterView> {
       _isLoading = true;
     });
 
-    final result = await _accountController.registerUser(
-        name, userName, email, phoneNumber, address, password, confirmPassword, _imageFile, selectedGenres.join(", "), description);
+    final result = await _accountController.registerUser(name, userName, email, phoneNumber, address, password, confirmPassword, _imageFile, selectedGenres.join(", "), description);
 
     setState(() {
       _message = result['message'];

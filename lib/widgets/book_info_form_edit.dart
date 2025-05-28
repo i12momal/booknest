@@ -630,6 +630,18 @@ class _BookInfoFormEditState extends State<BookInfoFormEdit> {
       final filePath = result.files.single.path!;
       final fileName = result.files.single.name;
 
+      // Validar que el archivo tenga extensión .pdf
+      if (!fileName.toLowerCase().endsWith('.pdf')) {
+        setState(() {
+          uploadedFileName = null;
+          isUploading = false;
+          fileErrorMessage = 'El archivo debe ser un PDF';
+        });
+
+        widget.onFilePicked(null);
+        return;
+      }
+
       setState(() {
         uploadedFileName = fileName;
         isUploading = false;

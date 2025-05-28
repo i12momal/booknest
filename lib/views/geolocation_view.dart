@@ -19,7 +19,7 @@ class GeolocationMap extends StatefulWidget {
 
 
 class _GeolocationMapState extends State<GeolocationMap> {
-  late GoogleMapController mapController;
+  GoogleMapController? mapController;
   LatLng _center = const LatLng(0, 0);
   final Set<Marker> _markers = {};
   List<Geolocation> _nearbyUsers = [];
@@ -39,7 +39,6 @@ class _GeolocationMapState extends State<GeolocationMap> {
   void initState() {
     super.initState();
     _focusedUser = widget.focusedUser;
-    _loadUserId();
     _loadUserIdAndCheckGeolocation();
   }
 
@@ -133,48 +132,29 @@ class _GeolocationMapState extends State<GeolocationMap> {
       });
 
       // Mover la cámara del mapa a la ubicación actual
-      mapController.animateCamera(CameraUpdate.newLatLng(currentLocation));
-      // Si hay un usuario enfocado, mostrar su diálogo y mover la cámara a su ubicación
-      if (_focusedUser != null) {
-        final focused = _nearbyUsers.firstWhere(
-          (u) => u.userId == _focusedUser!.userId,
-          orElse: () => _focusedUser!,
-        );
+      if (mounted && mapController != null) {
+        mapController!.animateCamera(CameraUpdate.newLatLng(currentLocation));
+      }
 
-        // Mover la cámara al usuario enfocado
-        mapController.animateCamera(
+     // Si hay un usuario enfocado, mostrar su diálogo y mover la cámara a su ubicación
+    if (_focusedUser != null) {
+      final focused = _nearbyUsers.firstWhere(
+        (u) => u.userId == _focusedUser!.userId,
+        orElse: () => _focusedUser!,
+      );
+
+      // Mover la cámara al usuario enfocado
+      if (mapController != null) {
+        mapController!.animateCamera(
           CameraUpdate.newLatLng(
             LatLng(focused.latitude, focused.longitude),
           ),
         );
-
-        // Mostrar el diálogo tras un breve delay (asegura que el mapa está listo)
-        Future.delayed(const Duration(milliseconds: 500), () {
-          _showUserBooksDialog(focused);
-        });
       }
+    }
 
     } catch (e) {
       print("Error obteniendo la ubicación: $e");
-    }
-  }
-
-
-  void _loadUserId() async {
-    final id = await AccountController().getCurrentUserId();
-    setState(() {
-      userId = id;
-    });
-  }
-
-  Future<void> _fetchUserGeolocation() async {
-    try {
-      final isEnabled = await GeolocationController().isUserGeolocationEnabled(userId!);
-      setState(() {
-        _isLocationEnabled = isEnabled;
-      });
-    } catch (e) {
-      print("Error en _fetchUserGeolocation: $e");
     }
   }
 
@@ -355,8 +335,8 @@ class _GeolocationMapState extends State<GeolocationMap> {
             );
 
             final focusLatLng = LatLng(focused.latitude, focused.longitude);
-
-            await mapController.animateCamera(CameraUpdate.newLatLngZoom(focusLatLng, 14));
+            
+            await mapController!.animateCamera(CameraUpdate.newLatLngZoom(focusLatLng, 14));
 
             // Muestra el diálogo tras un pequeño delay para asegurar visibilidad
             Future.delayed(const Duration(milliseconds: 500), () {
@@ -364,10 +344,10 @@ class _GeolocationMapState extends State<GeolocationMap> {
             });
           }
 
-          if (_focusedMarkerId != null) {
+          if (_focusedMarkerId != null && mapController != null) {
             final markerExists = _markers.any((m) => m.markerId == _focusedMarkerId);
             if (markerExists) {
-              mapController.showMarkerInfoWindow(_focusedMarkerId!);
+              mapController!.showMarkerInfoWindow(_focusedMarkerId!);
             }
           }
 

@@ -539,10 +539,20 @@ class _BookInfoFormState extends State<BookInfoForm> {
       final String filePath = result.files.single.path!;
       final String fileName = result.files.single.name;
 
+      // Validar que el archivo tenga extensión .pdf
+      if (!fileName.toLowerCase().endsWith('.pdf')) {
+        setState(() {
+          uploadedFileName = null;
+          isUploading = false;
+          fileErrorMessage = 'El archivo debe ser un PDF';
+        });
+        return;
+      }
+
       setState(() {
         uploadedFileName = fileName;
         isUploading = false;
-        fileErrorMessage = null; 
+        fileErrorMessage = null;
         widget.onFileAndFormatChanged(filePath, isPhysicalSelected, isDigitalSelected);
       });
     } else {
@@ -552,4 +562,5 @@ class _BookInfoFormState extends State<BookInfoForm> {
       });
     }
   }
+
 }

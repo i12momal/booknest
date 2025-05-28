@@ -407,7 +407,9 @@ class _BookReviewsTabState extends State<_BookReviewsTab> {
                             name: user.name,
                             rating: review.rating,
                             comment: review.comment,
-                            imageUrl: user.image ?? '',
+                            imageProvider: (user.image != null && user.image!.isNotEmpty)
+                            ? NetworkImage(user.image!)
+                            : const AssetImage('assets/images/default.png') as ImageProvider,
                             isOwner: review.userId == widget.currentUserId,
                             onEdit: () => _editReview(review), 
                             onDelete: () => _confirmDeleteReview(review), 

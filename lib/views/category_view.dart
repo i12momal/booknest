@@ -215,11 +215,12 @@ class _CategoryViewState extends State<CategoryView> {
 
                                           final loanedFormats = snapshot.data!;
                                           final status = getAvailabilityStatus(book, loanedFormats);
-
+                                          final normalizedStatus = status.trim().toLowerCase();
+                      
                                           Icon statusIcon;
-                                          if (status == 'Disponible') {
+                                          if (normalizedStatus == 'disponible') {
                                             statusIcon = const Icon(Icons.check_circle, color: Colors.green, size: 20);
-                                          } else if (status == 'Prestado') {
+                                          } else if (normalizedStatus == 'prestado') {
                                             statusIcon = const Icon(Icons.cancel, color: Colors.red, size: 20);
                                           } else {
                                             statusIcon = const Icon(Icons.check_circle, color: Colors.orange, size: 20);

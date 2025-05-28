@@ -58,37 +58,40 @@ class _CategorySelectionPopupState extends State<CategorySelectionPopup> {
                 ],
               ),
               const SizedBox(height: 18),
-              Container(
-                width: constraints.maxWidth,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF687CFF), Color(0xFF2E3C94)],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                  ),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFF112363), width: 3),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 5,
-                      spreadRadius: 2,
+              SizedBox(
+                height: 250,
+                child: Container(
+                  width: constraints.maxWidth,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF687CFF), Color(0xFF2E3C94)],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
                     ),
-                  ],
-                ),
-                padding: const EdgeInsets.all(16.0),
-                child: Scrollbar(
-                  child: SingleChildScrollView(
-                    child: Wrap(
-                      spacing: 8.0,
-                      runSpacing: 8.0,
-                      children: widget.allCategories.map((category) {
-                        return GenreChip(
-                          genre: category,
-                          isSelected: _selectedCategories.contains(category),
-                          onTap: () => _toggleSelection(category),
-                        );
-                      }).toList(),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: const Color(0xFF112363), width: 3),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black26,
+                        blurRadius: 5,
+                        spreadRadius: 2,
+                      ),
+                    ],
+                  ),
+                  padding: const EdgeInsets.all(16.0),
+                  child: Scrollbar(
+                    child: SingleChildScrollView(
+                      child: Wrap(
+                        spacing: 8.0,
+                        runSpacing: 8.0,
+                        children: widget.allCategories.map((category) {
+                          return GenreChip(
+                            genre: category,
+                            isSelected: _selectedCategories.contains(category),
+                            onTap: () => _toggleSelection(category),
+                          );
+                        }).toList(),
+                      ),
                     ),
                   ),
                 ),

@@ -335,203 +335,186 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
 
   @override
   Widget build(BuildContext context) {
-    final hasDescription = _descriptionController.text.trim().isNotEmpty && _descriptionController.text.trim().toLowerCase() != 'null';
+    final hasDescription = _descriptionController.text.trim().isNotEmpty &&
+        _descriptionController.text.trim().toLowerCase() != 'null';
 
-        if (_isLoading) {
-          return const Scaffold(
-            backgroundColor: Colors.white,
-            body: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+    final screenWidth = MediaQuery.of(context).size.width;
+    final bool isMobile = screenWidth < 600;
+
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: Colors.white,
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SizedBox(
+                height: 100,
+                width: 100,
+                child: CircularProgressIndicator(color: Color(0xFF112363)),
+              ),
+              SizedBox(height: 20),
+              Text(
+                'Cargando...',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF112363),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (_message.isNotEmpty) {
+      return Scaffold(
+        body: Center(child: Text(_message)),
+      );
+    }
+
+    return Scaffold(
+      body: Background(
+        showExitIcon: false,
+        showRowIcon: false,
+        title: 'Mi Perfil',
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              const SizedBox(height: 40),
+              Row(
+                crossAxisAlignment: hasDescription ? CrossAxisAlignment.start : CrossAxisAlignment.center,
                 children: [
-                  SizedBox(
-                    height: 100,
-                    width: 100,
-                    child: CircularProgressIndicator(color: Color(0xFF112363)),
+                  CircleAvatar(
+                    radius: 50,
+                    backgroundColor: Colors.black12,
+                    backgroundImage: currentImageUrl != null && currentImageUrl!.isNotEmpty
+                        ? NetworkImage(currentImageUrl!)
+                        : const AssetImage('assets/images/default.png') as ImageProvider,
                   ),
-                  SizedBox(height: 20),
-                  Text(
-                    'Cargando...',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF112363),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => EditUserView(userId: widget.userId),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: const Color(0xFF112363)),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _nameController.text,
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
+                            const SizedBox(height: 4),
+                            if (hasDescription)
+                              Row(
+                                children: [
+                                  Expanded(child: Text(_descriptionController.text)),
+                                ],
+                              ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ],
               ),
-            ),
-          );
-        }
-
-        if (_message.isNotEmpty) {
-          return Scaffold(
-            body: Center(child: Text(_message)),
-          );
-        }
-
-        return Scaffold(
-          body: Background(
-            showExitIcon: false,
-            showRowIcon: false,
-            title: 'Mi Perfil',
-            child: SingleChildScrollView(
-              child: Column(
+              const SizedBox(height: 8),
+              Row(
                 children: [
-                  const SizedBox(height: 40),
-                  Row(
-                    crossAxisAlignment: hasDescription ? CrossAxisAlignment.start : CrossAxisAlignment.center,
-                    children: [
-                      CircleAvatar(
-                        radius: 50,
-                        backgroundColor: Colors.black12,
-                        backgroundImage: currentImageUrl != null && currentImageUrl!.isNotEmpty
-                            ? NetworkImage(currentImageUrl!)
-                            : const AssetImage('assets/images/default.png') as ImageProvider,
-                      ),
-                      
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => EditUserView(userId: widget.userId),
-                              ),
-                            );
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              border: Border.all(color: const Color(0xFF112363)),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  _nameController.text,
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 1,
-                                ),
-                                const SizedBox(height: 4),
-                                if (hasDescription)
-                                  Row(
-                                    children: [
-                                      Expanded(child: Text(_descriptionController.text)),
-                                    ],
-                                  ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+                  const Text(
+                    'Ubicación',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                   ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      const Text(
-                        'Ubicación',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                      ),
-                      const SizedBox(width: 8),
-                      Switch(
-                        value: _isLocationEnabled,
-                        onChanged: (bool newValue) async {
-                          setState(() {
-                            _isLocationEnabled = newValue;
-                          });
-
-                          await GeolocationController().updateUserGeolocation(widget.userId, newValue);
-                        },
-                        activeColor: const Color(0xFF112363),
-                      ),
-
-                    ],
+                  const SizedBox(width: 8),
+                  Switch(
+                    value: _isLocationEnabled,
+                    onChanged: (bool newValue) async {
+                      setState(() {
+                        _isLocationEnabled = newValue;
+                      });
+                      await GeolocationController().updateUserGeolocation(widget.userId, newValue);
+                    },
+                    activeColor: const Color(0xFF112363),
                   ),
-                  const SizedBox(height: 50),
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        const Center(
-                          child: Text(
-                            'Mi Biblioteca',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                          ),
-                        ),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.search, color: Colors.black),
-                                onPressed: () {
-                                  _showSearchDialog(context);
-                                },
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.add_circle_outline, color: Colors.black),
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(builder: (context) => const AddBookView(origin: 'profile')),
-                                  );
-                                },
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                ],
+              ),
+              const SizedBox(height: 50),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    const Center(
+                      child: Text(
+                        'Mi Biblioteca',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
                     ),
-                  ),
-                  const Divider(thickness: 1, color: Color(0xFF112363)),
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    height: categories.length > 4 ? 200 : 100,
-                    child: categories.isEmpty
-                        ? const Center(child: Text('No tienes libros subidos actualmente.'))
-                        : categories.length > 4
-                        ? GridView.builder(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: categories.length,
-                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              mainAxisSpacing: 12,
-                              crossAxisSpacing: 20,
-                              childAspectRatio: 0.8,
-                            ),
-                            itemBuilder: (context, index) {
-                              final category = categories[index];
-                              return GestureDetector(
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => CategoryView(
-                                        categoryName: category.name,
-                                        categoryImageUrl: category.image,
-                                        userId: widget.userId,
-                                      ),
-                                    ),
-                                  );
-                                },
-                                child: _CategoryItem(label: category.name, imageUrl: category.image),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.search, color: Colors.black),
+                            onPressed: () => _showSearchDialog(context),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.add_circle_outline, color: Colors.black),
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => const AddBookView(origin: 'profile')),
                               );
                             },
-                          )
-                        : SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Row(
-                              children: categories.map((category) {
-                                return Padding(
-                                  padding: const EdgeInsets.only(right: 20),
-                                  child: GestureDetector(
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(thickness: 1, color: Color(0xFF112363)),
+              const SizedBox(height: 8),
+
+              // Responsive Biblioteca
+              SizedBox(
+                height: categories.isEmpty
+                    ? 100
+                    : isMobile
+                        ? (categories.length > 4 ? 200 : 100)
+                        : 220,
+                child: categories.isEmpty
+                    ? const Center(child: Text('No tiene libros subidos actualmente.'))
+                    : isMobile
+                        ? (categories.length > 4
+                            ? GridView.builder(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: categories.length,
+                                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  mainAxisSpacing: 12,
+                                  crossAxisSpacing: 20,
+                                  childAspectRatio: 0.8,
+                                ),
+                                itemBuilder: (context, index) {
+                                  final category = categories[index];
+                                  return GestureDetector(
                                     onTap: () {
                                       Navigator.push(
                                         context,
@@ -544,181 +527,238 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
                                         ),
                                       );
                                     },
-                                    child: _CategoryItem(label: category.name, imageUrl: category.image),
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-                          ),
-                  ),
-                  const SizedBox(height: 20),
-                  const Text('Prestados', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  const SizedBox(height: 16),
-                  const Divider(thickness: 1, color: Color(0xFF112363)),
-                  SizedBox(
-                    height: 250,
-                    child: activeLoans.isEmpty
-                        ? const Center(child: Text('No tienes libros prestados actualmente.'))
-                        : ListView.builder(
+                                    child: _CategoryItem(
+                                      label: category.name,
+                                      imageUrl: category.image,
+                                    ),
+                                  );
+                                },
+                              )
+                            : SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                child: Row(
+                                  children: categories.map((category) {
+                                    return Padding(
+                                      padding: const EdgeInsets.only(right: 20),
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => CategoryView(
+                                                categoryName: category.name,
+                                                categoryImageUrl: category.image,
+                                                userId: widget.userId,
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                        child: _CategoryItem(
+                                          label: category.name,
+                                          imageUrl: category.image,
+                                        ),
+                                      ),
+                                    );
+                                  }).toList(),
+                                ),
+                              ))
+                        : SingleChildScrollView(
                             scrollDirection: Axis.horizontal,
-                            itemCount: activeLoans.length,
-                            itemBuilder: (context, index) {
-                              final loanData = activeLoans[index]['loan'];
-                              final book = activeLoans[index]['book'];
-                              final currentPage = loanData['currentPage'] ?? 0;
-                              final loanId = loanData['id'];
-
-                              final formattedEnd = loanData['endDate'].split('T').first;
-
-                              return GestureDetector(
-                                onTap: () async {
-                                  final url = book.file;
-                                  if (url != null && url.isNotEmpty) {
-                                    final uri = Uri.parse(url);
-                                    if (await canLaunchUrl(uri)) {
-                                      if (!context.mounted) return;
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxHeight: 220),
+                              child: Wrap(
+                                spacing: 20,
+                                runSpacing: 20,
+                                children: categories.map((category) {
+                                  return GestureDetector(
+                                    onTap: () {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (context) => BookReaderView(
-                                            bookId: book.id,
-                                            url: book.file,
-                                            initialPage: currentPage,
+                                          builder: (context) => CategoryView(
+                                            categoryName: category.name,
+                                            categoryImageUrl: category.image,
                                             userId: widget.userId,
-                                            bookTitle: book.title,
                                           ),
                                         ),
-                                      ).then((returnedPage) {
-                                        if (returnedPage != null) {
-                                          LoanController().saveCurrentPageProgress(
-                                            widget.userId,
-                                            book.id,
-                                            returnedPage,
-                                          );
-                                        }
-                                      });
-                                    } else {
-                                      print('No se pudo abrir el archivo');
-                                    }
-                                  } else {
-                                    print('El libro no tiene un archivo asociado');
-                                  }
-                                },
-                                child: Padding(
-                                  padding: const EdgeInsets.only(right: 12),
-                                  child: Column(
-                                    children: [
-                                      ClipRRect(
-                                        borderRadius: BorderRadius.circular(8),
-                                        child: Image.network(
-                                          book.cover,
-                                          width: 100,
-                                          height: 130,
-                                          fit: BoxFit.cover,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      SizedBox(
-                                        width: 150,
-                                        child: Text(
-                                          book.title,
-                                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          textAlign: TextAlign.center,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      SizedBox(
-                                        width: 150,
-                                        child: Text(
-                                          "Formato: " + loanData['format'],
-                                          style: const TextStyle(fontSize: 10),
-                                          textAlign: TextAlign.center,
-                                        ),
-                                      ),
-                                      if(loanData['format'] == 'Digital')...[
-                                       const SizedBox(height: 4),
-                                        SizedBox(
-                                          width: 150,
-                                          child: Text(
-                                            "Vencimiento: " + formattedEnd,
-                                            style: const TextStyle(fontSize: 10),
-                                            textAlign: TextAlign.center,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 8),
-                                        ElevatedButton(
-                                        onPressed: _isReturning
-                                            ? null
-                                            : () async {
-                                                bool? confirm = await _showConfirmDialog(context);
-                                                if (confirm == true) {
-                                                  _returnBook(loanId);
-                                                }
-                                              },
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: const Color(0xFFAD0000),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(30),
-                                            side: const BorderSide(color: Color(0xFF700101), width: 3),
-                                          ),
-                                          padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 7),
-                                        ),
-                                        child: _isReturning
-                                            ? const SizedBox(
-                                                width: 16,
-                                                height: 16,
-                                                child: CircularProgressIndicator(
-                                                  strokeWidth: 2,
-                                                  color: Colors.white,
-                                                ),
-                                              )
-                                            : const Text(
-                                                "Devolver",
-                                                style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 10,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                      ),]
-
-                                    ],
-                                  ),
-                                ),
-                              );
-                            },
+                                      );
+                                    },
+                                    child: _CategoryItem(
+                                      label: category.name,
+                                      imageUrl: category.image,
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                            ),
                           ),
-                  ),
-                ],
               ),
-            ),
+
+              const SizedBox(height: 20),
+              const Text('Prestados', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              const SizedBox(height: 16),
+              const Divider(thickness: 1, color: Color(0xFF112363)),
+              SizedBox(
+                height: 250,
+                child: activeLoans.isEmpty
+                    ? const Center(child: Text('No tienes libros prestados actualmente.'))
+                    : ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: activeLoans.length,
+                        itemBuilder: (context, index) {
+                          final loanData = activeLoans[index]['loan'];
+                          final book = activeLoans[index]['book'];
+                          final currentPage = loanData['currentPage'] ?? 0;
+                          final loanId = loanData['id'];
+                          final formattedEnd = loanData['endDate'].split('T').first;
+
+                          return GestureDetector(
+                            onTap: () async {
+                              final url = book.file;
+                              if (url != null && url.isNotEmpty) {
+                                final uri = Uri.parse(url);
+                                if (await canLaunchUrl(uri)) {
+                                  if (!context.mounted) return;
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => BookReaderView(
+                                        bookId: book.id,
+                                        url: book.file,
+                                        initialPage: currentPage,
+                                        userId: widget.userId,
+                                        bookTitle: book.title,
+                                      ),
+                                    ),
+                                  ).then((returnedPage) {
+                                    if (returnedPage != null) {
+                                      LoanController().saveCurrentPageProgress(
+                                        widget.userId,
+                                        book.id,
+                                        returnedPage,
+                                      );
+                                    }
+                                  });
+                                }
+                              }
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 12),
+                              child: Column(
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Image.network(
+                                      book.cover,
+                                      width: 100,
+                                      height: 130,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  SizedBox(
+                                    width: 150,
+                                    child: Text(
+                                      book.title,
+                                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  SizedBox(
+                                    width: 150,
+                                    child: Text(
+                                      "Formato: ${loanData['format']}",
+                                      style: const TextStyle(fontSize: 10),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                  if (loanData['format'] == 'Digital') ...[
+                                    const SizedBox(height: 4),
+                                    SizedBox(
+                                      width: 150,
+                                      child: Text(
+                                        "Vencimiento: $formattedEnd",
+                                        style: const TextStyle(fontSize: 10),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    ElevatedButton(
+                                      onPressed: _isReturning
+                                          ? null
+                                          : () async {
+                                              bool? confirm = await _showConfirmDialog(context);
+                                              if (confirm == true) {
+                                                _returnBook(loanId);
+                                              }
+                                            },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(0xFFAD0000),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(30),
+                                          side: const BorderSide(color: Color(0xFF700101), width: 3),
+                                        ),
+                                        padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 7),
+                                      ),
+                                      child: _isReturning
+                                          ? const SizedBox(
+                                              width: 16,
+                                              height: 16,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                color: Colors.white,
+                                              ),
+                                            )
+                                          : const Text(
+                                              "Devolver",
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+              ),
+            ],
           ),
-          bottomNavigationBar: Footer(
-            selectedIndex: 0,
-            onItemTapped: (index) {
-              switch (index) {
-                case 0:
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => const HomeView()));
-                  break;
-                case 1:
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => const UserSearchView()));
-                  break;
-                case 2:
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => const GeolocationMap()));
-                  break;
-                case 3:
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => const FavoritesView()));
-                  break;
-                case 4:
-                  Navigator.push(context,
-                      MaterialPageRoute(builder: (context) => OwnerProfileView(userId: widget.userId)));
-                  break;
-              }
-            },
-          ),
-        );
+        ),
+      ),
+      bottomNavigationBar: Footer(
+        selectedIndex: 0,
+        onItemTapped: (index) {
+          switch (index) {
+            case 0:
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const HomeView()));
+              break;
+            case 1:
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const UserSearchView()));
+              break;
+            case 2:
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const GeolocationMap()));
+              break;
+            case 3:
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const FavoritesView()));
+              break;
+            case 4:
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => OwnerProfileView(userId: widget.userId)),
+              );
+              break;
+          }
+        },
+      ),
+    );
   }
 }
 

@@ -128,12 +128,32 @@ class _HomeViewState extends State<HomeView> {
   }
 
   void _showLanguageFilterPopup(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
+    bool isMobile = screenWidth < 600;
+    bool isTablet = screenWidth >= 600 && screenWidth < 1024;
+    bool isDesktop = screenWidth >= 1024;
+
+    double dialogWidth = isMobile
+        ? screenWidth * 0.9
+        : isTablet
+            ? 450
+            : 500;
+
+    double dialogHeight = isMobile
+        ? screenHeight * 0.6
+        : isTablet
+            ? screenHeight * 0.55
+            : screenHeight * 0.5;
+
     showDialog(
       context: context,
       builder: (context) {
         return Dialog(
           backgroundColor: Colors.transparent,
           child: Container(
+            width: dialogWidth,
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               color: Colors.white,
@@ -154,7 +174,7 @@ class _HomeViewState extends State<HomeView> {
                 const SizedBox(height: 16),
                 LanguageDropdown(
                   controller: _languageFilterController,
-                  languages: const ['All', 'Español', 'Inglés', 'Francés', 'Alemán', 'Italiano','Portugués', 'Ruso', 'Chino', 'Japonés', 'Coreano', 'Árabe','Otro'],
+                  languages: const ['All', 'Español', 'Inglés', 'Francés', 'Alemán', 'Italiano', 'Portugués', 'Chino'],
                   onChanged: (selected) {
                     if (selected == 'All') {
                       selectedLanguage = null;
@@ -191,6 +211,7 @@ class _HomeViewState extends State<HomeView> {
                 const SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: () {
+                    FocusScope.of(context).unfocus();
                     Navigator.pop(context);
                     _applyFilters();
                   },
@@ -203,12 +224,13 @@ class _HomeViewState extends State<HomeView> {
                     padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
                   ),
                   child: const Text(
-                    'Aplicar filtro', 
+                    'Aplicar filtro',
                     style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),),
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -217,6 +239,7 @@ class _HomeViewState extends State<HomeView> {
       },
     );
   }
+
 
 
 
@@ -252,6 +275,25 @@ class _HomeViewState extends State<HomeView> {
 
 
   void _showCategorySelectionPopup(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
+    bool isMobile = screenWidth < 600;
+    bool isTablet = screenWidth >= 600 && screenWidth < 1024;
+    bool isDesktop = screenWidth >= 1024;
+
+    double dialogWidth = isMobile
+        ? screenWidth * 0.9
+        : isTablet
+            ? 500
+            : 600;
+
+    double dialogHeight = isMobile
+        ? screenHeight * 0.5
+        : isTablet
+            ? screenHeight * 0.55
+            : screenHeight * 0.6;
+
     showDialog(
       context: context,
       builder: (context) {
@@ -261,8 +303,8 @@ class _HomeViewState extends State<HomeView> {
           ),
           elevation: 5,
           child: SizedBox(
-            width: MediaQuery.of(context).size.width * 0.8,
-            height: MediaQuery.of(context).size.height * 0.5,
+            width: dialogWidth,
+            height: dialogHeight,
             child: CategorySelectionPopup(
               allCategories: allCategories,
               selectedCategories: categories.map((c) => c['name'].toString()).toList(),
@@ -275,14 +317,12 @@ class _HomeViewState extends State<HomeView> {
 
                 final userId = Supabase.instance.client.auth.currentUser?.id;
                 if (userId != null) {
-                  // Guarda las nuevas categorías en el campo 'genres'
                   final genresString = newSelectedCategories.join(',');
                   await Supabase.instance.client
                       .from('User')
                       .update({'genres': genresString})
                       .eq('id', userId);
 
-                  // Recarga las categorías y los libros
                   await _loadCategoriesAndBooks();
                 }
 
@@ -296,6 +336,7 @@ class _HomeViewState extends State<HomeView> {
       },
     );
   }
+
 
 
   void _toggleCategory(String category) {

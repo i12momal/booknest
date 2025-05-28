@@ -26,12 +26,7 @@ class LanguageDropdown extends StatelessWidget {
       'Alemán',
       'Italiano',
       'Portugués',
-      'Ruso',
-      'Chino',
-      'Japonés',
-      'Coreano',
-      'Árabe',
-      'Otro'
+      'Chino'
     ];
 
     return Container(

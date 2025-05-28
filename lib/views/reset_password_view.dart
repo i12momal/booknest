@@ -194,62 +194,81 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
+Widget build(BuildContext context) {
+  final screenWidth = MediaQuery.of(context).size.width;
+  final screenHeight = MediaQuery.of(context).size.height;
 
-    return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
-      child: Background(
-        title: 'Recuperar Contraseña',
-        showNotificationIcon: false,
-        onBack: () => Navigator.pop(context),
+  final isMobile = screenWidth < 600;
+  final isTablet = screenWidth >= 600 && screenWidth < 1024;
+  final isDesktop = screenWidth >= 1024;
+
+  final maxContainerWidth = isMobile
+      ? screenWidth * 0.95
+      : isTablet
+          ? 450.0
+          : 500.0;
+
+  return GestureDetector(
+    onTap: () => FocusScope.of(context).unfocus(),
+    child: Background(
+      title: 'Recuperar Contraseña',
+      showNotificationIcon: false,
+      onBack: () => Navigator.pop(context),
+      child: Center(
         child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
-          child: Column(
-            children: [
-              SizedBox(height: screenHeight * 0.05),
-              Image.asset(
-                'assets/images/reset_password.jpg',
-                height: screenHeight * 0.3,
-              ),
-              SizedBox(height: screenHeight * 0.08),
-              _buildGradientCard(screenWidth, screenHeight),
-            ],
+          padding: EdgeInsets.symmetric(horizontal: isMobile ? 16.0 : 32.0),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: maxContainerWidth),
+            child: Column(
+              children: [
+                SizedBox(height: screenHeight * 0.05),
+                Image.asset(
+                  'assets/images/reset_password.jpg',
+                  height: isMobile
+                      ? screenHeight * 0.25
+                      : isTablet
+                          ? screenHeight * 0.30
+                          : screenHeight * 0.35,
+                ),
+                SizedBox(height: screenHeight * 0.08),
+                _buildGradientCard(screenWidth, screenHeight, isMobile),
+              ],
+            ),
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
-  Widget _buildGradientCard(double screenWidth, double screenHeight) {
-    return Container(
-      width: screenWidth * 0.95,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF687CFF), Color(0xFF2E3C94)],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: const Color(0xFF112363),
-          width: 3,
-        ),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 5,
-            spreadRadius: 2,
-          ),
-        ],
+Widget _buildGradientCard(double screenWidth, double screenHeight, bool isMobile) {
+  return Container(
+    width: double.infinity,
+    decoration: BoxDecoration(
+      gradient: const LinearGradient(
+        colors: [Color(0xFF687CFF), Color(0xFF2E3C94)],
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
       ),
-      padding: EdgeInsets.all(screenWidth * 0.05),
-      child: widget.fromDeepLink
-          ? _buildPasswordFields(screenHeight, screenWidth)
-          : _buildEmailField(screenHeight, screenWidth),
-    );
-  }
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(
+        color: const Color(0xFF112363),
+        width: 3,
+      ),
+      boxShadow: const [
+        BoxShadow(
+          color: Colors.black26,
+          blurRadius: 5,
+          spreadRadius: 2,
+        ),
+      ],
+    ),
+    padding: EdgeInsets.all(isMobile ? 16.0 : 24.0),
+    child: widget.fromDeepLink
+        ? _buildPasswordFields(screenHeight, screenWidth)
+        : _buildEmailField(screenHeight, screenWidth),
+  );
+}
 
   Widget _buildEmailField(double screenHeight, double screenWidth) {
     return Column(
@@ -404,3 +423,4 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
     );
   }
 }
+
