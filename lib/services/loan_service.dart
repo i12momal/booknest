@@ -414,14 +414,9 @@ class LoanService extends BaseService{
 
   Future<Map<String, dynamic>> cancelLoan(int bookId, int? notificationId, String? format) async {
     try {
-      // Eliminamos la notificación si existe
+      // 1. Eliminar notificación si existe
       if (notificationId != null) {
-        final not = await BaseService.client
-            .from('Notifications')
-            .delete()
-            .eq('id', notificationId);
-
-        print('not $not');
+        await BaseService.client.from('Notifications').delete().eq('id', notificationId);
       }
 
       if (format == null) {
@@ -431,67 +426,96 @@ class LoanService extends BaseService{
         };
       }
 
-      // Eliminamos la solicitud de préstamo (solo si está en estado Pendiente)
-      final response = await BaseService.client
+      // 2. Obtener el préstamo principal (Pendiente)
+      final mainLoan = await BaseService.client
           .from('Loan')
-          .delete()
+          .select('id, offeredLoanIds')
           .eq('bookId', bookId)
           .eq('state', 'Pendiente')
           .eq('format', format)
-          .select();
+          .maybeSingle();
 
-      // Recalcular el estado del libro si se eliminó algo
-      if (response.isNotEmpty) {
-        final bookResponse = await BaseService.client
-            .from('Book')
-            .select('id, format')
-            .eq('id', bookId)
-            .single();
-
-        if (bookResponse != null) {
-          final bookFormats = bookResponse['format']
-              .toString()
-              .split(',')
-              .map((f) => f.trim().toLowerCase())
-              .toList();
-
-          final loanedFormats = await LoanController().getLoanedFormatsAndStates(bookId);
-          final normalizedLoans = loanedFormats.map((f) => {
-                'format': f['format'].toString().trim().toLowerCase(),
-                'state': f['state'].toString().trim().toLowerCase(),
-              }).toList();
-
-          String newState = 'Disponible';
-
-          if (bookFormats.length == 2) {
-            final acceptedCount =
-                normalizedLoans.where((f) => f['state'] == 'aceptado').length;
-            final pendingCount =
-                normalizedLoans.where((f) => f['state'] == 'pendiente').length;
-
-            if ((acceptedCount == 2) ||
-                (pendingCount == 2) ||
-                (acceptedCount == 1 && pendingCount == 1)) {
-              newState = 'No Disponible';
-            }
-          } else if (bookFormats.length == 1 && normalizedLoans.isNotEmpty) {
-            final state = normalizedLoans.first['state'];
-            if (state == 'pendiente' || state == 'aceptado') {
-              newState = 'Pendiente';
-            }
-          }
-
-          print('Nuevo estado del libro tras cancelación: $newState');
-          await BookController().changeState(bookId, newState);
-        }
-
-        return {'success': true};
-      } else {
+      if (mainLoan == null) {
         return {
           'success': false,
-          'message': 'No se pudo eliminar la solicitud o no existía'
+          'message': 'No se encontró una solicitud pendiente para este libro y formato.'
         };
       }
+
+      final int mainLoanId = mainLoan['id'];
+      final String offeredLoanIdsStr = mainLoan['offeredLoanIds'] ?? '';
+      final List<int> offeredLoanIds = offeredLoanIdsStr
+          .split(',')
+          .map((id) => id.trim())
+          .where((id) => id.isNotEmpty)
+          .map(int.parse)
+          .toList();
+
+      // 3. Eliminar compensaciones (ofertas físicas asociadas)
+      for (final offerLoanId in offeredLoanIds) {
+        // Obtener info del préstamo ofrecido antes de eliminarlo
+        final offeredLoan = await BaseService.client
+            .from('Loan')
+            .select('bookId')
+            .eq('id', offerLoanId)
+            .maybeSingle();
+
+        if (offeredLoan != null) {
+          final int offeredBookId = offeredLoan['bookId'];
+
+          // Cambiar el estado del libro a Disponible
+          await BookController().changeState(offeredBookId, 'Disponible');
+        }
+
+        // Eliminar el préstamo de compensación
+        await BaseService.client.from('Loan').delete().eq('id', offerLoanId);
+      }
+
+      // 4. Eliminar el préstamo principal
+      await BaseService.client.from('Loan').delete().eq('id', mainLoanId);
+
+      // 5. Recalcular el estado del libro original
+      final bookResponse = await BaseService.client
+          .from('Book')
+          .select('id, format')
+          .eq('id', bookId)
+          .maybeSingle();
+
+      if (bookResponse != null) {
+        final bookFormats = bookResponse['format']
+            .toString()
+            .split(',')
+            .map((f) => f.trim().toLowerCase())
+            .toList();
+
+        final loanedFormats = await LoanController().getLoanedFormatsAndStates(bookId);
+        final normalizedLoans = loanedFormats.map((f) => {
+              'format': f['format'].toString().trim().toLowerCase(),
+              'state': f['state'].toString().trim().toLowerCase(),
+            }).toList();
+
+        String newState = 'Disponible';
+
+        if (bookFormats.length == 2) {
+          final acceptedCount = normalizedLoans.where((f) => f['state'] == 'aceptado').length;
+          final pendingCount = normalizedLoans.where((f) => f['state'] == 'pendiente').length;
+
+          if ((acceptedCount == 2) ||
+              (pendingCount == 2) ||
+              (acceptedCount == 1 && pendingCount == 1)) {
+            newState = 'No Disponible';
+          }
+        } else if (bookFormats.length == 1 && normalizedLoans.isNotEmpty) {
+          final state = normalizedLoans.first['state'];
+          if (state == 'pendiente' || state == 'aceptado') {
+            newState = 'Pendiente';
+          }
+        }
+
+        await BookController().changeState(bookId, newState);
+      }
+
+      return {'success': true};
     } catch (e) {
       print('Error al cancelar la solicitud: $e');
       return {'success': false, 'message': 'Error al eliminar la solicitud'};
@@ -588,7 +612,7 @@ class LoanService extends BaseService{
   }
 
 
-  Future<Map<String, dynamic>> createLoanOfferPhysicalBook(CreateLoanViewModel createLoanViewModel) async {
+  Future<Map<String, dynamic>> createLoanOfferPhysicalBook(CreateLoanViewModel createLoanViewModel, int principalLoanId) async {
     try {
       if (BaseService.client == null) {
         return {'success': false, 'message': 'Error de conexión a la base de datos.'};
@@ -613,6 +637,29 @@ class LoanService extends BaseService{
           .single();
 
       print("Respuesta del servicio Loan: $response");
+
+      // Guardar el id de las compensaciones
+      // Obtener el préstamo principal
+      final principalLoan = await BaseService.client
+          .from('Loan')
+          .select('offeredLoanIds')
+          .eq('id', principalLoanId)
+          .single();
+
+      String currentOfferedLoanIds = (principalLoan['offeredLoanIds'] ?? '').toString();
+      List<String> ids = currentOfferedLoanIds.split(',')
+          .map((e) => e.trim())
+          .where((e) => e.isNotEmpty)
+          .toList();
+
+      final newLoanId = response['id'].toString();
+      if (!ids.contains(newLoanId)) {
+        ids.add(newLoanId);
+      }
+
+      final updatedString = ids.join(',');
+
+      await BaseService.client.from('Loan').update({'offeredLoanIds': updatedString}).eq('id', principalLoanId);
 
       if (response != null) {
         return {

@@ -36,6 +36,7 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
   final _controller = BookController();
   final loancontroller = LoanController();
   final bool _shouldReloadReviews = false;
+  int? principalLoanId;
 
   late Future<List<Map<String, String>>> _loanedFormatsFuture;
   bool _loanRequestSent = false;
@@ -292,36 +293,53 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
                                               return;
                                             }
                                           }
-
+                                          // Físico
                                           if (selectedFormat.toLowerCase() == 'físico') {
                                             final userBooks = await _controller.getUserAvailablePhysicalBooks(currentUserId!);
                                             if (!context.mounted) return;
 
-                                            final selectedBooks = await _showUserBookSelectionDialog(context, userBooks, widget.bookId);
+                                            // Primero, crea el préstamo principal
+                                            final response = await loancontroller.requestLoan(book, selectedFormat, []);
+                                            print('RESPONSE QUE CONTIENE INFORMACION DEL PRESTAMO QUE SE ACABA DE CREAR $response');
+
+                                            if (!response['success']) {
+                                              _showErrorDialog(context, response['message']);
+                                              setState(() => _isSendingRequest = false);
+                                              return;
+                                            }
+
+                                            principalLoanId = response['data']['id'];
+                                            print('VALOR DE PRINCIPALLOANID $principalLoanId');
                                             if (!context.mounted) return;
+
+                                            // Ahora que tienes el ID, puedes continuar con el diálogo
+                                            final selectedBooks = await _showUserBookSelectionDialog(context, userBooks, widget.bookId, principalLoanId!);
+                                            if (!context.mounted) return;
+
                                             if (selectedBooks == null) {
                                               setState(() => _isSendingRequest = false);
                                               return;
                                             }
+
                                             if (selectedBooks.isEmpty) {
                                               _showErrorDialog(context, 'Debes seleccionar al menos un libro físico para continuar.');
                                               setState(() => _isSendingRequest = false);
                                               return;
                                             }
 
-                                            final response = await loancontroller.requestLoan(book, selectedFormat, selectedBooks);
-                                            if (!context.mounted) return;
-
-                                            if (response['success']) {
-                                              await _checkIfLoanRequestExists();
-                                              _showSuccessDialog(context);
-                                            } else {
-                                              _showErrorDialog(context, response['message']);
+                                            // Registrar los libros ofrecidos
+                                            for (var book in selectedBooks) {
+                                              BookController().changeState(book.id, 'Pendiente');
+                                              await LoanController().requestOfferPhysicalBookLoan(book, principalLoanId!);
                                             }
+
+                                            await _checkIfLoanRequestExists();
+                                            _showSuccessDialog(context);
                                             setState(() => _isSendingRequest = false);
                                             return;
                                           }
 
+                                          // Digital
                                           final response = await loancontroller.requestLoan(book, selectedFormat, null);
                                           if (!context.mounted) return;
 
@@ -413,7 +431,7 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
 }
 
 
-Future<List<Book>?> _showUserBookSelectionDialog(BuildContext context, List<Book> userBooks, int bookId) async {
+Future<List<Book>?> _showUserBookSelectionDialog(BuildContext context, List<Book> userBooks, int bookId, int principalLoanId) async {
   final selected = <Book>{};
 
   return await showDialog<List<Book>>(
@@ -504,10 +522,6 @@ Future<List<Book>?> _showUserBookSelectionDialog(BuildContext context, List<Book
               if (userBooks.isNotEmpty)
                 ElevatedButton(
                   onPressed: () async{
-                    for (var book in selected) {
-                      BookController().changeState(book.id, 'Pendiente');
-                      LoanController().requestOfferPhysicalBookLoan(book);
-                    }
                     Navigator.pop(context, selected.toList());
                   },
                   style: ElevatedButton.styleFrom(

@@ -359,7 +359,7 @@ class LoanController extends BaseController{
   }
 
   
-  Future<Map<String, dynamic>> requestOfferPhysicalBookLoan(Book book) async {
+  Future<Map<String, dynamic>> requestOfferPhysicalBookLoan(Book book, int principalLoanId) async {
       try {
         final DateTime startDate = DateTime.now();
         final DateTime endDate = startDate.add(const Duration(days: 30));
@@ -376,7 +376,7 @@ class LoanController extends BaseController{
         );
 
         // Intentamos crear el préstamo
-        final response = await loanService.createLoanOfferPhysicalBook(createLoanViewModel);
+        final response = await loanService.createLoanOfferPhysicalBook(createLoanViewModel, principalLoanId);
         print('requestOfferPhysicalBookLoan response: $response');
 
        return response;
