@@ -104,34 +104,38 @@ class _CategoryViewState extends State<CategoryView> {
     return 3;
   }
 
-  String getAvailabilityStatus(Book book, List<String> loanedFormats) {
-    final List<String> formats = book.format
+  String getAvailabilityStatus({required Book book, required List<String> loanedFormats, required List<String> pendingFormats}) {
+    final allFormats = book.format
         .split(',')
         .map((f) => f.trim().toLowerCase())
         .where((f) => f.isNotEmpty)
         .toList();
 
-    final List<String> disponibles = formats
-        .where((format) => !loanedFormats.map((f) => f.toLowerCase()).contains(format))
+    final availableFormats = allFormats
+        .where((format) =>
+            !loanedFormats.contains(format) &&
+            !pendingFormats.contains(format))
         .toList();
 
-    if (disponibles.isEmpty) {
-      return 'Prestado';
-    } else if (disponibles.length == formats.length) {
+    if (availableFormats.isEmpty) {
+      if (pendingFormats.isNotEmpty) {
+        return 'Pendiente';
+      } else {
+        return 'Prestado';
+      }
+    } else if (availableFormats.length == allFormats.length) {
       return 'Disponible';
-    } else if (disponibles.length == 1) {
-      final formatCapitalized = disponibles.first[0].toUpperCase() + disponibles.first.substring(1);
-      return formatCapitalized;
     } else {
-      if (disponibles.contains('físico') && !disponibles.contains('digital')) {
+      if (availableFormats.contains('físico') && !availableFormats.contains('digital')) {
         return 'Físico';
-      } else if (disponibles.contains('digital') && !disponibles.contains('físico')) {
+      } else if (availableFormats.contains('digital') && !availableFormats.contains('físico')) {
         return 'Digital';
       } else {
         return 'Disponible';
       }
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -206,24 +210,38 @@ class _CategoryViewState extends State<CategoryView> {
                                     itemCount: _books.length,
                                     itemBuilder: (context, index) {
                                       final book = _books[index];
-                                      return FutureBuilder<List<String>>(
-                                        future: _loanController.fetchLoanedFormats(book.id),
+                                      return FutureBuilder<List<List<String>>>(
+                                        future: Future.wait([
+                                          _loanController.fetchLoanedFormats(book.id), // Formatos prestados
+                                          _loanController.fetchPendingFormats(book.id), // Formatos pendientes
+                                        ]),
                                         builder: (context, snapshot) {
                                           if (!snapshot.hasData) {
                                             return const Center(child: CircularProgressIndicator(strokeWidth: 1));
                                           }
 
-                                          final loanedFormats = snapshot.data!;
-                                          final status = getAvailabilityStatus(book, loanedFormats);
-                                          final normalizedStatus = status.trim().toLowerCase();
-                      
+                                          final loanedFormats = snapshot.data![0];
+                                          final pendingFormats = snapshot.data![1];
+                                          final status = getAvailabilityStatus(
+                                            book: book,
+                                            loanedFormats: loanedFormats,
+                                            pendingFormats: pendingFormats,
+                                          );
+
                                           Icon statusIcon;
-                                          if (normalizedStatus == 'disponible') {
-                                            statusIcon = const Icon(Icons.check_circle, color: Colors.green, size: 20);
-                                          } else if (normalizedStatus == 'prestado') {
-                                            statusIcon = const Icon(Icons.cancel, color: Colors.red, size: 20);
-                                          } else {
-                                            statusIcon = const Icon(Icons.check_circle, color: Colors.orange, size: 20);
+                                          switch (status.toLowerCase()) {
+                                            case 'disponible':
+                                              statusIcon = const Icon(Icons.check_circle, color: Colors.green, size: 20);
+                                              break;
+                                            case 'prestado':
+                                              statusIcon = const Icon(Icons.cancel, color: Colors.red, size: 20);
+                                              break;
+                                            case 'pendiente':
+                                              statusIcon = const Icon(Icons.hourglass_empty, color: Colors.amber, size: 20);
+                                              break;
+                                            default:
+                                              statusIcon = const Icon(Icons.check_circle, color: Colors.orange, size: 20);
+                                              break;
                                           }
 
                                           return GestureDetector(
@@ -274,7 +292,6 @@ class _CategoryViewState extends State<CategoryView> {
                                           );
                                         },
                                       );
-
                                     },
                                   ),
                           ),

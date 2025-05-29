@@ -337,6 +337,15 @@ class LoanController extends BaseController{
       return [];
     }
   }
+
+  Future<List<String>> fetchPendingFormats(int bookId) async {
+    try {
+      return await loanService.getPendingFormats(bookId);
+    } catch (e) {
+      print('Error en BookController.fetchPendingFormats: $e');
+      return [];
+    }
+  }
   
 
   Future<List<Map<String, dynamic>>> getLoansByBookId(int bookId) async {

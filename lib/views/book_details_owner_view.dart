@@ -892,7 +892,7 @@ Widget _styledInput(String text) {
                           Row(
                             children: [
                               if (availabilityStatus == 'Pendiente') ...[
-                                const Icon(Icons.cancel, color: Colors.orange, size: 18),
+                                const Icon(Icons.hourglass_empty, color: Colors.orange, size: 18),
                                 const SizedBox(width: 4),
                                 const Text("Pendiente"),
                               ]else if (availabilityStatus == 'Disponible') ...[

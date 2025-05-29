@@ -370,6 +370,28 @@ class LoanService extends BaseService{
   }
 
 
+  Future<List<String>> getPendingFormats(int bookId) async {
+    try {
+      final loanData = await BaseService.client
+          .from('Loan')
+          .select('format')
+          .eq('bookId', bookId)
+          .eq('state', 'Pendiente');
+
+      final loanedFormats = (loanData as List)
+          .map((loan) => loan['format'])
+          .where((f) => f != null)
+          .map((f) => f.toString().trim().toLowerCase())
+          .toList();
+
+      return loanedFormats;
+    } catch (e) {
+      print('Error en getPendingFormats: $e');
+      return [];
+    }
+  }
+
+
   Future<List<Map<String, String>>> getLoanedFormatsAndStates(int bookId) async {
     try {
       final loanData = await BaseService.client
