@@ -1,5 +1,6 @@
 import 'package:booknest/controllers/account_controller.dart';
 import 'package:booknest/views/home_view.dart';
+import 'package:booknest/views/splash_video_view.dart';
 import 'package:flutter/material.dart';
 import 'package:booknest/views/register_view.dart';
 import 'package:booknest/views/reset_password_view.dart';
@@ -50,7 +51,12 @@ class _LoginViewState extends State<LoginView> {
       child: Background(
         title: 'Iniciar Sesión',
         showNotificationIcon: false,
-        onBack: () => Navigator.pop(context),
+        onBack: () {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const MyHomePage(title: '')),
+          );
+        },
         child: SingleChildScrollView(
           child: Center(
             child: Padding(
