@@ -35,23 +35,24 @@ class User {
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
-      id: json['id'],
-      name: json['name'],
-      userName: json['userName'],
-      email: json['email'],
-      phoneNumber: json['phoneNumber'],
-      address: json['address'],
-      password: json['password'],
-      confirmPassword: json['confirmPassword'],
+      id: json['id'] ?? '',
+      name: json['name'] ?? '',
+      userName: json['userName'] ?? '',
+      email: json['email'] ?? '',
+      phoneNumber: json['phoneNumber'] ?? 0,
+      address: json['address'] ?? '',
+      password: json['password'] ?? '',
+      confirmPassword: json['confirmPassword'] ?? '',
       image: json['image'],
       genres: json['genres'] is String
-        ? json['genres'].split(', ')
-        : List<String>.from(json['genres'] ?? []),
-      role: json['role'],
+          ? json['genres'].split(', ')
+          : List<String>.from(json['genres'] ?? []),
+      role: json['role'] ?? '',
       favorites: json['favorites'] is String
-        ? json['favorites'].split(',').map((e) => e.trim()).toList()
-        : List<String>.from(json['favorites'] ?? []),
-      description: json['description'],
+          ? json['favorites'].split(',').map((e) => e.trim()).toList()
+          : List<String>.from(json['favorites'] ?? []),
+      description: json['description'] ?? '',
     );
   }
+
 }

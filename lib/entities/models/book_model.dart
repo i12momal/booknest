@@ -45,7 +45,7 @@ class Book{
         summary: json['summary'] ?? '',
         categories: json['categories'] ?? '',  // Aseguramos que sea un String
         state: json['state'] ?? '',
-        ownerId: json['owner_id'] ?? '',
+        ownerId: json['ownerId'] ?? json['owner_id'] ?? '',
       );
     }
 }

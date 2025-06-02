@@ -586,7 +586,7 @@ class LoanService extends BaseService{
           .from('Loan')
           .select()
           .eq('bookId', bookId)
-          .eq('format', format)
+          .eq('format', format.toLowerCase()) // normaliza aquí también
           .eq('state', 'Aceptado')
           .maybeSingle();
 
@@ -596,6 +596,7 @@ class LoanService extends BaseService{
       return false;
     }
   }
+
 
   Future<bool> areAllFormatsAvailable(int bookId, List<String> formats) async {
     try {

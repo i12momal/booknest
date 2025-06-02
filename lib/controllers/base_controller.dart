@@ -11,17 +11,17 @@ import 'package:booknest/services/book_service.dart';
 import 'package:booknest/services/notification_service.dart';
 
 abstract class BaseController {
-  final AccountService accountService = AccountService();
-  final CategoryService categoryService = CategoryService();
-  final UserService userService = UserService();
-  final BookService bookService = BookService();
-  final ReviewService reviewService = ReviewService();
-  final LoanService loanService = LoanService();
-  final NotificationService notificationService = NotificationService();
-  final ReminderService reminderService = ReminderService();
-  final GeolocationService geolocationService = GeolocationService();
-  final LoanChatService loanChatService = LoanChatService();
-  final ChatMessageService chatMessageService = ChatMessageService();
+  late AccountService accountService = AccountService();
+  late CategoryService categoryService = CategoryService();
+  late UserService userService = UserService();
+  late BookService bookService = BookService();
+  late ReviewService reviewService = ReviewService();
+  late LoanService loanService = LoanService();
+  late NotificationService notificationService = NotificationService();
+  late ReminderService reminderService = ReminderService();
+  late GeolocationService geolocationService = GeolocationService();
+  late LoanChatService loanChatService = LoanChatService();
+  late ChatMessageService chatMessageService = ChatMessageService();
 
   BaseController();
 }
