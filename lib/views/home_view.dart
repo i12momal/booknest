@@ -34,7 +34,7 @@ class _HomeViewState extends State<HomeView> {
 
   List<Map<String, dynamic>> filteredBooks = [];
   int currentPage = 1;
-  final int booksPerPage = 20;
+  final int booksPerPage = 21;
 
   bool isLoading = true;
   String? userId;
