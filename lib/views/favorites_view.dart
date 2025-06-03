@@ -12,6 +12,7 @@ import 'package:booknest/widgets/background.dart';
 import 'package:booknest/widgets/footer.dart';
 import 'package:flutter/material.dart';
 
+// Vista para la acción de Visualizar los libros favoritos de un usuario
 class FavoritesView extends StatefulWidget {
   const FavoritesView({super.key});
 
@@ -39,6 +40,7 @@ class _FavoritesViewState extends State<FavoritesView> {
     _loadUserId();
   }
 
+  // Función para obtener el id del usuario actual
   Future<void> _loadUserId() async {
     final id = await AccountController().getCurrentUserId();
     setState(() {
@@ -46,6 +48,7 @@ class _FavoritesViewState extends State<FavoritesView> {
     });
   }
 
+  // Función para cargar los libros favoritos del usuario
   Future<void> _loadFavorites() async {
     setState(() {
       isLoading = true;
@@ -87,7 +90,7 @@ class _FavoritesViewState extends State<FavoritesView> {
     });
   }
 
-
+  // Función para filtrar los libros
   void _filterByLetter(String letter) {
     setState(() {
       selectedLetter = letter;
@@ -104,7 +107,7 @@ class _FavoritesViewState extends State<FavoritesView> {
     });
   }
 
-  // Este archivo podría ser algo como favorite_books_page.dart o similar.
+  // Función que maneja la letra seleccionada para el filtrado
   Future<void> _toggleReminder(int bookId, int index) async {
     final reminders = await ReminderController().getRemindersByBookAndUser(bookId, userId!);
     final isActive = reminders.isNotEmpty;
@@ -137,7 +140,6 @@ class _FavoritesViewState extends State<FavoritesView> {
 
     setState(() {});
   }
-
 
 
   @override
@@ -279,14 +281,10 @@ class _FavoritesViewState extends State<FavoritesView> {
                                     ],
                                   ),
                                 ),
-
                               ],
                             ),
                           ),
-
                         );
-
-
                       },
                     ),
             ),
@@ -371,6 +369,7 @@ class _FavoritesViewState extends State<FavoritesView> {
     );
   }
 
+  // Widget para construir el método de filtrado
   Widget _buildCircleFilter(String label, String value) {
     final isSelected = value == selectedLetter;
 
@@ -398,4 +397,5 @@ class _FavoritesViewState extends State<FavoritesView> {
       ),
     );
   }
+
 }

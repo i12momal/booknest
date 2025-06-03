@@ -53,8 +53,7 @@ void main() {
 
       final fakeUsers = <Geolocation>[];
 
-      when(() => mockService.getNearbyUsers(position))
-          .thenAnswer((_) async => fakeUsers);
+      when(() => mockService.getNearbyUsers(position)).thenAnswer((_) async => fakeUsers);
 
       final result = await controller.getNearbyUsers(position);
 
@@ -67,8 +66,7 @@ void main() {
     test('isAvailable llama al servicio con bookId y retorna booleano', () async {
       const bookId = 123;
 
-      when(() => mockService.isAvailable(bookId))
-          .thenAnswer((_) async => true);
+      when(() => mockService.isAvailable(bookId)).thenAnswer((_) async => true);
 
       final result = await controller.isAvailable(bookId);
 
@@ -80,8 +78,7 @@ void main() {
     test('isUserGeolocationEnabled llama servicio y retorna valor', () async {
       const userId = 'user1';
 
-      when(() => mockService.isUserGeolocationEnabled(userId))
-          .thenAnswer((_) async => true);
+      when(() => mockService.isUserGeolocationEnabled(userId)).thenAnswer((_) async => true);
 
       final result = await controller.isUserGeolocationEnabled(userId);
 
@@ -94,8 +91,7 @@ void main() {
       const userId = 'user1';
       const enabled = true;
 
-      when(() => mockService.updateUserGeolocation(userId, enabled))
-          .thenAnswer((_) async => Future.value());
+      when(() => mockService.updateUserGeolocation(userId, enabled)).thenAnswer((_) async => Future.value());
 
       await controller.updateUserGeolocation(userId, enabled);
 
@@ -107,8 +103,7 @@ void main() {
       const userId = 'user1';
       final fakeGeolocation = GeolocationFake();
 
-      when(() => mockService.getUserGeolocation(userId))
-          .thenAnswer((_) async => fakeGeolocation);
+      when(() => mockService.getUserGeolocation(userId)).thenAnswer((_) async => fakeGeolocation);
 
       final result = await controller.getUserGeolocation(userId);
 
@@ -117,4 +112,5 @@ void main() {
       print('getUserGeolocation llamado con userId=$userId');
     });
   });
+  
 }

@@ -1,15 +1,3 @@
-// Modelo de vista del Index
-class IndexReviewViewModel{
-  final String comment;
-  final int rating;
-
-  IndexReviewViewModel({
-    required this.comment,
-    required this.rating
-  });
-}
-
-
 // Modelo de vista del formulario de creación
 class CreateReviewViewModel{
   final String comment;

@@ -2,8 +2,10 @@ import 'package:booknest/entities/models/chat_message_model.dart';
 import 'package:booknest/entities/viewmodels/chat_message_view_model.dart';
 import 'package:booknest/services/base_service.dart';
 
+// Servicio con los métodos de negocio de la entidad Mensajes de Chat.
 class ChatMessageService extends BaseService{
 
+  // Método asíncrono para crear un mensaje asociado a un chat.
    Future<Map<String, dynamic>> createChatMessage(CreateChatMessageViewModel createChatMessageViewModel) async {
     try {
       if (BaseService.client == null) {
@@ -42,25 +44,17 @@ class ChatMessageService extends BaseService{
     }
   }
 
-
+  // Método asíncrono que obtiene los mensajes asociados a un chat.
   Future<List<ChatMessage>> getMessagesForChat(int chatId, String userId) async {
-    final response = await BaseService.client
-      .from('ChatMessage')
-      .select()
-      .eq('chatId', chatId)
-      .eq('userId', userId)
-      .order('id', ascending: false);
+    final response = await BaseService.client.from('ChatMessage').select().eq('chatId', chatId).eq('userId', userId).order('id', ascending: false);
 
     return (response as List).map((json) => ChatMessage.fromJson(json)).toList();
   }
 
+  // Método asíncrono para marcar un mensaje como leído.
   Future<void> markMessageAsRead(int chatId, String userId) async {
     try {
-      await BaseService.client
-        .from('ChatMessage')
-        .update({'read' : true})
-        .eq('chatId', chatId).eq('userId', userId)
-        .select();
+      await BaseService.client.from('ChatMessage').update({'read' : true}).eq('chatId', chatId).eq('userId', userId).select();
 
     } catch (e) {
       if (e.toString().contains('SocketException')) {
@@ -70,6 +64,7 @@ class ChatMessageService extends BaseService{
     }
   }
 
+  // Método asíncrono para eliminar los mensajes de un usuario.
   Future<Map<String, dynamic>> deleteMessagesByUser(int chatId, String userId) async {
     try {
       final response = await BaseService.client
@@ -96,14 +91,10 @@ class ChatMessageService extends BaseService{
     }
   }
 
-
+  // Método que actualiza el estado de un chat si se ha borrado
   Future<Map<String, dynamic>> updateDeleteLoanChat(int chatId, String userId) async {
     try {
-      final response = await BaseService.client
-          .from('LoanChat')
-          .select()
-          .eq('id', chatId)
-          .maybeSingle();
+      final response = await BaseService.client.from('LoanChat').select().eq('id', chatId).maybeSingle();
 
       if (response == null) {
         return {
@@ -135,6 +126,5 @@ class ChatMessageService extends BaseService{
       };
     }
   }
-
 
 }

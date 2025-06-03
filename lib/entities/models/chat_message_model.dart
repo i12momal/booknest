@@ -1,3 +1,4 @@
+// Define la entidad Mensaje de Chat en el modelo de datos.
 class ChatMessage {
   final int id;
   final String userId;

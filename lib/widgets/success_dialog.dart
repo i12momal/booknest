@@ -6,7 +6,6 @@ class SuccessDialog extends StatelessWidget {
   final String message;
   final VoidCallback onAccept;
 
-  // Constructor del widget
   const SuccessDialog({
     super.key,
     required this.title,
@@ -44,4 +43,5 @@ class SuccessDialog extends StatelessWidget {
       },
     );
   }
+  
 }

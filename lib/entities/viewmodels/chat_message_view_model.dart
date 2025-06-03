@@ -1,3 +1,4 @@
+// Modelo de vista del formulario de creación.
 class CreateChatMessageViewModel {
   final String userId;
   final int chatId;

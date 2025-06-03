@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:booknest/widgets/genre_chip.dart';
 
+// Widget para el container de selección de categorías al añadir/editar un libro
 class GenreSelectionBookWidget extends StatelessWidget {
   final List<String> genres;
   final List<String> selectedGenres;
@@ -126,4 +127,5 @@ class GenreSelectionBookWidget extends StatelessWidget {
       ],
     );
   }
+  
 }

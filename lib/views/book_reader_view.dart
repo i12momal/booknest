@@ -2,6 +2,7 @@ import 'package:booknest/controllers/loan_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 
+// Vista para la acción de Leer un libro
 class BookReaderView extends StatefulWidget {
   final String url;
   final int initialPage;

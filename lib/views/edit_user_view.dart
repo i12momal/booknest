@@ -106,7 +106,7 @@ class _EditUserViewState extends State<EditUserView> {
           _message = 'No se encontró la información del usuario. Por favor, intente nuevamente.';
           _isLoading = false;
         });
-        // Redirigir al login después de un breve delay
+        // Redirigir al login 
         Future.delayed(const Duration(seconds: 2), () {
           if (mounted) {
             Navigator.pushReplacement(
@@ -121,7 +121,7 @@ class _EditUserViewState extends State<EditUserView> {
         _message = 'Error al cargar los datos del usuario. Por favor, intente nuevamente.';
         _isLoading = false;
       });
-      // Redirigir al login después de un breve delay
+      // Redirigir al login 
       Future.delayed(const Duration(seconds: 2), () {
         if (mounted) {
           Navigator.pushReplacement(
@@ -178,6 +178,26 @@ class _EditUserViewState extends State<EditUserView> {
     }
   }
 
+  // Función que muestra el dialogo de éxito al actualizar un usuario
+  void _showSuccessDialog() {
+    SuccessDialog.show(
+      context,
+      'Actualización Exitosa', 
+      '¡Tus datos han sido actualizados correctamente!',
+      () {
+        Navigator.pop(context);
+        Future.microtask(() {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => OwnerProfileView(userId: widget.userId),
+            ),
+          );
+        });
+      },
+    );
+  }
+
   // Método para actualizar el usuario
   Future<void> _updateUser() async {
     if (selectedGenres.isEmpty) {
@@ -205,17 +225,6 @@ class _EditUserViewState extends State<EditUserView> {
       // Mantener la imagen actual si no se ha seleccionado una nueva
       // final imageUrl = _imageFile ?? currentImageUrl ?? '';
 
-      print("Datos para actualizar:");
-      print("Nombre: $name");
-      print("Nombre de usuario: $userName");
-      print("Email: $email");
-      print("Teléfono: $phoneNumber");
-      print("Dirección: $address");
-      print("Contraseña: ${password ?? '(No modificada)'}");
-      print("Confirmar contraseña: ${confirmPassword ?? '(No modificada)'}");
-      print("Géneros seleccionados: $selectedGenres");
-      print("Imagen: ${_imageFile != null ? 'Nueva imagen seleccionada' : 'Mantener imagen actual'}");
-
       final result = await _userController.editUser(widget.userId, name, userName, email, phoneNumber, address, password ?? '', confirmPassword ?? '', _imageFile,
         selectedGenres.join(", "), description);
 
@@ -235,25 +244,6 @@ class _EditUserViewState extends State<EditUserView> {
     }
   }
 
-  // Función que muestra el dialogo de éxito al actualizar un usuario
-  void _showSuccessDialog() {
-    SuccessDialog.show(
-      context,
-      'Actualización Exitosa', 
-      '¡Tus datos han sido actualizados correctamente!',
-      () {
-        Navigator.pop(context);
-        Future.microtask(() {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => OwnerProfileView(userId: widget.userId),
-            ),
-          );
-        });
-      },
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -321,4 +311,5 @@ class _EditUserViewState extends State<EditUserView> {
       isLoading: _isLoading,
     );
   }
+  
 }

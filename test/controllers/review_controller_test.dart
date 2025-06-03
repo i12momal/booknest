@@ -44,8 +44,7 @@ void main() {
         ]
       };
 
-      when(() => mockService.fetchReviews(bookId))
-          .thenAnswer((_) async => mockResponse);
+      when(() => mockService.fetchReviews(bookId)).thenAnswer((_) async => mockResponse);
 
       final result = await controller.getReviews(bookId);
 
@@ -60,8 +59,7 @@ void main() {
       const bookId = 1;
       final mockResponse = {'success': false};
 
-      when(() => mockService.fetchReviews(bookId))
-          .thenAnswer((_) async => mockResponse);
+      when(() => mockService.fetchReviews(bookId)).thenAnswer((_) async => mockResponse);
 
       final result = await controller.getReviews(bookId);
 
@@ -78,8 +76,7 @@ void main() {
 
       final mockResponse = {'success': true, 'message': 'Reseña agregada'};
 
-      when(() => mockService.addReview(any()))
-          .thenAnswer((_) async => mockResponse);
+      when(() => mockService.addReview(any())).thenAnswer((_) async => mockResponse);
 
       final result = await controller.addReview(comment, rating, userId, bookId);
 
@@ -92,8 +89,7 @@ void main() {
       const reviewId = 1;
       final mockResponse = {'success': true, 'message': 'Eliminado correctamente'};
 
-      when(() => mockService.deleteReview(reviewId))
-          .thenAnswer((_) async => mockResponse);
+      when(() => mockService.deleteReview(reviewId)).thenAnswer((_) async => mockResponse);
 
       final result = await controller.deleteReview(reviewId);
 
@@ -108,8 +104,7 @@ void main() {
       const rating = 3;
       final mockResponse = {'success': true, 'message': 'Actualizado correctamente'};
 
-      when(() => mockService.updateReview(any()))
-          .thenAnswer((_) async => mockResponse);
+      when(() => mockService.updateReview(any())).thenAnswer((_) async => mockResponse);
 
       final result = await controller.updateReview(id, comment, rating);
 
@@ -123,8 +118,7 @@ void main() {
       const comment = 'Comentario fallido';
       const rating = 2;
 
-      when(() => mockService.updateReview(any()))
-          .thenThrow(Exception('Error inesperado'));
+      when(() => mockService.updateReview(any())).thenThrow(Exception('Error inesperado'));
 
       final result = await controller.updateReview(id, comment, rating);
 
@@ -133,4 +127,5 @@ void main() {
       print('Error al actualizar reseña capturado correctamente');
     });
   });
+  
 }

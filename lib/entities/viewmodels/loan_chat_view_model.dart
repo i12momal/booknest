@@ -1,3 +1,4 @@
+// Modelo de vista del formulario de creación.
 class CreateLoanChatViewModel {
   final int id;
   final String loanId;

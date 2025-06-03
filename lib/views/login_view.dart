@@ -7,6 +7,7 @@ import 'package:booknest/views/reset_password_view.dart';
 import 'package:booknest/widgets/background.dart';
 import 'package:booknest/widgets/custom_text_field.dart';
 
+// Vista para las acciones de la Página de Inicio de Sesión
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
 
@@ -239,4 +240,5 @@ class _LoginViewState extends State<LoginView> {
       ),
     );
   }
+  
 }

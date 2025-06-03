@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+// Widget para el diseño de cómo se muestra una reseña
 class ReviewItem extends StatelessWidget {
   final String name;
   final int rating;
@@ -95,4 +96,5 @@ class ReviewItem extends StatelessWidget {
       ),
     );
   }
+
 }

@@ -13,6 +13,7 @@ import 'package:html/dom.dart' as dom;
 import 'package:url_launcher/url_launcher.dart';
 
 
+// Widget Background para barra superior y footer
 class Background extends StatefulWidget {
   final Widget child;
   final String title;
@@ -58,12 +59,12 @@ class _BackgroundState extends State<Background> {
     _loadUserId();
   }
 
+  // Función para poder abrir el enlace al correo
   Future<void> _launchUrlExternally(String url) async {
     final uri = Uri.parse(url);
     try {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } catch (e) {
-      //if (!mounted) return;
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
@@ -77,7 +78,7 @@ class _BackgroundState extends State<Background> {
     }
   }
 
-
+  // Función para mostrar/ocultar chats
   void _toggleChatMenu() {
     setState(() {
       _showChatMenu = !_showChatMenu;
@@ -85,6 +86,7 @@ class _BackgroundState extends State<Background> {
     });
   }
 
+  // Función para obtener el id del usuario actual
   void _loadUserId() async {
     if (userId != null) return;
 
@@ -99,7 +101,7 @@ class _BackgroundState extends State<Background> {
     setState(() {});
   }
 
-
+  // Función que muestra un diálogo de confirmación para devolver un libro
   Future<bool?> _showConfirmReturnDialog(BuildContext context) {
     return showDialog<bool>(
       context: context,
@@ -119,13 +121,13 @@ class _BackgroundState extends State<Background> {
     );
   }
 
+  // Función para actualizar el estado de una solicitud de préstamo devuelta
   Future <void> _returnPhysicalBookByUser(int loanId, int compensationLoanId) async {
     await LoanController().updateLoanStateByUser(loanId, compensationLoanId, 'Devuelto');
   }
 
-
+  // Función para cargar los chats de un usuario
   Future<void> _loadChats(String currentUserId) async {
-    //setState(() => _isLoadingChats = true);
 
     if (currentUserId == null) {
       setState(() => _isLoadingChats = false);
@@ -173,7 +175,7 @@ class _BackgroundState extends State<Background> {
     }
   }
 
-
+  // Obtener el número de notificaciones no leídas del usuario
   Future<int> _fetchNotificationCount() async {
     final userId = await AccountController().getCurrentUserId();
     if (userId == null) return 0;
@@ -182,7 +184,7 @@ class _BackgroundState extends State<Background> {
     return response.length;
   }
 
-
+  // Función que muestra un mensaje de confirmación para el cierre de sesión
   void _confirmLogout(BuildContext context) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -213,6 +215,7 @@ class _BackgroundState extends State<Background> {
     }
   }
 
+  // Método para archivar/desarchivar un chat
   void _confirmArchiveToggle(LoanChat chat) async {
     final isArchived = _showArchived;
 
@@ -247,6 +250,7 @@ class _BackgroundState extends State<Background> {
     }
   }
 
+  // Función que muestra un diálogo de éxito en la devolución de un libro
   Future<void> showSuccessDialog(BuildContext context, int bookId) async {
     if (!context.mounted) return;
 
@@ -267,6 +271,7 @@ class _BackgroundState extends State<Background> {
     );
   }
 
+  // Widget para construir el listado de chats del usuario
   Widget _buildChatList() {
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 300),
@@ -399,7 +404,7 @@ class _BackgroundState extends State<Background> {
                         text: TextSpan(
                           children: [
                             TextSpan(
-                              text: 'Préstamo #${chat.loanId} ', // Puedes mostrar `myLoanId` si quieres más precisión
+                              text: 'Préstamo #${chat.loanId} ',
                               style: const TextStyle(
                                 color: Colors.black,
                                 fontWeight: FontWeight.normal,
@@ -507,7 +512,6 @@ class _BackgroundState extends State<Background> {
                                       setState(() => _isReturningBook = false);
 
                                     },
-
 
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: const Color(0xFF112363),
@@ -746,4 +750,5 @@ class _BackgroundState extends State<Background> {
       )
     );
   }
+  
 }

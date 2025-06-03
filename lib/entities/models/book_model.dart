@@ -31,7 +31,6 @@ class Book{
   });
 
     factory Book.fromJson(Map<String, dynamic> json) {
-      // Directamente asignamos los valores de 'format' y 'categories' como String
       return Book(
         id: json['id'],
         title: json['title'] ?? '',
@@ -39,11 +38,11 @@ class Book{
         isbn: json['isbn'] ?? '',
         pagesNumber: json['pagesNumber'] ?? 0,
         language: json['language'] ?? '',
-        format: json['format'] ?? '',  // Aseguramos que sea un String
+        format: json['format'] ?? '', 
         file: json['file'] ?? '',
         cover: json['cover'] ?? '',
         summary: json['summary'] ?? '',
-        categories: json['categories'] ?? '',  // Aseguramos que sea un String
+        categories: json['categories'] ?? '', 
         state: json['state'] ?? '',
         ownerId: json['ownerId'] ?? json['owner_id'] ?? '',
       );

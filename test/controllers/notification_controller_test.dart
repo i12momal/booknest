@@ -28,8 +28,7 @@ void main() {
     test('markNotificationAsRead llama al servicio correctamente', () async {
       const notificationId = 1;
 
-      when(() => mockService.markNotificationAsRead(notificationId))
-          .thenAnswer((_) async => Future.value());
+      when(() => mockService.markNotificationAsRead(notificationId)).thenAnswer((_) async => Future.value());
 
       await controller.markNotificationAsRead(notificationId);
 
@@ -43,8 +42,7 @@ void main() {
       const relatedId = 123;
       const message = 'Tienes una nueva solicitud de préstamo';
 
-      when(() => mockService.createNotification(any()))
-          .thenAnswer((_) async => {'success': true});
+      when(() => mockService.createNotification(any())).thenAnswer((_) async => {'success': true});
 
       final result = await controller.createNotification(userId, type, relatedId, message);
 
@@ -66,8 +64,7 @@ void main() {
       const userId = 'user1';
       final mockNotifications = <Map<String, dynamic>>[];
 
-      when(() => mockService.getNotifications(userId))
-          .thenAnswer((_) async => mockNotifications);
+      when(() => mockService.getNotifications(userId)).thenAnswer((_) async => mockNotifications);
 
       final result = await controller.getUserNotifications(userId);
 
@@ -82,8 +79,7 @@ void main() {
       const userId = 'user1';
       final mockUnread = <Map<String, dynamic>>[];
 
-      when(() => mockService.getUnreadNotifications(userId))
-          .thenAnswer((_) async => mockUnread);
+      when(() => mockService.getUnreadNotifications(userId)).thenAnswer((_) async => mockUnread);
 
       final result = await controller.getUnreadUserNotifications(userId);
 
@@ -97,8 +93,7 @@ void main() {
     test('deleteNotification llama al servicio y retorna resultado', () async {
       const notificationId = 1;
 
-      when(() => mockService.deleteNotification(notificationId))
-          .thenAnswer((_) async => {'deleted': true});
+      when(() => mockService.deleteNotification(notificationId)).thenAnswer((_) async => {'deleted': true});
 
       final result = await controller.deleteNotification(notificationId);
 
@@ -112,8 +107,7 @@ void main() {
       const loanId = 101;
       final mockNotifications = <Map<String, dynamic>>[];
 
-      when(() => mockService.getNotificationsByLoanId(loanId))
-          .thenAnswer((_) async => mockNotifications);
+      when(() => mockService.getNotificationsByLoanId(loanId)).thenAnswer((_) async => mockNotifications);
 
       final result = await controller.getNotificationsByLoanId(loanId);
 
@@ -124,4 +118,5 @@ void main() {
       print('Notificaciones para préstamo $loanId: $result');
     });
   });
+  
 }

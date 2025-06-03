@@ -6,7 +6,7 @@ import 'package:booknest/entities/viewmodels/review_view_model.dart';
 // Controlador con los métodos de las acciones de Reseñas y Valoraciones.
 class ReviewController extends BaseController {
 
-  // Método para obtener las reseñas de un libro
+  // Método asíncrono para obtener las reseñas de un libro.
   Future<List<Review>> getReviews(int bookId) async {
     var response = await reviewService.fetchReviews(bookId);
 
@@ -32,7 +32,7 @@ class ReviewController extends BaseController {
   }
 
   // Método asíncrono para añadir una nueva reseña a un libro
-   Future<Map<String, dynamic>> addReview(String comment, int rating, String userId, int bookId) async {
+  Future<Map<String, dynamic>> addReview(String comment, int rating, String userId, int bookId) async {
     // Creación del viewModel
     final addReviewViewModel = CreateReviewViewModel(
       comment: comment,
@@ -45,13 +45,13 @@ class ReviewController extends BaseController {
     return await reviewService.addReview(addReviewViewModel);
   }
 
-
+  // Método asíncrono para eliminar una reseña.
   Future<Map<String, dynamic>> deleteReview(int reviewId) async {
     return await reviewService.deleteReview(reviewId);
   }
 
+  // Método asíncrono para editar una reseña.
   Future<Map<String, dynamic>> updateReview(int id, String comment, int rating) async {
-
     // Crear viewModel con los datos editados
     final editReviewViewModel = EditReviewViewModel(
       id: id,
@@ -71,6 +71,5 @@ class ReviewController extends BaseController {
       };
     }
   }
-
 
 }

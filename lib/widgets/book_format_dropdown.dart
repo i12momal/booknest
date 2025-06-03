@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+// Widget para mostrar el dropdown de formatos de un libro
 class BookFormatDropdown extends StatelessWidget {
   final TextEditingController controller;
   final String? Function(String?)? validator;

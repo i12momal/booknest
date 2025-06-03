@@ -6,7 +6,7 @@ import 'package:booknest/services/base_service.dart';
 // Servicio con los métodos de negocio para la entidad Préstamo.
 class LoanService extends BaseService{
 
-  // Método asíncrono para solicitar el préstamo de un libro
+  // Método asíncrono para crear una solicitud de préstamo de un libro
   Future<Map<String, dynamic>> createLoan(CreateLoanViewModel createLoanViewModel) async {
     try {
       if (BaseService.client == null) {
@@ -103,19 +103,14 @@ class LoanService extends BaseService{
     }
   }
 
-
-  // Método asíncrono que obtiene las solicitudes de préstamos pendientes.
+  // Método asíncrono que obtiene las solicitudes de préstamos pendientes de un usuario.
   Future<List<Map<String, dynamic>>> getUserPendingLoans(String userId) async {
     try {
       if (BaseService.client == null) {
         return [];
       }
 
-      final response = await BaseService.client
-          .from('Loan')
-          .select()
-          .eq('ownerId', userId)
-          .eq('state', 'Pendiente').order('created_at', ascending: false);;
+      final response = await BaseService.client.from('Loan').select().eq('ownerId', userId).eq('state', 'Pendiente').order('created_at', ascending: false);
 
       return response;
     } catch (e) {
@@ -124,7 +119,7 @@ class LoanService extends BaseService{
     }
   }
 
-  // Método asíncrono que obtiene los datos de un libro.
+  // Método asíncrono que obtiene los datos de una solicitud de préstamo.
   Future<Map<String, dynamic>> getLoanById(int loanId) async {
     try {
       // Comprobamos si la conexión a Supabase está activa.
@@ -133,11 +128,7 @@ class LoanService extends BaseService{
       }
 
       // Llamada a la base de datos para obtener los datos del préstamo.
-      final response = await BaseService.client
-          .from('Loan')
-          .select()
-          .eq('id', loanId)
-          .maybeSingle();
+      final response = await BaseService.client.from('Loan').select().eq('id', loanId).maybeSingle();
 
       print("Respuesta de Supabase: $response");
 
@@ -153,6 +144,7 @@ class LoanService extends BaseService{
     }
   }
 
+  // Método asíncrono para actualizar el estado de un préstamo.
   Future<void> updateLoanState(int loanId, String newState) async {
     try {
       if (BaseService.client == null) {
@@ -201,10 +193,7 @@ class LoanService extends BaseService{
             }
             
             // Actualizar el estado solo si es No Disponible
-            await BaseService.client
-                .from('Book')
-                .update({'state': newState})
-                .eq('id', bookId);
+            await BaseService.client.from('Book').update({'state': newState}).eq('id', bookId);
           }
         }
 
@@ -227,26 +216,19 @@ class LoanService extends BaseService{
           if (response != null && response.isNotEmpty) {
             int bookId = response.first['bookId'];
             String newState = 'Disponible';
-            final resp = await BaseService.client
-                .from('Book')
-                .update({'state': newState})
-                .eq('id', bookId);
+            final resp = await BaseService.client.from('Book').update({'state': newState}).eq('id', bookId);
           print('responde: $resp');
           }
       }else{
         // Si no es 'Aceptado' ni 'Devuelto', solo se actualiza el estado
-        final response = await BaseService.client
-            .from('Loan')
-            .update({'state': newState})
-            .eq('id', loanId)
-            .select();
+        final response = await BaseService.client.from('Loan').update({'state': newState}).eq('id', loanId).select();
       }
     } catch (e) {
       print('Error al cambiar el estado del préstamo: $e');
     }
   }
 
-  // Método que obtiene los libros que han sido prestados a un usuario
+  // Método asíncrono que obtiene los libros que han sido prestados a un usuario
   Future<List<Map<String, dynamic>>> getLoansByHolder(String userId) async {
     try {
       if (BaseService.client == null) return [];
@@ -268,7 +250,7 @@ class LoanService extends BaseService{
     }
   }
 
-
+  // Método asíncrono que obtiene un préstamo por usuario y libro
   Future<Map<String, dynamic>?> getLoanByUserAndBook(String userId, int bookId) async {
     try {
       final today = DateTime.now().toIso8601String();
@@ -291,6 +273,7 @@ class LoanService extends BaseService{
     }
   }
 
+  // Método para actualizar la página actual por la que se está leyendo un libro.
   Future<void> updateCurrentPage(int loanId, int currentPage) async {
     try {
       await BaseService.client.from('Loan').update({
@@ -301,22 +284,21 @@ class LoanService extends BaseService{
     }
   }
 
-  // Método para obtener el progreso guardado de una página
+  // Método asíncrono para obtener el progreso guardado de una página
   Future<int?> getSavedPageProgress(String userId, int bookId) async {
     try {
       // Llamada al servicio para consultar el progreso guardado
       final response = await BaseService.client
-          .from('Loan') // Asumiendo que la tabla es 'Loan'
-          .select() // Seleccionar los campos
-          .eq('currentHolderId', userId) // Filtrar por userId
-          .eq('bookId', bookId) // Filtrar por bookId
-          .maybeSingle(); // Tomar un solo registro (si existe)
+          .from('Loan')
+          .select()
+          .eq('currentHolderId', userId)
+          .eq('bookId', bookId)
+          .maybeSingle();
 
       if (response != null) {
-        // Si se encuentra el progreso guardado, se asume que la respuesta tiene el campo 'currentPage'
         return response['currentPage'];
       } else {
-        return null; // No se encontró progreso guardado
+        return null;
       }
     } catch (e) {
       print('Error en LoanService.getSavedPageProgress: $e');
@@ -324,8 +306,7 @@ class LoanService extends BaseService{
     }
   }
 
-
-
+  // Método asíncrono para obtener los formatos disponibles de un libro
   Future<List<String>> getAvailableFormats(int bookId, List<String> formats) async {
     try {
       // Obtener los préstamos con el estado 'Aceptado' y el 'bookId'
@@ -348,6 +329,7 @@ class LoanService extends BaseService{
     }
   }
 
+  // Método asíncrono para obtener los formatos prestados de un libro
   Future<List<String>> getLoanedFormats(int bookId) async {
     try {
       final loanData = await BaseService.client
@@ -369,7 +351,7 @@ class LoanService extends BaseService{
     }
   }
 
-
+  // Método asíncrono para obtener los formatos pendientes de un libro
   Future<List<String>> getPendingFormats(int bookId) async {
     try {
       final loanData = await BaseService.client
@@ -391,7 +373,7 @@ class LoanService extends BaseService{
     }
   }
 
-
+  // Método asíncrono para obtener los formatos prestados y su estado
   Future<List<Map<String, String>>> getLoanedFormatsAndStates(int bookId) async {
     try {
       final loanData = await BaseService.client
@@ -415,17 +397,12 @@ class LoanService extends BaseService{
     }
   }
 
-
-
-
+  // Método asíncrono para obtener los préstamos de un libro por su id
   Future<List<Map<String, dynamic>>> getLoansByBookId(int bookId) async {
     try {
       if (BaseService.client == null) return [];
 
-      final response = await BaseService.client
-          .from('Loan')
-          .select()
-          .eq('bookId', bookId);
+      final response = await BaseService.client.from('Loan').select().eq('bookId', bookId);
 
       return List<Map<String, dynamic>>.from(response);
     } catch (e) {
@@ -434,6 +411,7 @@ class LoanService extends BaseService{
     }
   }
 
+  // Método asíncrono para eliminar una solicitud de préstamo realizada sobre un libro.
   Future<Map<String, dynamic>> cancelLoan(int bookId, int? notificationId, String? format) async {
     try {
       // 1. Eliminar notificación si existe
@@ -544,8 +522,7 @@ class LoanService extends BaseService{
     }
   }
 
-
-  // Método que comprueba si el usuario ya ha realizado una solicitud de préstamo para un libro
+  // Método asíncrono que comprueba si el usuario ya ha realizado una solicitud de préstamo para un libro
   Future<Map<String, dynamic>> checkExistingLoanRequest(int bookId, String userId) async {
     try {
       if (BaseService.client == null) {
@@ -579,14 +556,14 @@ class LoanService extends BaseService{
     }
   }
 
-
+  // Método asíncrono que obtiene los préstamos activos de un libro según sus formatos.
   Future<bool> getActiveLoanForBookAndFormat(int bookId, String format) async {
     try {
       final response = await BaseService.client
           .from('Loan')
           .select()
           .eq('bookId', bookId)
-          .eq('format', format.toLowerCase()) // normaliza aquí también
+          .eq('format', format.toLowerCase())
           .eq('state', 'Aceptado')
           .maybeSingle();
 
@@ -597,7 +574,7 @@ class LoanService extends BaseService{
     }
   }
 
-
+  // Método asíncrono que comprueba si todos los formatos de un libro están disponibles.
   Future<bool> areAllFormatsAvailable(int bookId, List<String> formats) async {
     try {
       for (final format in formats) {
@@ -613,28 +590,27 @@ class LoanService extends BaseService{
     }
   }
 
+  // Método asíncrono para actualizar la contraprestación seleccionada en un intercambio físico.
   Future<void> updateCompensation(String? compensation, int loanId) async {
     try {
       if (BaseService.client == null) {
         return;
       }
       
-      final response = await BaseService.client
-          .from('Loan')
-          .update({
-            'compensation': compensation,
-          })
-          .eq('id', loanId)
-          .select();
-
-        
+      await BaseService.client
+        .from('Loan')
+        .update({
+          'compensation': compensation,
+        })
+        .eq('id', loanId)
+        .select();
       
     } catch (e) {
       print('Error al cambiar el estado de la contraprestación: $e');
     }
   }
 
-
+  // Método asíncrono para crear una solicitud de préstamo física.
   Future<Map<String, dynamic>> createLoanOfferPhysicalBook(CreateLoanViewModel createLoanViewModel, int principalLoanId) async {
     try {
       if (BaseService.client == null) {
@@ -653,11 +629,7 @@ class LoanService extends BaseService{
         'currentPage': createLoanViewModel.currentPage,
       };
 
-      final response = await BaseService.client
-          .from('Loan')
-          .insert(loanData)
-          .select()
-          .single();
+      final response = await BaseService.client.from('Loan').insert(loanData).select().single();
 
       print("Respuesta del servicio Loan: $response");
 
@@ -698,8 +670,7 @@ class LoanService extends BaseService{
     }
   }
 
-
-  // Borra loan por libro y usuario (para los libros no seleccionados o si fue fianza)
+  // Método asíncrono que borra loan por libro y usuario (para los libros no seleccionados o si fue fianza)
   Future<void> deleteLoanByBookAndUser(int bookId, String userId) async {
     try {
       await BaseService.client
@@ -707,13 +678,13 @@ class LoanService extends BaseService{
           .delete()
           .eq('bookId', bookId)
           .eq('ownerId', userId);
-      print('✅ Loan eliminado: libro $bookId, usuario $userId');
+      print(' Loan eliminado: libro $bookId, usuario $userId');
     } catch (e) {
-      print('❌ Error al eliminar loan: $e');
+      print(' Error al eliminar loan: $e');
     }
   }
 
-  // Acepta el libro seleccionado: actualiza estado y currentHolderId
+  // Método asíncrono que acepta el libro seleccionado: actualiza estado y currentHolderId
   Future<int?> acceptCompensationLoan({required int bookId, required String userId, required String? newHolderId, required String compensation}) async {
     try {
       print('Valores del acceptCompensationLoan $bookId, $userId, $newHolderId, $compensation');
@@ -743,7 +714,7 @@ class LoanService extends BaseService{
     }
   }
 
-
+  // Método asíncrono que obtiene el estado de una solicitud de préstamo realizada por un usuario.
   Future<String> getLoanStateForUser(int loanId, String userId) async {
     try {
       final response = await BaseService.client
@@ -753,7 +724,6 @@ class LoanService extends BaseService{
           .eq('ownerId', userId)
           .maybeSingle();
 
-      // response es directamente un Map<String, dynamic> con los datos
       if (response != null && response['state'] != null) {
         return response['state'] as String;
       } else {
@@ -765,6 +735,7 @@ class LoanService extends BaseService{
     }
   }
 
+  // Método asíncrono que obtiene el id de la solicitud de préstamo de un usuario.
   Future<int?> getActualLoanIdForUserAndBook(int loanId, String userId) async {
     try {
       final response = await BaseService.client
@@ -783,6 +754,7 @@ class LoanService extends BaseService{
     }
   }
 
+  // Método asíncrono para actualizar el estado de una solicitud de préstamo
   Future<void> updateLoanStateByUser(String? userId, int loanId, int compensationLoanId, String newState,) async {
     try {
       if (BaseService.client == null || userId == null) {
@@ -790,10 +762,7 @@ class LoanService extends BaseService{
       }
 
       // Obtener los dos préstamos
-      final response = await BaseService.client
-          .from('Loan')
-          .select()
-          .filter('id', 'in', '($loanId,$compensationLoanId)') as List;
+      final response = await BaseService.client.from('Loan').select().filter('id', 'in', '($loanId,$compensationLoanId)') as List;
 
       if (response.isEmpty) {
         return;
@@ -839,7 +808,7 @@ class LoanService extends BaseService{
     }
   }
 
-
+  // Método asíncrono para crear la solicitud de préstamo asociada cuando la contraprestación seleccionada ha sido Fianza.
   Future<Map<String, dynamic>> createLoanFianza(CreateLoanViewModel createLoanViewModel, String bookTitle) async {
     try {
       if (BaseService.client == null) {
@@ -880,7 +849,5 @@ class LoanService extends BaseService{
       return {'success': false, 'message': ex.toString()};
     }
   }
-
-
 
 }

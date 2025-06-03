@@ -22,6 +22,7 @@ import 'package:booknest/widgets/success_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+// Vista para las acciones del Perfil del Usuario Propietario
 class OwnerProfileView extends StatefulWidget {
   final String userId;
   const OwnerProfileView({super.key, required this.userId});
@@ -62,6 +63,7 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
     _fetchActiveLoans();
   }
 
+  // Método para cargar los datos del usuario
   Future<void> _fetchUserData() async {
     setState(() {
       _isLoading = true;
@@ -106,7 +108,7 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
     }
   }
 
-
+  // Método para compronar si el usuario tiene la geolocalización activa
   Future<void> _fetchUserGeolocation() async {
     try {
       final isEnabled = await GeolocationController().isUserGeolocationEnabled(widget.userId);
@@ -118,7 +120,7 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
     }
   }
 
-
+  // Método para obtener las categorías del usuario que tienen libros creados.
   void _fetchUserCategoriesFromBooks() async {
     try {
       final categoriesFromBooks =
@@ -133,6 +135,7 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
     }
   }
 
+  // Método para obtener los libros obtenidos de préstamo
   Future<void> _fetchActiveLoans() async {
     try {
       final userId = await AccountController().getCurrentUserId();
@@ -163,6 +166,7 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
     }
   }
 
+  // Función que muestra un diálogo de éxito de devolución de un libro digital.
   void _showSuccessDialog() {
     SuccessDialog.show(
       context,
@@ -172,6 +176,7 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
     );
   }
 
+  // Función que muestra un diálogo de error de devolución de un libro digital.
   void _showErrorDialog() {
     SuccessDialog.show(
       context,
@@ -181,6 +186,7 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
     );
   }
 
+  // // Función que muestra un diálogo de confirmación de devolución de un libro digital.
   Future<bool?> _showConfirmDialog(BuildContext context) async {
     return showDialog<bool>(
       context: context,
@@ -201,6 +207,8 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
     );
   }
 
+
+  // Método para devolver un libro digital
   void _returnBook(int loanId) async {
     setState(() {
       _isReturning = true;
@@ -220,6 +228,7 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
     }
   }
 
+  // Función para buscar un libro del usuario
   Future<void> _searchBooks(String query, Function setState) async {
     final userId = await AccountController().getCurrentUserId();
 
@@ -242,7 +251,7 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
     });
   }
 
-
+  // Función que muestra el diálogo de búsqueda de libros del usuario.
   void _showSearchDialog(BuildContext context) {
     _searchController.clear();
     filteredBooks.clear();
@@ -492,7 +501,7 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
               const Divider(thickness: 1, color: Color(0xFF112363)),
               const SizedBox(height: 8),
 
-              // Responsive Biblioteca
+              // Biblioteca responsive
               SizedBox(
                 height: categories.isEmpty
                     ? 100
@@ -775,34 +784,32 @@ class _CategoryItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 80,  // Limitar el ancho del contenedor para evitar desbordamientos
+      width: 80,  
       child: Column(
         children: [
-          // Contenedor con borde azul y circular para la imagen
           Container(
             width: 50,
             height: 50,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
-                color: const Color(0xFF112363),  // Borde azul
+                color: const Color(0xFF112363),
                 width: 2,
               ),
             ),
             child: ClipOval(
               child: Image.network(
-                imageUrl ?? '',  // Si no hay URL, se muestra la imagen por defecto
+                imageUrl ?? '',  
                 fit: BoxFit.cover,
               ),
             ),
           ),
           const SizedBox(height: 4),
-          // Texto con truncamiento en caso de ser muy largo
           Text(
             label,
             style: const TextStyle(
               fontSize: 12,
-              fontWeight: FontWeight.normal,  // El texto no se pone en negrita
+              fontWeight: FontWeight.normal,  
               color: Colors.black87,
             ),
             overflow: TextOverflow.ellipsis,  // Truncar texto si es largo
@@ -812,4 +819,5 @@ class _CategoryItem extends StatelessWidget {
       ),
     );
   }
+  
 }

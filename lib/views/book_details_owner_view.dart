@@ -57,6 +57,7 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
     _checkIfLoanRequestExists();
   }
 
+  // Función para mostrar el diálogo de éxito al realizar una solicitud de préstamo
   void _showSuccessDialog(BuildContext context) {
     SuccessDialog.show(
       context,
@@ -75,6 +76,7 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
     );
   }
 
+  // Función para mostrar el diálogo de error al realizar una solicitud de préstamo
   void _showErrorDialog(BuildContext context, String message) {
     SuccessDialog.show(
       context,
@@ -84,6 +86,7 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
     );
   }
 
+  // Función para comprobar si ya existe una solicitud de préstamo para ese libro
   Future<void> _checkIfLoanRequestExists() async {
     final userId = await AccountController().getCurrentUserId();
     if (userId != null) {
@@ -99,6 +102,7 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
     }
   }
 
+  // Función para confirmar la eliminación de una solicitud de préstamos
   Future<void> _confirmDeleteLoanRequest(BuildContext context, int bookId, int? notificationId, String? format) async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -150,6 +154,7 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
     }
   }
 
+  // Función que muestra un diálogo con los formatos del libro (en caso de que tenga dos)
   Future<String?> _showFormatDialog(BuildContext context, List<String> formats) async {
     return await showDialog<String>(
       context: context,
@@ -167,8 +172,9 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
     );
   }
 
+  // Función para establecer la disponiblidad de un libro según el estado de sus formatos
   String getAvailabilityStatus(Book book, List<String> loanedFormats) {
-    // Obtener los formatos del libro (en minúsculas y sin espacios extra)
+    // Obtener los formatos del libro
     final List<String> formats = book.format
         .split(',')
         .map((f) => f.trim().toLowerCase())
@@ -300,7 +306,6 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
 
                                             // Primero, crea el préstamo principal
                                             final response = await loancontroller.requestLoan(book, selectedFormat, []);
-                                            print('RESPONSE QUE CONTIENE INFORMACION DEL PRESTAMO QUE SE ACABA DE CREAR $response');
 
                                             if (!response['success']) {
                                               _showErrorDialog(context, response['message']);
@@ -309,10 +314,9 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
                                             }
 
                                             principalLoanId = response['data']['id'];
-                                            print('VALOR DE PRINCIPALLOANID $principalLoanId');
                                             if (!context.mounted) return;
 
-                                            // Ahora que tienes el ID, puedes continuar con el diálogo
+                                            // Ahora que tenemos el ID, continuar con el diálogo
                                             final selectedBooks = await _showUserBookSelectionDialog(context, userBooks, widget.bookId, principalLoanId!);
                                             if (!context.mounted) return;
 
@@ -430,7 +434,7 @@ class _BookDetailsOwnerViewState extends State<BookDetailsOwnerView> {
   }
 }
 
-
+// Método que muestra el diálogo de selección de libros físicos del usuario a ofrecer en un intercambio físico
 Future<List<Book>?> _showUserBookSelectionDialog(BuildContext context, List<Book> userBooks, int bookId, int principalLoanId) async {
   final selected = <Book>{};
 
@@ -551,6 +555,7 @@ Future<List<Book>?> _showUserBookSelectionDialog(BuildContext context, List<Book
 
 
 
+// Vista para la acción de Ver los datos generales de un libro
 class _BookHeader extends StatelessWidget {
   final Book book;
   final bool isOwner;
@@ -738,7 +743,7 @@ class _BookHeader extends StatelessWidget {
   return null;
 }
 
-// Widget para mostrar los campos de texto como en el diseño
+// Widget para mostrar los campos de texto con diseño
 Widget _styledInput(String text) {
   return Container(
     width: double.infinity,
@@ -759,11 +764,8 @@ Widget _styledInput(String text) {
   Widget build(BuildContext context) {
 
     final List<String> allFormats = book.format.split(',').map((f) => f.trim().toLowerCase()).where((f) => f.isNotEmpty).toList();
-
     final List<String> acceptedFormats = loanedFormats.where((entry) => entry['state'] == 'Aceptado').map((entry) => entry['format']!).toList();
-
     final List<String> pendingFormats = loanedFormats.where((entry) => entry['state'] == 'Pendiente' && !acceptedFormats.contains(entry['format'])).map((entry) => entry['format']!).toList();
-
     final List<String> availableFormats = allFormats.where((f) => !acceptedFormats.contains(f) && !pendingFormats.contains(f)).toList();
 
     String availabilityStatus;
@@ -962,7 +964,7 @@ Widget _styledInput(String text) {
                         right: -10,
                         child: FavoriteIcon(book: book),
                       ),
-                    if (isOwner) // La papelera solo se muestra si ERES el propietario
+                    if (isOwner) // La papelera solo se muestra si eres el propietario
                       Positioned(
                         bottom: 0, 
                         right: 0,  
@@ -1012,6 +1014,6 @@ Widget _styledInput(String text) {
         ),
       ],
     );
-
   }
+  
 }

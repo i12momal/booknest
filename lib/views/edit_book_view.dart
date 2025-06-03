@@ -130,16 +130,16 @@ class _EditBookViewState extends State<EditBookView> {
 
         if (bookData.cover.isNotEmpty) {
           setState(() {
-            currentCoverImageUrl = bookData.cover;  // Aquí obtienes la URL de la portada
+            currentCoverImageUrl = bookData.cover;  // Obtener la URL de la portada
           });
         }
 
         // Si el libro tiene un formato Digital, cargar el archivo
         if (bookData.format.contains('Digital')) {
-          currentImageUrl = bookData.file;  // Aquí obtienes el URL del archivo
+          currentImageUrl = bookData.file;  // Obtener la URL del archivo
         }
 
-        // Si hay archivo asociado, cargalo en la variable que gestionará el archivo
+        // Si hay archivo asociado, cargarlo en la variable que gestionará el archivo
         if (currentImageUrl != null && currentImageUrl!.isNotEmpty) {
           fileToSend = File(currentImageUrl!);  // Cargar el archivo en fileToSend
         }
@@ -152,9 +152,8 @@ class _EditBookViewState extends State<EditBookView> {
             if (bookData.format.contains('Digital')) {
               selectedFormat.add('Digital');
             }
-            print("selectedFormat: $selectedFormat");  // Depuración
+            print("selectedFormat: $selectedFormat");
           });
-
 
           _isLoading = false;
         });
@@ -192,7 +191,6 @@ class _EditBookViewState extends State<EditBookView> {
     FocusScope.of(context).unfocus();
     await Future.delayed(const Duration(milliseconds: 500));
 
-    // Ya validaste antes de llamar a esto
     print("Formulario válido, cambiando página");
     _pageController.nextPage(
       duration: const Duration(milliseconds: 300),
@@ -202,7 +200,6 @@ class _EditBookViewState extends State<EditBookView> {
       _currentPage = 1;
     });
   }
-
 
   // Función para pasar a la página de datos personales desde la selección de géneros
   void prevPage() {
@@ -218,6 +215,29 @@ class _EditBookViewState extends State<EditBookView> {
       Navigator.pop(context);
     }
   }
+
+  // Función que muestra el dialogo de éxito al actualizar un usuario
+  void _showSuccessDialog() {
+    SuccessDialog.show(
+      context,
+      'Actualización Exitosa', 
+      'Los datos del libro han sido actualizados correctamente!',
+      () {
+        Navigator.pop(context);
+
+        Future.microtask(() {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => BookDetailsOwnerView(bookId: widget.bookId),
+            ),
+          );
+        });
+      },
+    );
+  }
+
+
 
   // Método para actualizar el libro
   Future<void> _updateBook() async {
@@ -263,26 +283,12 @@ class _EditBookViewState extends State<EditBookView> {
 
       print("Imagen: ${coverImage != null ? 'Nueva imagen de portada seleccionada' : 'Mantener imagen actual'}");
 
-
       final userId = await AccountController().getCurrentUserId();
 
       print("Id del libro a editar ${widget.bookId}");
 
-      final result = await _bookController.editBook(
-        widget.bookId,
-        title,
-        author,
-        isbn,
-        pagesNumber,
-        language,
-        selectedFormat.join(", "),
-        fileToSend,  
-        summary,
-        selectedGenres.join(", "),
-        state,
-        userId ?? '',
-        coverImage,
-      );
+      final result = await _bookController.editBook(widget.bookId, title, author, isbn, pagesNumber, language, selectedFormat.join(", "), fileToSend,  
+        summary, selectedGenres.join(", "), state, userId ?? '', coverImage);
 
       // Ocultar el spinner y mostrar el mensaje de éxito
       setState(() {
@@ -306,33 +312,11 @@ class _EditBookViewState extends State<EditBookView> {
   }
 
 
-  // Función que muestra el dialogo de éxito al actualizar un usuario
-  void _showSuccessDialog() {
-    SuccessDialog.show(
-      context,
-      'Actualización Exitosa', 
-      'Los datos del libro han sido actualizados correctamente!',
-      () {
-        Navigator.pop(context); // Cierra el diálogo
-
-        Future.microtask(() {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => BookDetailsOwnerView(bookId: widget.bookId),
-            ),
-          );
-        });
-      },
-    );
-  }
-
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        // Al tocar fuera del campo de texto, se oculta el teclado
         FocusScope.of(context).unfocus();
       },
       child: Background(

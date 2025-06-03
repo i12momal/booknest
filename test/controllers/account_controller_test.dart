@@ -8,7 +8,7 @@ import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Mock del servicio de cuenta
+/// Mock del servicio de cuenta de usuario
 class MockAccountService extends Mock implements AccountService {}
 
 /// Mock para File (imagen)
@@ -190,7 +190,6 @@ void main() {
     });
 
     test('isUsernameTaken detecta usernames existentes', () async {
-      // Simula la función isUsernameTaken dentro del controlador si está
       Future<bool> isUsernameTaken(String username) async {
         List<String> existingUsernames = ['user1', 'user2', 'user3']; 
         return existingUsernames.contains(username); 
@@ -216,8 +215,7 @@ void main() {
     });
 
     test('getCurrentUserIdNonNull delega y devuelve valor del servicio', () async {
-      when(() => mockService.getCurrentUserIdNonNull())
-          .thenAnswer((_) async => 'user-456');
+      when(() => mockService.getCurrentUserIdNonNull()).thenAnswer((_) async => 'user-456');
 
       final result = await controller.getCurrentUserIdNonNull();
       print('Test getCurrentUserIdNonNull: $result');
@@ -226,8 +224,7 @@ void main() {
     });
 
     test('logout limpia sesión en caso de éxito', () async {
-      when(() => mockService.logoutUser())
-          .thenAnswer((_) async => {'success': true});
+      when(() => mockService.logoutUser()).thenAnswer((_) async => {'success': true});
 
       await controller.logout();
 
@@ -237,8 +234,7 @@ void main() {
     });
 
     test('logout no limpia sesión en caso de fallo', () async {
-      when(() => mockService.logoutUser())
-          .thenAnswer((_) async => {'success': false, 'message': 'Error'});
+      when(() => mockService.logoutUser()).thenAnswer((_) async => {'success': false, 'message': 'Error'});
 
       await controller.logout();
 
@@ -248,8 +244,7 @@ void main() {
     });
 
     test('checkUsernameExists delega al servicio', () async {
-      when(() => mockService.checkUsernameExists('usuario'))
-          .thenAnswer((_) async => true);
+      when(() => mockService.checkUsernameExists('usuario')).thenAnswer((_) async => true);
 
       final result = await controller.checkUsernameExists('usuario');
       print('Test checkUsernameExists: $result');
@@ -258,8 +253,7 @@ void main() {
     });
 
     test('checkEmailExists delega al servicio', () async {
-      when(() => mockService.checkEmailExists('email@test.com'))
-          .thenAnswer((_) async => false);
+      when(() => mockService.checkEmailExists('email@test.com')).thenAnswer((_) async => false);
 
       final result = await controller.checkEmailExists('email@test.com');
       print('Test checkEmailExists: $result');
@@ -267,4 +261,5 @@ void main() {
       verify(() => mockService.checkEmailExists('email@test.com')).called(1);
     });
   });
+
 }

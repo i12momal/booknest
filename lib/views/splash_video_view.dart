@@ -3,6 +3,7 @@ import 'package:booknest/views/register_view.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
+// Vista para la acción de Mostrar el vídeo al iniciar la aplicación
 class SplashVideoPage extends StatefulWidget {
   const SplashVideoPage({super.key});
 
@@ -30,7 +31,7 @@ class _SplashVideoPageState extends State<SplashVideoPage> with TickerProviderSt
     // Animation controller para desvanecer el video y la página de inicio
     _fadeController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1600), // Duración extendida para el fade de los elementos
+      duration: const Duration(milliseconds: 1600),
     );
 
     _fadeAnimation = CurvedAnimation(
@@ -90,7 +91,7 @@ class _SplashVideoPageState extends State<SplashVideoPage> with TickerProviderSt
           // Video que se desvanece después de un tiempo
           _controller.value.isInitialized
               ? FadeTransition(
-                  opacity: _videoFadeAnimation, // Aquí aplicamos el desvanecimiento al video
+                  opacity: _videoFadeAnimation, // Desvanecimiento al video
                   child: SizedBox.expand(
                     child: FittedBox(
                       fit: BoxFit.cover,
@@ -299,4 +300,5 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
       ),
     );
   }
+  
 }

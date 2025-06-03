@@ -8,10 +8,10 @@ import 'package:booknest/entities/models/chat_message_model.dart';
 /// Mock del servicio de chatMessage
 class MockChatMessageService extends Mock implements ChatMessageService {}
 
-/// Fake para CreateChatMessageViewModel (si es necesario)
+/// Fake para CreateChatMessageViewModel
 class CreateChatMessageViewModelFake extends Fake implements CreateChatMessageViewModel {}
 
-/// Fake para ChatMessage (si es necesario)
+/// Fake para ChatMessage
 class ChatMessageFake extends Fake implements ChatMessage {}
 
 void main() {
@@ -39,8 +39,7 @@ void main() {
 
       print('Ejecutando createChatMessage con userId=$userId, chatId=$chatId, message=$message');
 
-      when(() => mockService.createChatMessage(any()))
-          .thenAnswer((_) async => {'success': true});
+      when(() => mockService.createChatMessage(any())).thenAnswer((_) async => {'success': true});
 
       final result = await controller.createChatMessage(userId, chatId, message);
 
@@ -59,8 +58,7 @@ void main() {
       const chatId = 1;
       const userId = 'user1';
 
-      when(() => mockService.getMessagesForChat(chatId, userId))
-          .thenAnswer((_) async => []);
+      when(() => mockService.getMessagesForChat(chatId, userId)).thenAnswer((_) async => []);
 
       final messages = await controller.getMessagesForChat(chatId, userId);
 
@@ -74,8 +72,7 @@ void main() {
       const chatId = 1;
       const userId = 'user1';
 
-      when(() => mockService.markMessageAsRead(chatId, userId))
-          .thenAnswer((_) async => Future.value());
+      when(() => mockService.markMessageAsRead(chatId, userId)).thenAnswer((_) async => Future.value());
 
       await controller.markMessageAsRead(chatId, userId);
 
@@ -87,8 +84,7 @@ void main() {
       const chatId = 1;
       const userId = 'user1';
 
-      when(() => mockService.deleteMessagesByUser(chatId, userId))
-          .thenAnswer((_) async => <String, dynamic>{}); 
+      when(() => mockService.deleteMessagesByUser(chatId, userId)).thenAnswer((_) async => <String, dynamic>{}); 
 
       await controller.deleteMessagesByUser(chatId, userId);
 
@@ -100,8 +96,7 @@ void main() {
       const chatId = 1;
       const userId = 'user1';
 
-      when(() => mockService.updateDeleteLoanChat(any(), any()))
-          .thenAnswer((_) async => <String, dynamic>{});
+      when(() => mockService.updateDeleteLoanChat(any(), any())).thenAnswer((_) async => <String, dynamic>{});
 
       await controller.updateDeleteLoanChat(chatId, userId);
 
@@ -110,4 +105,5 @@ void main() {
     });
 
   });
+  
 }

@@ -12,6 +12,7 @@ import 'package:booknest/widgets/background.dart';
 import 'package:booknest/widgets/footer.dart';
 import 'package:flutter/material.dart';
 
+// Vista para la acción de Ver los libros pertenecientes a una categoría
 class CategoryView extends StatefulWidget {
   final String categoryName;
   final String categoryImageUrl;
@@ -45,6 +46,7 @@ class _CategoryViewState extends State<CategoryView> {
     _fetchBooksByCategory();
   }
 
+  // Función que obtiene los libros asociados a una categoría
   Future<void> _fetchBooksByCategory() async {
     try {
       final books = await _bookController.getUserBooksByCategory(widget.userId, widget.categoryName);
@@ -65,13 +67,15 @@ class _CategoryViewState extends State<CategoryView> {
       });
     }
   }
-
+  
+  // Función para la paginación de los libros que aparecen por página
   List<Book> _paginateBooks() {
     final start = (_currentPage - 1) * _booksPerPage;
     final end = (start + _booksPerPage).clamp(0, _allFilteredBooks.length);
     return _allFilteredBooks.sublist(start, end);
   }
 
+  // Función para cambiar de página (paginación)
   void _changePage(int page) {
     setState(() {
       _currentPage = page;
@@ -79,6 +83,7 @@ class _CategoryViewState extends State<CategoryView> {
     });
   }
 
+  // Función para eliminar un libro
   void _removeBook(int bookId) {
     setState(() {
       // Eliminamos el libro de la lista de libros filtrados
@@ -104,6 +109,7 @@ class _CategoryViewState extends State<CategoryView> {
     return 3;
   }
 
+  // Función que obtiene la disponiblidad de un libro en función del estado de sus formatos
   String getAvailabilityStatus({required Book book, required List<String> loanedFormats, required List<String> pendingFormats}) {
     final allFormats = book.format
         .split(',')
@@ -369,4 +375,5 @@ class _CategoryViewState extends State<CategoryView> {
       },
     );
   }
+  
 }

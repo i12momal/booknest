@@ -1,16 +1,3 @@
-// Modelo de vista del Index
-class IndexCategoryViewModel{
-  final String name;
-  final String image;
-  final String description;
-
-  IndexCategoryViewModel({
-    required this.name,
-    required this.image,
-    required this.description,
-  });
-}
-
 // Modelo de vista del formulario de creación
 class CreateCategoryViewModel{
   final String name;

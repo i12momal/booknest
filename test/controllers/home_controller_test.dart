@@ -44,11 +44,9 @@ void main() {
         ],
       };
 
-      when(() => mockUserService.getUserGenres(userId))
-          .thenAnswer((_) async => userGenres);
+      when(() => mockUserService.getUserGenres(userId)).thenAnswer((_) async => userGenres);
 
-      when(() => mockCategoryService.getUserCategories())
-          .thenAnswer((_) async => categoryData);
+      when(() => mockCategoryService.getUserCategories()).thenAnswer((_) async => categoryData);
 
       final result = await controller.loadUserGenres(userId);
 
@@ -69,8 +67,7 @@ void main() {
         {'title': 'Orgullo y Prejuicio', 'category': 'Romance'},
       ];
 
-      when(() => mockBookService.getBooksByCategories(categories))
-          .thenAnswer((_) async => fakeBooks);
+      when(() => mockBookService.getBooksByCategories(categories)).thenAnswer((_) async => fakeBooks);
 
       final result = await controller.loadBooksByUserCategories(categories);
 
@@ -85,8 +82,7 @@ void main() {
         {'title': 'Cien Años de Soledad'},
       ];
 
-      when(() => mockBookService.getAllBooks(includeUnavailable: false))
-          .thenAnswer((_) async => books);
+      when(() => mockBookService.getAllBooks(includeUnavailable: false)).thenAnswer((_) async => books);
 
       final result = await controller.loadAllBooks();
 
@@ -101,8 +97,7 @@ void main() {
         {'title': 'Cien Años de Soledad', 'author': 'Gabriel García Márquez'}
       ];
 
-      when(() => mockBookService.searchBooksByTitleOrAuthor(query))
-          .thenAnswer((_) async => books);
+      when(() => mockBookService.searchBooksByTitleOrAuthor(query)).thenAnswer((_) async => books);
 
       final result = await controller.searchBooksByTitleOrAuthor(query);
 
@@ -117,4 +112,5 @@ void main() {
       expect(result, 'arbol nandu exito');
     });
   });
+  
 }

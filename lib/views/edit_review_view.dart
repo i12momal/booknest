@@ -7,6 +7,7 @@ import 'package:booknest/widgets/tap_bubble_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 
+// Vista para la acción de Edición de una Reseña 
 class EditReviewView extends StatefulWidget {
   final Book book;
   final Review review;
@@ -36,6 +37,7 @@ class _EditReviewViewState extends State<EditReviewView> {
     _rating = widget.review.rating.toDouble();
   }
 
+  // Función para obtener el id del usuario actual
   Future<void> _loadUserId() async {
     final id = await AccountController().getCurrentUserId();
     setState(() {
@@ -317,4 +319,5 @@ class _EditReviewViewState extends State<EditReviewView> {
       ),
     );
   }
+  
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+// Widget que muestra un dropdown con los estados posibles en los que puede encontrarse una solicitud de préstamo
 class LoanStateDropdown extends StatefulWidget {
   final String selectedState;
   final ValueChanged<String?>? onChanged;
@@ -25,6 +26,7 @@ class _LoanStateDropdownState extends State<LoanStateDropdown> {
     _currentState = widget.selectedState;
   }
 
+  // Para gestionar el color en función del estado
   Color _getStateColor(String state) {
     switch (state.toLowerCase()) {
       case 'pendiente':
@@ -96,4 +98,5 @@ class _LoanStateDropdownState extends State<LoanStateDropdown> {
       ),
     );
   }
+
 }

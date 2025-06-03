@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:booknest/widgets/custom_text_field.dart';
 import 'package:booknest/widgets/image_picker.dart';
 
+// Widget para la vista de los datos personales de un usuario durante el registro
 class PersonalInfoForm extends StatefulWidget {
   final TextEditingController nameController;
   final TextEditingController userNameController;
@@ -81,6 +82,7 @@ class _PersonalInfoFormState extends State<PersonalInfoForm> {
     super.dispose();
   }
 
+  // Validar el nombre de usuario
   Future<void> validateUserName(String username) async {
     final trimmed = username.trim();
 
@@ -111,7 +113,7 @@ class _PersonalInfoFormState extends State<PersonalInfoForm> {
     }
   }
 
-
+  // Validar correo electrónico
   Future<void> validateEmail(String email) async {
     final trimmed = email.trim();
 
@@ -413,6 +415,7 @@ class _PersonalInfoFormState extends State<PersonalInfoForm> {
     );
   }
 
+  // Widget para el diseño de los campos a ingresar
   Widget _buildTextField(String label, IconData icon, TextEditingController controller, {bool isPassword = false, String? Function(String?)? validator, ValueChanged<String>? onChanged, FocusNode? focusNode, bool readOnly = false}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -435,4 +438,5 @@ class _PersonalInfoFormState extends State<PersonalInfoForm> {
       ],
     );
   }
+
 }

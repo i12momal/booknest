@@ -9,26 +9,22 @@ import 'package:booknest/entities/viewmodels/loan_view_model.dart';
 
 // Controlador con los métodos de las acciones de Préstamos.
 class LoanController extends BaseController{
-   late NotificationController notificationController;
-   late ReminderController reminderController;
-   late AccountController accountController;
-   late BookController bookController;
-   late ChatMessageController chatMessageController;
+  late NotificationController notificationController;
+  late ReminderController reminderController;
+  late AccountController accountController;
+  late BookController bookController;
+  late ChatMessageController chatMessageController;
 
-  // Método asíncrono para solicitar el préstamo de un libro
+  // Método asíncrono para solicitar el préstamo de un libro.
     Future<Map<String, dynamic>> requestLoan(Book book, String format, List<Book>? selectedBooks) async {
       try {
-        // Verificamos si el usuario está autenticado
         final userId = await accountService.getCurrentUserId();
-        print('userId: $userId'); // Imprimir para verificar si el usuario está autenticado
         if (userId == null) {
-          print('Usuario no autenticado'); // Si no está autenticado, regresamos un mensaje
           return {'success': false, 'message': 'Usuario no autenticado'};
         }
 
         final DateTime startDate = DateTime.now();
         final DateTime endDate = startDate.add(const Duration(days: 30));
-        print('startDate: $startDate, endDate: $endDate'); // Imprimir las fechas
 
         final createLoanViewModel = CreateLoanViewModel(
           ownerId: book.ownerId,
@@ -41,9 +37,8 @@ class LoanController extends BaseController{
           currentPage: 0,
         );
 
-        // Intentamos crear el préstamo
+        // Creamos el préstamo
         final response = await loanService.createLoan(createLoanViewModel);
-        print('createLoan response: $response'); // Imprimir la respuesta de la creación del préstamo
 
         String? notificationId;
 
@@ -62,17 +57,16 @@ class LoanController extends BaseController{
             ? 'Has recibido una nueva solicitud de préstamo para tu libro "$bookTitle". El usuario ha incluido los siguientes libros físicos como contraprestación: $selectedBookTitles'
             : 'Has recibido una nueva solicitud de préstamo para tu libro "$bookTitle".';
 
+          // Creamos la notificación
           final notificationResponse = await notificationController.createNotification(
             ownerId,
             'Préstamo',
             loan['id'],
             notificationMessage
           );
-          print('notificationResponse: $notificationResponse'); // Imprimir la respuesta de la notificación
 
           if (notificationResponse['success'] && notificationResponse['data'] != null) {
             notificationId = notificationResponse['data']['id']?.toString();
-            print('notificationId: $notificationId'); // Imprimir el ID de la notificación
           }
         }
 
@@ -115,26 +109,27 @@ class LoanController extends BaseController{
         if (notificationId != null) 'notificationId': notificationId,
       };
     } catch (e) {
-      print('Error en requestLoan: $e'); // Si ocurre un error, lo imprimimos
+      print('Error en requestLoan: $e');
       return {'success': false, 'message': 'Error al realizar la solicitud de préstamo'};
     }
   }
 
-  // Método que obtiene los libros que han sido prestados a un usuario
+  // Método que obtiene los libros que han sido prestados a un usuario.
   Future<List<Map<String, dynamic>>> getLoansByHolder(String userId) async {
     return await loanService.getLoansByHolder(userId);
   }
 
-  // Método que obtiene las solicitudes de préstamos de un usuario
+  // Método que obtiene las solicitudes de préstamos de un usuario.
   Future<List<Map<String, dynamic>>> getPendingLoansForUser(String userId) async {
     return await loanService.getUserPendingLoans(userId);
   }
 
+  // Método que obtiene una solicitud de préstamo por su id.
   Future<Map<String, dynamic>> getLoanById(int loanId) async {
     return await loanService.getLoanById(loanId);
   }
 
-  // Cambiar el estado del préstamo
+  // Método para cambiar el estado de una solicitud de préstamo.
   Future<void> updateLoanState(int loanId, String newState, {String? compensation, int? compensationLoanId}) async {
     try {
       final loanResponse = await loanService.getLoanById(loanId);
@@ -265,7 +260,7 @@ class LoanController extends BaseController{
     }
   }
 
-
+  // Método que comprueba si todos los formatos de un libro están disponibles.
   Future<bool> areAllFormatsAvailable(int bookId) async {
     final bookResponse = await bookService.getBookById(bookId);
     if (bookResponse == null || bookResponse['data'] == null) {
@@ -274,10 +269,7 @@ class LoanController extends BaseController{
     }
 
     final formatString = bookResponse['data']['format'] as String;
-    final formats = formatString
-        .split(',')
-        .map((f) => f.trim().toLowerCase()) // normalizamos
-        .toList();
+    final formats = formatString.split(',').map((f) => f.trim().toLowerCase()).toList();
 
     for (var format in formats) {
       final hasActiveLoan = await loanService.getActiveLoanForBookAndFormat(bookId, format);
@@ -289,7 +281,7 @@ class LoanController extends BaseController{
     return true;
   }
 
-
+  // Método para notificar que un libro vuelve a estar disponible a aquellas personas con recordatorio activado.
   Future<void> handleBookReturnAndNotification(int bookId, String format) async {
     final usersIdForReminder = await reminderController.getUsersIdForReminder(bookId);
     final bookResponse = await bookService.getBookById(bookId);
@@ -316,6 +308,7 @@ class LoanController extends BaseController{
     }
   }
 
+  // Método asíncrono para guardar la página actual por la que se está leyendo un libro
   Future<void> saveCurrentPageProgress(String userId, int bookId, int currentPage) async {
     try {
       final loan = await loanService.getLoanByUserAndBook(userId, bookId);
@@ -336,9 +329,9 @@ class LoanController extends BaseController{
     return await loanService.getSavedPageProgress(userId, bookId);
   }
 
+  // Método asíncrono para obtener los formatos disponibles de un libro.
   Future<List<String>> fetchAvailableFormats(int bookId, List<String> formats) async {
     try {
-      // Llamamos al servicio para obtener los formatos disponibles
       final availableFormats = await loanService.getAvailableFormats(bookId, formats);
       return availableFormats;
     } catch (e) {
@@ -347,6 +340,7 @@ class LoanController extends BaseController{
     }
   }
 
+  // Método asíncrono para obtener los formatos de un libro que están en préstamo.
   Future<List<String>> fetchLoanedFormats(int bookId) async {
     try {
       return await loanService.getLoanedFormats(bookId);
@@ -356,6 +350,7 @@ class LoanController extends BaseController{
     }
   }
 
+  // Método para obtener los formatos de un libro que están pendientes de préstamo.
   Future<List<String>> fetchPendingFormats(int bookId) async {
     try {
       return await loanService.getPendingFormats(bookId);
@@ -365,23 +360,27 @@ class LoanController extends BaseController{
     }
   }
   
+  // Método asíncrono que obtiene las solicitudes de préstamo de un libro por su id.
   Future<List<Map<String, dynamic>>> getLoansByBookId(int bookId) async {
     return await loanService.getLoansByBookId(bookId);
   }
 
+  // Método asíncrono para eliminar una solicitud de préstamo sobre un libro.
   Future<Map<String, dynamic>> cancelLoanRequest(int bookId, int? notificationId, String? format) async {
     return await loanService.cancelLoan(bookId, notificationId, format);
   }
 
-  // Método que comprueba si el usuario ya ha realizado una solicitud de préstamo para un libro
+  // Método asíncrono que comprueba si el usuario ya ha realizado una solicitud de préstamo para un libro.
   Future<Map<String, dynamic>> checkExistingLoanRequest(int bookId, String userId) async {
     return await loanService.checkExistingLoanRequest(bookId, userId);
   }
 
+  // Método asíncrono que obtiene los formatos de un libro que están en préstamo y su estado.
   Future<List<Map<String, String>>> getLoanedFormatsAndStates(int bookId) async {
     return await loanService.getLoanedFormatsAndStates(bookId);
   }
 
+  // Método asíncrono para ofrecer libros como contraprestación en un intercambio físico.
   Future<Map<String, dynamic>> requestOfferPhysicalBookLoan(Book book, int principalLoanId) async {
       try {
         final DateTime startDate = DateTime.now();
@@ -398,7 +397,7 @@ class LoanController extends BaseController{
           currentPage: 0,
         );
 
-        // Intentamos crear el préstamo
+        // Creamos la solicitud de préstamo
         final response = await loanService.createLoanOfferPhysicalBook(createLoanViewModel, principalLoanId);
         print('requestOfferPhysicalBookLoan response: $response');
 
@@ -409,23 +408,27 @@ class LoanController extends BaseController{
     }
   }
 
-  // Borra loan por libro y usuario (para los libros no seleccionados o si fue fianza)
+  // Método asíncrono para borrar una solicitud de préstamo por libro y usuario (para los libros no seleccionados o si fue fianza).
   Future<void> deleteLoanByBookAndUser(int bookId, String userId) async {
     await loanService.deleteLoanByBookAndUser(bookId, userId);
   }
 
+  // Método asíncrono para aceptar una de las compensaciones ofrecidas en un intercambio físico.
   Future<int?> acceptCompensationLoan({required int bookId, required String userId, required String? newHolderId, required String compensation}) async {
    return await loanService.acceptCompensationLoan(bookId: bookId, userId: userId, newHolderId: newHolderId, compensation: compensation);
   }
 
+  // Método asíncrono para obtener el estado de una solicitud de préstamo de un usuario.
   Future<String> getLoanStateForUser(int loanId, String userId) async {
     return loanService.getLoanStateForUser(loanId, userId);
   }
 
+  // Método asíncrono para obtener el id de la solicitud de préstamo de un usuario.
   Future<int?> getActualLoanIdForUserAndBook(int loanId, String userId) async {
     return await loanService.getActualLoanIdForUserAndBook(loanId, userId);
   }
 
+  // Método asíncrono para actualizar el estado de una solicitud de préstamo.
   Future<void> updateLoanStateByUser(int loanId, int compensationLoanId, String newState) async {
     String? userId = await accountController.getCurrentUserId();
 
@@ -536,6 +539,7 @@ class LoanController extends BaseController{
       } 
   }
 
+  // Método asíncrono para la creación de una solicitud de préstamo cuando la contraprestación elegida ha sido Fianza.
   Future<Map<String, dynamic>> createLoanFianza(int bookId, String ownerId, String currentHolderId, String bookTitle) async {
       try {
         final DateTime startDate = DateTime.now();
@@ -552,7 +556,7 @@ class LoanController extends BaseController{
           currentPage: 0
         );
 
-        // Intentamos crear el préstamo
+        // Creamos la solicitud de préstamo
         final response = await loanService.createLoanFianza(createLoanViewModel, bookTitle);
         print('requestOfferPhysicalBookLoan response: $response');
 

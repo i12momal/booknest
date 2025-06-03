@@ -3,7 +3,6 @@ class LoginUserViewModel {
   final String userName;
   final String password;
 
-//All required fields from class User
   LoginUserViewModel(
     {
     required this.userName,
@@ -26,7 +25,6 @@ class RegisterUserViewModel {
   final String role;
   final String? description;
 
-//All required fields from class User
   RegisterUserViewModel(
     {  
     required this.name,

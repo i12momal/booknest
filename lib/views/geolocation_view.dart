@@ -7,6 +7,7 @@ import 'package:booknest/views/user_profile_view.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter/material.dart';
 
+// Vista para la acción de Visualizar el mapa de ubicación
 class GeolocationMap extends StatefulWidget {
   final LatLng? focusLocation;
   final Geolocation? focusedUser;
@@ -42,6 +43,7 @@ class _GeolocationMapState extends State<GeolocationMap> {
     _loadUserIdAndCheckGeolocation();
   }
 
+  // Función para obtener el usuario actual y su localización
   void _loadUserIdAndCheckGeolocation() async {
     final id = await AccountController().getCurrentUserId();
     setState(() {
@@ -63,13 +65,13 @@ class _GeolocationMapState extends State<GeolocationMap> {
       setState(() {
         _isLocationEnabled = true;
       });
-
     }
 
     // Si ya está activado o lo activó, continúa
     _getUserLocation();
   }
 
+  // Función que muestra el diálogo para activar la geolocalización (en caso de estar desactivada)
   Future<bool> _mostrarDialogoActivarGeolocalizacion() async {
     return await showDialog<bool>(
       context: context,
@@ -92,7 +94,7 @@ class _GeolocationMapState extends State<GeolocationMap> {
   }
 
 
-
+  // Método para obtener la ubicación de un usuario
   Future<void> _getUserLocation() async {
     try {
       // Obtener ubicación actual
@@ -158,6 +160,7 @@ class _GeolocationMapState extends State<GeolocationMap> {
     }
   }
 
+  // Función para actualizar un marcador
   void updateMarkers(List<Geolocation> nearbyUsers) {
     _markers.clear(); 
 
@@ -200,7 +203,7 @@ class _GeolocationMapState extends State<GeolocationMap> {
     setState(() {});
   }
 
-
+  // Función que muestra un diálogo con los libros físicos disponibles de un usuario.
   void _showUserBooksDialog(Geolocation user) {
     showDialog(
       context: context,
@@ -326,7 +329,6 @@ class _GeolocationMapState extends State<GeolocationMap> {
           mapController = controller;
 
           if (_focusedUser != null) {
-            // Espera un poco a que los marcadores estén en el mapa
             await Future.delayed(const Duration(milliseconds: 300));
 
             final focused = _nearbyUsers.firstWhere(
@@ -363,4 +365,5 @@ class _GeolocationMapState extends State<GeolocationMap> {
       ),
     );
   }
+
 }

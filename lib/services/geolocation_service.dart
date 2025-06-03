@@ -3,8 +3,10 @@ import 'package:booknest/entities/models/geolocation_model.dart';
 import 'package:booknest/services/base_service.dart';
 import 'package:geolocator/geolocator.dart';
 
+// Servicio con los métodos de negocio de la entidad Geolocalización.
 class GeolocationService extends BaseService{
   
+  // Método asíncrono para obtener los usuarios cercanos a un usuario.
   Future<List<Geolocation>> getNearbyUsers(Position position) async {
     final response = await BaseService.client.from('Geolocation').select('userId, userName, latitude, longitude, books').eq('geolocationEnabled', true);
 
@@ -23,10 +25,8 @@ class GeolocationService extends BaseService{
     }).toList();
   }
 
-
-
-
- Future<void> upsertUserLocation({required String userId, required String userName, required double latitude, required double longitude, required List<Book> books, bool? geolocationEnabled}) async {
+  // Método asíncrono para actualizar la ubicación de un usuario.
+  Future<void> upsertUserLocation({required String userId, required String userName, required double latitude, required double longitude, required List<Book> books, bool? geolocationEnabled}) async {
   final List<Map<String, dynamic>> booksJson = books.map((book) => {
     'id': book.id,
     'title': book.title,
@@ -58,7 +58,6 @@ class GeolocationService extends BaseService{
       data['geolocationEnabled'] = geolocationEnabled;
     }
 
-    // 🟢 Ahora sí insertamos (ya no habrá conflicto)
     final response = await BaseService.client.from('Geolocation').insert(data);
 
     print('Ubicación y libros guardados correctamente. Respuesta: $response');
@@ -67,26 +66,21 @@ class GeolocationService extends BaseService{
   }
 }
 
-
-
+  // Método asíncrono para eliminar la ubicación de un usuario.
   Future<void> deleteUserLocationIfExists(String userId) async {
     try {
       final response = await BaseService.client.from('Geolocation').delete().eq('userId', userId);
 
-      // Solo imprime la respuesta si es útil para debug
       print('Ubicación anterior eliminada. Respuesta: $response');
     } catch (e) {
       print('Error eliminando ubicación anterior: $e');
     }
   }
 
-
+  // Método asíncrono que comprueba si un libro está disponible.
   Future<bool> isAvailable(int bookId) async {
     try {
-      final response = await BaseService.client
-          .from('Loan')
-          .select('state')
-          .eq('bookId', bookId);
+      final response = await BaseService.client.from('Loan').select('state').eq('bookId', bookId);
 
       for (var res in response) {
         final state = res['state'];
@@ -101,13 +95,10 @@ class GeolocationService extends BaseService{
     }
   }
 
+  // Método asíncrono que comprueba si la localización de un usuario está activa.
   Future<bool> isUserGeolocationEnabled(String userId) async {
     try {
-      final response = await BaseService.client
-          .from('Geolocation')
-          .select('geolocationEnabled')
-          .eq('userId', userId)
-          .maybeSingle();
+      final response = await BaseService.client.from('Geolocation').select('geolocationEnabled').eq('userId', userId).maybeSingle();
 
       return response != null && response['geolocationEnabled'] == true;
     } catch (e) {
@@ -116,14 +107,11 @@ class GeolocationService extends BaseService{
     }
   }
 
+  // Método asíncrono para actualizar la ubicación de un usuario.
   Future<void> updateUserGeolocation(String userId, bool enabled) async {
     try {
       // Obtener datos actuales del usuario
-      final existing = await BaseService.client
-          .from('Geolocation')
-          .select()
-          .eq('userId', userId)
-          .maybeSingle();
+      final existing = await BaseService.client.from('Geolocation').select().eq('userId', userId).maybeSingle();
 
       if (existing == null) {
         print("No existe geolocalización previa para $userId");
@@ -142,9 +130,7 @@ class GeolocationService extends BaseService{
     }
   }
 
-
-
-
+  // Método asíncrono para obtener la ubicación de un usuario.
   Future<Geolocation?> getUserGeolocation(String userId) async {
     try {
       final response = await BaseService.client.from('Geolocation').select().eq('userId', userId).maybeSingle();
@@ -161,37 +147,34 @@ class GeolocationService extends BaseService{
     }
   }
 
+  // Método asíncrono para aactualizar los libros físicos disponibles de un usuario.
   Future<void> updateUserBooksInLocation({required String userId, required List<Book> books}) async {
-  final List<Map<String, dynamic>> booksJson = books.map((book) => {
-    'id': book.id,
-    'title': book.title,
-    'author': book.author,
-    'isbn': book.isbn,
-    'pagesNumber': book.pagesNumber,
-    'language': book.language,
-    'format': book.format,
-    'file': book.file,
-    'cover': book.cover,
-    'summary': book.summary,
-    'categories': book.categories,
-    'state': book.state,
-    'owner_id': book.ownerId,
-  }).toList();
+    final List<Map<String, dynamic>> booksJson = books.map((book) => {
+      'id': book.id,
+      'title': book.title,
+      'author': book.author,
+      'isbn': book.isbn,
+      'pagesNumber': book.pagesNumber,
+      'language': book.language,
+      'format': book.format,
+      'file': book.file,
+      'cover': book.cover,
+      'summary': book.summary,
+      'categories': book.categories,
+      'state': book.state,
+      'owner_id': book.ownerId,
+    }).toList();
 
-  try {
-    final response = await BaseService.client
-        .from('Geolocation')
-        .update({'books': booksJson})
-        .eq('userId', userId);
+    try {
+      final response = await BaseService.client
+          .from('Geolocation')
+          .update({'books': booksJson})
+          .eq('userId', userId);
 
-    print('Libros actualizados correctamente en Geolocation. Respuesta: $response');
-  } catch (e) {
-    print('Excepción al actualizar solo los libros: $e');
+      print('Libros actualizados correctamente en Geolocation. Respuesta: $response');
+    } catch (e) {
+      print('Excepción al actualizar solo los libros: $e');
+    }
   }
-}
-
-
-
-
 
 }

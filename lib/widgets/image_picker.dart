@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
+// Widget para gestionar el diseño y la subida de una imagen
 class ImagePickerWidget extends StatefulWidget {
   final File? initialImage;
   final String? imageUrl;
@@ -65,4 +66,5 @@ class _ImagePickerWidgetState extends State<ImagePickerWidget> {
       ],
     );
   }
+
 }

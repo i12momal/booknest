@@ -15,6 +15,7 @@ import 'package:booknest/widgets/success_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
+// Widget para las pestañas en la Vista de detalles del libro
 class BookInfoTabs extends StatefulWidget {
   final Book book;
   final bool isOwner;
@@ -56,6 +57,7 @@ class _BookInfoTabsState extends State<BookInfoTabs> {
     }
   }
 
+  // Obtener el id del usuario actual y su geolocalización
   void _loadUserId() async {
     final id = await AccountController().getCurrentUserId();
     final result = await UserController().getUserNameById(widget.book.ownerId);
@@ -80,9 +82,7 @@ class _BookInfoTabsState extends State<BookInfoTabs> {
     }
   }
 
-
-
-
+  // Obtener las reseñas dell libro
   Future<List<Review>> fetchReviews() async {
     return await ReviewController().getReviews(widget.book.id);
   }
@@ -147,6 +147,7 @@ class _BookInfoTabsState extends State<BookInfoTabs> {
 }
 
 
+// Pestaña Detalles
 class _BookDetailsTab extends StatelessWidget {
   final Book book;
   final String userName;
@@ -264,7 +265,7 @@ class _BookDetailsTab extends StatelessWidget {
 
 
 
-
+// Pestaña Reseñas y Valoraciones
 class _BookReviewsTab extends StatefulWidget {
   final Book book;
   final bool isOwner;
@@ -297,6 +298,7 @@ class _BookReviewsTabState extends State<_BookReviewsTab> {
     _loadReviews();
   }
 
+  // Cargar las reseñas
   Future<void> _loadReviews() async {
     final newReviews = await ReviewController().getReviews(widget.book.id);
     setState(() {
@@ -463,6 +465,7 @@ class _BookReviewsTabState extends State<_BookReviewsTab> {
     );
   }
 
+  // Método para editar una reseña
   void _editReview(Review review) async {
     final result = await Navigator.push(
       context,
@@ -476,7 +479,7 @@ class _BookReviewsTabState extends State<_BookReviewsTab> {
     }
   }
 
-
+  // Función que muestra un diálogo de confirmación de leiminación de una reseña
   void _confirmDeleteReview(Review review) async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -510,4 +513,5 @@ class _BookReviewsTabState extends State<_BookReviewsTab> {
       }
     }
   }
+
 }

@@ -32,17 +32,13 @@ void main() {
       const compensationLoanId = 5;
       const expectedChatId = 42;
 
-      when(() => mockService.createChatIfNotExists(
-              loanId, ownerId, requesterId, compensationLoanId))
-          .thenAnswer((_) async => expectedChatId);
+      when(() => mockService.createChatIfNotExists(loanId, ownerId, requesterId, compensationLoanId)).thenAnswer((_) async => expectedChatId);
 
-      final chatId = await controller.createChatIfNotExists(
-          loanId, ownerId, requesterId, compensationLoanId);
+      final chatId = await controller.createChatIfNotExists(loanId, ownerId, requesterId, compensationLoanId);
 
       expect(chatId, expectedChatId);
 
-      verify(() => mockService.createChatIfNotExists(
-          loanId, ownerId, requesterId, compensationLoanId)).called(1);
+      verify(() => mockService.createChatIfNotExists(loanId, ownerId, requesterId, compensationLoanId)).called(1);
 
       print('Chat creado con ID: $chatId');
     });
@@ -53,8 +49,7 @@ void main() {
 
       final mockChats = <LoanChat>[];
 
-      when(() => mockService.getUserLoanChats(userId, archived))
-          .thenAnswer((_) async => mockChats);
+      when(() => mockService.getUserLoanChats(userId, archived)).thenAnswer((_) async => mockChats);
 
       final result = await controller.getUserLoanChats(userId, archived);
 
@@ -70,8 +65,7 @@ void main() {
       const userId = 'user1';
       const archive = true;
 
-      when(() => mockService.toggleArchiveStatus(chatId, userId, archive))
-          .thenAnswer((_) async => Future.value());
+      when(() => mockService.toggleArchiveStatus(chatId, userId, archive)).thenAnswer((_) async => Future.value());
 
       await controller.toggleArchiveStatus(chatId, userId, archive);
 
@@ -79,4 +73,5 @@ void main() {
       print('Estado de archivado cambiado para chat $chatId por usuario $userId: archive=$archive');
     });
   });
+  
 }

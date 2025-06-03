@@ -2,6 +2,7 @@ import 'package:booknest/widgets/genre_selection_book.dart';
 import 'package:booknest/widgets/summary_input.dart';
 import 'package:flutter/material.dart';
 
+// Widget para la vista de resumen y selección de categorías al añadir/editar un libro
 class GenreAndSummarySelectionWidget extends StatefulWidget {
   final List<String> genres;
   final List<String> selectedGenres;
@@ -42,6 +43,7 @@ class _GenreAndSummarySelectionWidgetState extends State<GenreAndSummarySelectio
     widget.summaryController.addListener(_onSummaryChanged);
   }
 
+  // Validar resumen
   void _onSummaryChanged() {
     if (widget.summaryError.isNotEmpty) {
       widget.onSummaryChanged();
@@ -106,4 +108,5 @@ class _GenreAndSummarySelectionWidgetState extends State<GenreAndSummarySelectio
       ),
     );
   }
+
 }

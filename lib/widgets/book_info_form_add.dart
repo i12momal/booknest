@@ -7,6 +7,7 @@ import 'package:booknest/widgets/custom_text_field.dart';
 import 'package:booknest/widgets/language_dropdown.dart';
 import 'package:booknest/controllers/book_controller.dart';
 
+// Widget para la vista de datos generales del libro durante su creación
 class BookInfoForm extends StatefulWidget {
   final TextEditingController titleController;
   final TextEditingController authorController;
@@ -78,6 +79,7 @@ class _BookInfoFormState extends State<BookInfoForm> {
     });
   }
 
+  // Función para obtener el id del usuario actual
   void _loadUserId() async {
     final id = await AccountController().getCurrentUserId();
     setState(() {
@@ -85,6 +87,7 @@ class _BookInfoFormState extends State<BookInfoForm> {
     });
   }
 
+  // Método para validar el isbn
   String? validateISBN(String? value) {
     final trimmed = value?.trim() ?? '';
 
@@ -107,6 +110,7 @@ class _BookInfoFormState extends State<BookInfoForm> {
     return isbn13RegEx.hasMatch(value) || isbn10RegEx.hasMatch(value);
   }
 
+  // Método para validar el título
   Future<void> validateTitle(String title) async {
     final trimmed = title.trim();
 
@@ -451,7 +455,7 @@ class _BookInfoFormState extends State<BookInfoForm> {
                             formatErrorMessage = 'Seleccione al menos un formato';
                           }
 
-                          // Validar archivo digital si es necesario
+                          // Validar archivo digital
                           bool hasFileIfDigital = !(isDigitalSelected && uploadedFileName == null);
                           if (!hasFileIfDigital) {
                             fileErrorMessage = 'Sube un archivo para el formato digital';
@@ -494,6 +498,7 @@ class _BookInfoFormState extends State<BookInfoForm> {
     );
   }
 
+  // Widget para el diseño de los campos a ingresar
   Widget _buildTextField(String label, IconData? icon, TextEditingController controller, {String? Function(String?)? validator, ValueChanged<String>? onChanged, FocusNode? focusNode}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -526,6 +531,7 @@ class _BookInfoFormState extends State<BookInfoForm> {
     });
   }
 
+  // Función para seleccionar un archivo
   void _pickFile() async {
     setState(() {
       isUploading = true;

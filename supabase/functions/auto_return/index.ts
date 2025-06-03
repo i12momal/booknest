@@ -37,6 +37,7 @@ async function createNotification(createNotificationViewModel: { userId: string,
   }
 }
 
+// Función para obtener los préstamos activos por formato de un libro
 async function getActiveLoanForBookAndFormat(bookId: number, format: string): Promise<boolean> {
   try {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -55,6 +56,7 @@ async function getActiveLoanForBookAndFormat(bookId: number, format: string): Pr
   }
 }
 
+// Función que comprueba la disponiblidad de los formatos de un libro
 async function areAllFormatsAvailable(bookId: number, formats: string[]): Promise<boolean> {
   try {
     for (const format of formats) {
@@ -68,6 +70,7 @@ async function areAllFormatsAvailable(bookId: number, formats: string[]): Promis
   }
 }
 
+// Función para eliminar un recordatorio
 async function removeFromReminder(bookId: number, userId: string, format: string) {
   try {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -126,7 +129,7 @@ serve(async (_req) => {
           read: false
         });
 
-        // Book state
+        // Estado del libro
         await supabase.from("Book").update({ state: "Disponible" }).eq("id", loan.bookId);
 
         // Recordatorios

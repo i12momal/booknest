@@ -70,6 +70,7 @@ class _AddBookViewState extends State<AddBookView>{
     });
   }
 
+  // Función para obtener el id del usuario actual
   void _loadUserId() async {
     final id = await AccountController().getCurrentUserId();
     setState(() {
@@ -95,7 +96,6 @@ class _AddBookViewState extends State<AddBookView>{
     }
   }
 
-
   // Función para pasar a la página de datos personales desde la selección de géneros
   void prevPage() {
     if (_currentPage > 0) {
@@ -109,6 +109,35 @@ class _AddBookViewState extends State<AddBookView>{
     } else {
       Navigator.pop(context);
     }
+  }
+
+  // Función que muestra el dialogo de éxito al añadir un nuevo libro
+  void _showSuccessDialog() {
+    SuccessDialog.show(
+      context,
+      'Creación Exitosa',
+      '¡Tu libro ha sido creado con éxito!',
+      () {
+        Navigator.pop(context);
+        Future.microtask(() {
+          if (widget.origin == 'book_details') {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => BookDetailsOwnerView(bookId: widget.bookId!),
+              ),
+            );
+          } else if (widget.origin == 'profile') {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => OwnerProfileView(userId: userId!),
+              ),
+            );
+          }
+        });
+      },
+    );
   }
 
 
@@ -181,36 +210,6 @@ class _AddBookViewState extends State<AddBookView>{
       });
       _showSuccessDialog();
     }
-  }
-
-
-  // Función que muestra el dialogo de éxito al añadir un nuevo libro
-  void _showSuccessDialog() {
-    SuccessDialog.show(
-      context,
-      'Creación Exitosa',
-      '¡Tu libro ha sido creado con éxito!',
-      () {
-        Navigator.pop(context);
-        Future.microtask(() {
-          if (widget.origin == 'book_details') {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => BookDetailsOwnerView(bookId: widget.bookId!),
-              ),
-            );
-          } else if (widget.origin == 'profile') {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => OwnerProfileView(userId: userId!),
-              ),
-            );
-          }
-        });
-      },
-    );
   }
 
 
@@ -292,4 +291,5 @@ class _AddBookViewState extends State<AddBookView>{
     },
     );
   }
+
 }

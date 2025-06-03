@@ -11,14 +11,7 @@ class AccountController extends BaseController{
 
   final ValueNotifier<String> errorMessage = ValueNotifier<String>(''); 
 
-  /* Método asíncrono que permite el inicio de sesión de un usuario.
-    Parámetros:
-      - userName: Cadena con el nombre de usuario.
-      - password: Cadena con la contraseña del usuario.
-    Return: 
-      - success: Indica si el inicio de sesión fue exitoso (true o false).
-      - message: Proporciona un mensaje de estado.
-  */
+  // Método asíncrono que permite el inicio de sesión de un usuario.
   Future<void> login(String userName, String password) async {
     if (userName.isEmpty || password.isEmpty) {
       errorMessage.value = 'Por favor ingrese todos los campos';
@@ -59,22 +52,7 @@ class AccountController extends BaseController{
     }
   }
 
-
-  /* Método asíncrono que permite el registro de un nuevo usuario.
-    Parámetros:
-      - name: Cadena con el nombre completo del usuario.
-      - userName: Cadena con el nombre de usuario.
-      - email: Cadena con el email del usuario.
-      - phoneNumber: Entero con el número de teléfono del usuario.
-      - address: Cadena con la dirección del usuario.
-      - password: Cadena con la contraseña del usuario.
-      - image: Cadena con la ubicación de la imagen.
-    Return: 
-      Mapa con la clave:
-        - success: Indica si el registro fue exitoso (true o false).
-        - message: Proporciona un mensaje de estado.
-        - data (Opcional): Información del usuario registrado si la operación fue exitosa.
-  */
+  // Método asíncrono que permite el registro de un nuevo usuario.
   Future<Map<String, dynamic>> registerUser(String name, String userName, String email, int phoneNumber,
     String address, String password, String confirmPassword, File? image, String genres, String description) async {
 
@@ -108,22 +86,12 @@ class AccountController extends BaseController{
     return response;
   }
 
-
-
-  /* Método para guardar una imagen en Supabase.
-     Parámetros:
-      - imageFile: archivo de la imagen.
-      - userName: nombre del usuario para crear el nombre con el que se va a almacenar la imagen.
-  */
+  // Método para guardar una imagen en Supabase.
   Future<String?> uploadProfileImage(File imageFile, String userName) async {
     return await accountService.uploadProfileImage(imageFile, userName);
   }
 
-
-  /* Método para generar un hash seguro de la contraseña.
-     Parámetros:
-      - password: contraseña a cifrar.
-  */
+  // Método para generar un hash seguro de la contraseña.
   String generatePasswordHash(String password) {
     // Convertir la contraseña a bytes
     final bytes = utf8.encode(password);
@@ -135,32 +103,25 @@ class AccountController extends BaseController{
     return digest.toString();
   }
 
-
-  /* Método asíncrono que comprueba que el nombre de usuario no existe en la base de datos.
-    Parámetros:
-      - userName: Cadena con el nombre de usuario.
-    Return: 
-      Devuelve verdadero si el nombre de usuario ya está registrado.
-  */
+  // Método asíncrono que comprueba si el nombre de usuario existe en la base de datos.
   Future<bool> isUsernameTaken(String username) async {
     List<String> existingUsernames = ['user1', 'user2', 'user3']; 
     return existingUsernames.contains(username); 
   }
 
-  /* Método asíncrono que obtiene el ID del usuario actualmente autenticado.
-    Return: 
-      String con el ID del usuario autenticado o null si no hay usuario autenticado.
-  */
+  // Método asíncrono que obtiene el ID del usuario actualmente autenticado.
   Future<String?> getCurrentUserId() async {
     final result = await accountService.getCurrentUserId();
     return result;
   }
 
+  // Método asíncrono que obtiene el ID del usuario actualmente autenticado.
   Future<String> getCurrentUserIdNonNull() async {
     final result = await accountService.getCurrentUserIdNonNull();
     return result;
   }
 
+  // Método que permite el cierre de sesión del usuario.
   Future<void> logout() async {
     final result = await accountService.logoutUser();
 
@@ -174,11 +135,12 @@ class AccountController extends BaseController{
     }
   }
 
-
+  // Método asíncrono que comprueba si el nombre de usuario existe en la base de datos.
   Future<bool> checkUsernameExists(String username) async {
     return await accountService.checkUsernameExists(username);
   }
 
+  // Método asíncrono que comprueba si el correo electrónico de un usuario existe en la base de datos.
   Future<bool> checkEmailExists(String email) async {
     return await accountService.checkEmailExists(email);
   }

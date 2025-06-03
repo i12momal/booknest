@@ -2,6 +2,7 @@ import 'package:booknest/controllers/user_controller.dart';
 import 'package:booknest/entities/models/book_model.dart';
 import 'package:flutter/material.dart';
 
+// Widget para el icono de favoritos de un libro
 class FavoriteIcon extends StatefulWidget {
   final Book book;
 
@@ -28,6 +29,7 @@ class _FavoriteIconState extends State<FavoriteIcon> {
     });
   }
 
+  // Función que maneja el añadir/quitar un libro de favoritos
   void toggleFavorite() async {
     print("toggleFavorite ha sido llamado");
     
@@ -55,4 +57,5 @@ class _FavoriteIconState extends State<FavoriteIcon> {
       onPressed: toggleFavorite,
     );
   }
+
 }

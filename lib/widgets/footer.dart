@@ -3,6 +3,7 @@ import 'package:booknest/controllers/user_controller.dart';
 import 'package:booknest/views/login_view.dart';
 import 'package:flutter/material.dart';
 
+// Widget para el footer
 class Footer extends StatefulWidget {
   final int selectedIndex;
   final ValueChanged<int> onItemTapped;
@@ -26,6 +27,7 @@ class _FooterState extends State<Footer> {
     _loadUserImage();
   }
 
+  // Función que carga la imagen del usuario
   Future<void> _loadUserImage() async {
     try {
       final userId = await AccountController().getCurrentUserId();
@@ -134,4 +136,5 @@ class _FooterState extends State<Footer> {
   void dispose() {
     super.dispose();
   }
+  
 }

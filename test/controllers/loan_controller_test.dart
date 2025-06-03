@@ -91,8 +91,7 @@ void main() {
 
   group('LoanController - requestLoan', () {
     test('devuelve error si el usuario no está autenticado', () async {
-      when(() => mockAccountService.getCurrentUserId())
-          .thenAnswer((_) async => null);
+      when(() => mockAccountService.getCurrentUserId()).thenAnswer((_) async => null);
 
       final result = await controller.requestLoan(sampleBook, 'Digital', []);
 
@@ -112,7 +111,7 @@ void main() {
       // Simular NotificationController con éxito
       when(() => mockNotificationController.createNotification(any(), any(), any(), any())).thenAnswer((_) async => {'success': true, 'data': {'id': 'notif123'}});
 
-      // Inyectamos el controlador falso (puedes pasar por constructor o por setter según tu implementación)
+      // Inyectamos el controlador falso
       controller.notificationController = mockNotificationController;
 
       final result = await controller.requestLoan(sampleBook, 'Digital', []);
@@ -124,17 +123,13 @@ void main() {
     });
 
     test('no envía notificación si createLoan falla', () async {
-      when(() => mockAccountService.getCurrentUserId())
-          .thenAnswer((_) async => 'user1');
+      when(() => mockAccountService.getCurrentUserId()).thenAnswer((_) async => 'user1');
 
-      when(() => mockLoanService.createLoan(any()))
-          .thenAnswer((_) async => {'success': false});
+      when(() => mockLoanService.createLoan(any())).thenAnswer((_) async => {'success': false});
 
-      when(() => mockLoanService.getLoanedFormatsAndStates(any()))
-          .thenAnswer((_) async => []);
+      when(() => mockLoanService.getLoanedFormatsAndStates(any())).thenAnswer((_) async => []);
 
-      when(() => mockBookService.changeState(any(), any()))
-          .thenAnswer((_) async => Future.value());
+      when(() => mockBookService.changeState(any(), any())).thenAnswer((_) async => Future.value());
 
       final result = await controller.requestLoan(sampleBook, 'Digital', []);
 
@@ -143,8 +138,7 @@ void main() {
     });
 
     test('maneja excepciones correctamente', () async {
-      when(() => mockAccountService.getCurrentUserId())
-          .thenThrow(Exception('Error grave'));
+      when(() => mockAccountService.getCurrentUserId()).thenThrow(Exception('Error grave'));
 
       final result = await controller.requestLoan(sampleBook, 'Digital', []);
 
@@ -153,22 +147,18 @@ void main() {
     });
 
     test('marca libro como No Disponible si formatos están ocupados', () async {
-      when(() => mockAccountService.getCurrentUserId())
-          .thenAnswer((_) async => 'user1');
+      when(() => mockAccountService.getCurrentUserId()).thenAnswer((_) async => 'user1');
 
-      when(() => mockLoanService.createLoan(any()))
-          .thenAnswer((_) async => {'success': true, 'data': {'id': 99}});
+      when(() => mockLoanService.createLoan(any())).thenAnswer((_) async => {'success': true, 'data': {'id': 99}});
 
-      when(() => mockNotificationController.createNotification(any(), any(), any(), any()))
-          .thenAnswer((_) async => {'success': true, 'data': {'id': 'noti001'}});
+      when(() => mockNotificationController.createNotification(any(), any(), any(), any())).thenAnswer((_) async => {'success': true, 'data': {'id': 'noti001'}});
 
       when(() => mockLoanService.getLoanedFormatsAndStates(any())).thenAnswer((_) async => [
         {'format': 'Físico', 'state': 'aceptado'},
         {'format': 'Digital', 'state': 'pendiente'},
       ]);
 
-      when(() => mockBookService.changeState(any(), any()))
-          .thenAnswer((_) async => Future.value());
+      when(() => mockBookService.changeState(any(), any())).thenAnswer((_) async => Future.value());
 
       controller.notificationController = mockNotificationController;
 
@@ -185,8 +175,7 @@ void main() {
       {'id': 2, 'bookId': 102},
     ];
 
-    when(() => mockLoanService.getLoansByHolder('user123'))
-        .thenAnswer((_) async => mockLoans);
+    when(() => mockLoanService.getLoansByHolder('user123')).thenAnswer((_) async => mockLoans);
 
     final result = await controller.getLoansByHolder('user123');
 
@@ -199,8 +188,7 @@ void main() {
       {'id': 10, 'state': 'Pendiente'},
     ];
 
-    when(() => mockLoanService.getUserPendingLoans('user123'))
-        .thenAnswer((_) async => pendingLoans);
+    when(() => mockLoanService.getUserPendingLoans('user123')).thenAnswer((_) async => pendingLoans);
 
     final result = await controller.getPendingLoansForUser('user123');
 
@@ -211,8 +199,7 @@ void main() {
   test('getLoanById devuelve el préstamo correctamente', () async {
     final loanData = {'id': 55, 'bookId': 999};
 
-    when(() => mockLoanService.getLoanById(55))
-        .thenAnswer((_) async => loanData);
+    when(() => mockLoanService.getLoanById(55)).thenAnswer((_) async => loanData);
 
     final result = await controller.getLoanById(55);
 
@@ -229,10 +216,8 @@ void main() {
       expect(result, false);
     });
 
-
     test('devuelve true si todos los formatos están disponibles', () async {
-      when(() => mockBookService.getBookById(1))
-      .thenAnswer((_) async => {
+      when(() => mockBookService.getBookById(1)).thenAnswer((_) async => {
         'data': {
           'id': sampleBook.id,
           'format': sampleBook.format,
@@ -259,10 +244,8 @@ void main() {
       expect(result, true);
     });
 
-
     test('devuelve false si algún formato tiene préstamo activo', () async {
-      when(() => mockBookService.getBookById(1))
-    .thenAnswer((_) async => {
+      when(() => mockBookService.getBookById(1)).thenAnswer((_) async => {
       'data': {
         'id': sampleBook.id,
         'format': sampleBook.format,
@@ -279,7 +262,6 @@ void main() {
         'state': sampleBook.state,
       }
     });
-
 
       // Físico está libre, pero Digital tiene préstamo activo
       when(() => mockLoanService.getActiveLoanForBookAndFormat(1, 'físico')).thenAnswer((_) async => false);
@@ -299,12 +281,10 @@ void main() {
     final loanData = {'id': 42};
 
     // Simular que hay un préstamo activo para el usuario y libro
-    when(() => mockLoanService.getLoanByUserAndBook(userId, bookId))
-        .thenAnswer((_) async => loanData);
+    when(() => mockLoanService.getLoanByUserAndBook(userId, bookId)).thenAnswer((_) async => loanData);
 
     // Simular actualización exitosa de la página actual
-    when(() => mockLoanService.updateCurrentPage(loanData['id']!, currentPage))
-        .thenAnswer((_) async => Future.value());
+    when(() => mockLoanService.updateCurrentPage(loanData['id']!, currentPage)).thenAnswer((_) async => Future.value());
 
     await controller.saveCurrentPageProgress(userId, bookId, currentPage);
 
@@ -319,8 +299,7 @@ void main() {
     const currentPage = 150;
 
     // Simular que no hay préstamo activo para el usuario y libro
-    when(() => mockLoanService.getLoanByUserAndBook(userId, bookId))
-        .thenAnswer((_) async => null);
+    when(() => mockLoanService.getLoanByUserAndBook(userId, bookId)).thenAnswer((_) async => null);
 
     await controller.saveCurrentPageProgress(userId, bookId, currentPage);
 
@@ -335,8 +314,7 @@ void main() {
     const bookId = 1;
     const currentPage = 150;
 
-    when(() => mockLoanService.getLoanByUserAndBook(userId, bookId))
-        .thenThrow(Exception('Error simulado'));
+    when(() => mockLoanService.getLoanByUserAndBook(userId, bookId)).thenThrow(Exception('Error simulado'));
 
     // Llamar a la función y verificar que no lance excepción
     await controller.saveCurrentPageProgress(userId, bookId, currentPage);
@@ -353,8 +331,7 @@ void main() {
     const bookId = 1;
     const savedPage = 100;
 
-    when(() => mockLoanService.getSavedPageProgress(userId, bookId))
-        .thenAnswer((_) async => savedPage);
+    when(() => mockLoanService.getSavedPageProgress(userId, bookId)).thenAnswer((_) async => savedPage);
 
     final result = await controller.getSavedPageProgress(userId, bookId);
 
@@ -366,8 +343,7 @@ void main() {
     const userId = 'user123';
     const bookId = 1;
 
-    when(() => mockLoanService.getSavedPageProgress(userId, bookId))
-        .thenAnswer((_) async => null);
+    when(() => mockLoanService.getSavedPageProgress(userId, bookId)).thenAnswer((_) async => null);
 
     final result = await controller.getSavedPageProgress(userId, bookId);
 
@@ -380,8 +356,7 @@ void main() {
     final formats = ['Físico', 'Digital'];
     final availableFormats = ['Digital'];
 
-    when(() => mockLoanService.getAvailableFormats(bookId, formats))
-        .thenAnswer((_) async => availableFormats);
+    when(() => mockLoanService.getAvailableFormats(bookId, formats)).thenAnswer((_) async => availableFormats);
 
     final result = await controller.fetchAvailableFormats(bookId, formats);
 
@@ -393,8 +368,7 @@ void main() {
     const bookId = 1;
     final formats = ['Físico', 'Digital'];
 
-    when(() => mockLoanService.getAvailableFormats(bookId, formats))
-        .thenThrow(Exception('Error simulado'));
+    when(() => mockLoanService.getAvailableFormats(bookId, formats)).thenThrow(Exception('Error simulado'));
 
     final result = await controller.fetchAvailableFormats(bookId, formats);
 
@@ -406,8 +380,7 @@ void main() {
     const bookId = 1;
     final loanedFormats = ['Físico', 'Digital'];
 
-    when(() => mockLoanService.getLoanedFormats(bookId))
-        .thenAnswer((_) async => loanedFormats);
+    when(() => mockLoanService.getLoanedFormats(bookId)).thenAnswer((_) async => loanedFormats);
 
     final result = await controller.fetchLoanedFormats(bookId);
 
@@ -418,8 +391,7 @@ void main() {
   test('fetchLoanedFormats maneja excepciones y devuelve lista vacía', () async {
     const bookId = 1;
 
-    when(() => mockLoanService.getLoanedFormats(bookId))
-        .thenThrow(Exception('Error simulado'));
+    when(() => mockLoanService.getLoanedFormats(bookId)).thenThrow(Exception('Error simulado'));
 
     final result = await controller.fetchLoanedFormats(bookId);
 
@@ -431,8 +403,7 @@ void main() {
     const bookId = 1;
     final pendingFormats = ['Digital'];
 
-    when(() => mockLoanService.getPendingFormats(bookId))
-        .thenAnswer((_) async => pendingFormats);
+    when(() => mockLoanService.getPendingFormats(bookId)).thenAnswer((_) async => pendingFormats);
 
     final result = await controller.fetchPendingFormats(bookId);
 
@@ -443,8 +414,7 @@ void main() {
   test('fetchPendingFormats maneja excepciones y devuelve lista vacía', () async {
     const bookId = 1;
 
-    when(() => mockLoanService.getPendingFormats(bookId))
-        .thenThrow(Exception('Error simulado'));
+    when(() => mockLoanService.getPendingFormats(bookId)).thenThrow(Exception('Error simulado'));
 
     final result = await controller.fetchPendingFormats(bookId);
 
@@ -459,15 +429,13 @@ void main() {
       {'id': 2, 'userId': 'user2'},
     ];
 
-    when(() => mockLoanService.getLoansByBookId(bookId))
-        .thenAnswer((_) async => loans);
+    when(() => mockLoanService.getLoansByBookId(bookId)).thenAnswer((_) async => loans);
 
     final result = await controller.getLoansByBookId(bookId);
 
     expect(result, loans);
     verify(() => mockLoanService.getLoansByBookId(bookId)).called(1);
   });
-
 
   test('cancelLoanRequest devuelve respuesta correcta', () async {
     const bookId = 1;
@@ -476,8 +444,7 @@ void main() {
 
     final response = {'success': true, 'message': 'Préstamo cancelado'};
 
-    when(() => mockLoanService.cancelLoan(bookId, notificationId, format))
-        .thenAnswer((_) async => response);
+    when(() => mockLoanService.cancelLoan(bookId, notificationId, format)).thenAnswer((_) async => response);
 
     final result = await controller.cancelLoanRequest(bookId, notificationId, format);
 
@@ -491,8 +458,7 @@ void main() {
 
     final response = {'exists': true};
 
-    when(() => mockLoanService.checkExistingLoanRequest(bookId, userId))
-        .thenAnswer((_) async => response);
+    when(() => mockLoanService.checkExistingLoanRequest(bookId, userId)).thenAnswer((_) async => response);
 
     final result = await controller.checkExistingLoanRequest(bookId, userId);
 
@@ -508,8 +474,7 @@ void main() {
       {'format': 'Digital', 'state': 'Pendiente'},
     ];
 
-    when(() => mockLoanService.getLoanedFormatsAndStates(bookId))
-        .thenAnswer((_) async => loanedFormatsAndStates);
+    when(() => mockLoanService.getLoanedFormatsAndStates(bookId)).thenAnswer((_) async => loanedFormatsAndStates);
 
     final result = await controller.getLoanedFormatsAndStates(bookId);
 
@@ -538,8 +503,7 @@ void main() {
 
     final response = {'success': true, 'data': {'id': 50}};
 
-    when(() => mockLoanService.createLoanOfferPhysicalBook(any(), principalLoanId))
-        .thenAnswer((_) async => response);
+    when(() => mockLoanService.createLoanOfferPhysicalBook(any(), principalLoanId)).thenAnswer((_) async => response);
 
     final result = await controller.requestOfferPhysicalBookLoan(book, principalLoanId);
 
@@ -566,8 +530,7 @@ void main() {
 
     const principalLoanId = 10;
 
-    when(() => mockLoanService.createLoanOfferPhysicalBook(any(), principalLoanId))
-        .thenThrow(Exception('Error simulado'));
+    when(() => mockLoanService.createLoanOfferPhysicalBook(any(), principalLoanId)).thenThrow(Exception('Error simulado'));
 
     final result = await controller.requestOfferPhysicalBookLoan(book, principalLoanId);
 
@@ -580,8 +543,7 @@ void main() {
     const bookId = 1;
     const userId = 'user123';
 
-    when(() => mockLoanService.deleteLoanByBookAndUser(bookId, userId))
-        .thenAnswer((_) async => Future.value());
+    when(() => mockLoanService.deleteLoanByBookAndUser(bookId, userId)).thenAnswer((_) async => Future.value());
 
     await controller.deleteLoanByBookAndUser(bookId, userId);
 
@@ -623,8 +585,7 @@ void main() {
     const userId = 'user123';
     const expectedState = 'Aceptado';
 
-    when(() => mockLoanService.getLoanStateForUser(loanId, userId))
-        .thenAnswer((_) async => expectedState);
+    when(() => mockLoanService.getLoanStateForUser(loanId, userId)).thenAnswer((_) async => expectedState);
 
     final result = await controller.getLoanStateForUser(loanId, userId);
 
@@ -637,8 +598,7 @@ void main() {
     const userId = 'user123';
     const expectedLoanId = 77;
 
-    when(() => mockLoanService.getActualLoanIdForUserAndBook(loanId, userId))
-        .thenAnswer((_) async => expectedLoanId);
+    when(() => mockLoanService.getActualLoanIdForUserAndBook(loanId, userId)).thenAnswer((_) async => expectedLoanId);
 
     final result = await controller.getActualLoanIdForUserAndBook(loanId, userId);
 
@@ -654,8 +614,7 @@ void main() {
 
     final response = {'success': true, 'data': {'id': 123}};
 
-    when(() => mockLoanService.createLoanFianza(any(), bookTitle))
-        .thenAnswer((_) async => response);
+    when(() => mockLoanService.createLoanFianza(any(), bookTitle)).thenAnswer((_) async => response);
 
     final result = await controller.createLoanFianza(bookId, ownerId, currentHolderId, bookTitle);
 
@@ -669,8 +628,7 @@ void main() {
     const currentHolderId = 'holder1';
     const bookTitle = 'Título del libro';
 
-    when(() => mockLoanService.createLoanFianza(any(), bookTitle))
-        .thenThrow(Exception('Error simulado'));
+    when(() => mockLoanService.createLoanFianza(any(), bookTitle)).thenThrow(Exception('Error simulado'));
 
     final result = await controller.createLoanFianza(bookId, ownerId, currentHolderId, bookTitle);
 
@@ -686,15 +644,12 @@ void main() {
 
     // Mock ReminderController
     final mockReminderController = MockReminderController();
-    when(() => mockReminderController.getUsersIdForReminder(bookId))
-        .thenAnswer((_) async => ['user1', 'user2']);
-    when(() => mockReminderController.updateReminderStateForAllUsers(bookId, false))
-        .thenAnswer((_) async => Future.value());
+    when(() => mockReminderController.getUsersIdForReminder(bookId)).thenAnswer((_) async => ['user1', 'user2']);
+    when(() => mockReminderController.updateReminderStateForAllUsers(bookId, false)).thenAnswer((_) async => Future.value());
 
     // Mock NotificationController
     final mockNotificationController = MockNotificationController();
-    when(() => mockNotificationController.createNotification(any(), any(), any(), any()))
-        .thenAnswer((_) async => {'success': true, 'data': {'id': 'notif123'}});
+    when(() => mockNotificationController.createNotification(any(), any(), any(), any())).thenAnswer((_) async => {'success': true, 'data': {'id': 'notif123'}});
 
     // Mock BookService
     when(() => mockBookService.getBookById(bookId))
@@ -709,8 +664,7 @@ void main() {
         });
 
     // Mock LoanService para simular que no hay préstamos activos en ningún formato
-    when(() => mockLoanService.getActiveLoanForBookAndFormat(any(), any()))
-        .thenAnswer((_) async => false);
+    when(() => mockLoanService.getActiveLoanForBookAndFormat(any(), any())).thenAnswer((_) async => false);
 
     // Inject mocks en el controlador
     controller.reminderController = mockReminderController;
@@ -741,15 +695,12 @@ void main() {
 
     // Mock ReminderController
     final mockReminderController = MockReminderController();
-    when(() => mockReminderController.getUsersIdForReminder(bookId))
-        .thenAnswer((_) async => ['user1', 'user2']);
-    when(() => mockReminderController.updateReminderStateForAllUsers(bookId, false))
-        .thenAnswer((_) async => Future.value());
+    when(() => mockReminderController.getUsersIdForReminder(bookId)).thenAnswer((_) async => ['user1', 'user2']);
+    when(() => mockReminderController.updateReminderStateForAllUsers(bookId, false)).thenAnswer((_) async => Future.value());
 
     // Mock NotificationController
     final mockNotificationController = MockNotificationController();
-    when(() => mockNotificationController.createNotification(any(), any(), any(), any()))
-        .thenAnswer((_) async => {'success': true, 'data': {'id': 'notif999'}});
+    when(() => mockNotificationController.createNotification(any(), any(), any(), any())).thenAnswer((_) async => {'success': true, 'data': {'id': 'notif999'}});
 
     // Mock BookService
     when(() => mockBookService.getBookById(bookId))
@@ -763,9 +714,8 @@ void main() {
           }
         });
 
-    // Mock LoanService para simular que AL MENOS un formato sigue prestado
-    when(() => mockLoanService.getActiveLoanForBookAndFormat(bookId, any()))
-        .thenAnswer((_) async {
+    // Mock LoanService para simular que al menos un formato sigue prestado
+    when(() => mockLoanService.getActiveLoanForBookAndFormat(bookId, any())).thenAnswer((_) async {
           // Solo el formato 'Físico' sigue prestado
           final calledFormat = _.positionalArguments[1] as String;
           return calledFormat.toLowerCase() == 'físico';
@@ -793,8 +743,7 @@ void main() {
     verifyNever(() => mockReminderController.updateReminderStateForAllUsers(bookId, false));
   });
 
-  
-  // EXISTENTE: Devuelve y gestiona recordatorios si el usuario es el dueño del préstamo original
+  // Devuelve y gestiona recordatorios si el usuario es el dueño del préstamo original
   test('updateLoanStateByUser notifica devolución y gestiona recordatorios si es dueño del préstamo original', () async {
     const loanId = 10;
     const compensationLoanId = 20;
@@ -804,12 +753,10 @@ void main() {
     const title = 'El Principito';
 
     // Mockear AccountController para retornar el usuario actual
-    when(() => mockAccountController.getCurrentUserId())
-        .thenAnswer((_) async => userId);
+    when(() => mockAccountController.getCurrentUserId()).thenAnswer((_) async => userId);
 
     // Mock de actualización de estado
-    when(() => mockLoanService.updateLoanStateByUser(userId, loanId, compensationLoanId, 'Devuelto'))
-        .thenAnswer((_) async => Future.value());
+    when(() => mockLoanService.updateLoanStateByUser(userId, loanId, compensationLoanId, 'Devuelto')).thenAnswer((_) async => Future.value());
 
     // Mock obtener préstamo
     when(() => mockLoanService.getLoanById(loanId)).thenAnswer((_) async => {
@@ -836,25 +783,20 @@ void main() {
       Reminder(id: 2, userId: 'user2', format: format, notified: false, bookId: bookId),
     ];
 
-    when(() => mockReminderController.getRemindersByBook(bookId))
-        .thenAnswer((_) async => reminders);
+    when(() => mockReminderController.getRemindersByBook(bookId)).thenAnswer((_) async => reminders);
 
-    when(() => mockReminderController.markAsNotified(any(), any(), any()))
-        .thenAnswer((_) async => Future.value({'success': true}));
+    when(() => mockReminderController.markAsNotified(any(), any(), any())).thenAnswer((_) async => Future.value({'success': true}));
 
-    // 🔧 CORREGIDO: Mock que devuelve un Map en lugar de null
-    when(() => mockReminderController.removeFromReminder(any(), any(), any()))
-        .thenAnswer((_) async => {'success': true});
+    // Mock que devuelve un Map en lugar de null
+    when(() => mockReminderController.removeFromReminder(any(), any(), any())).thenAnswer((_) async => {'success': true});
 
     // Mock areAllFormatsAvailable devuelve true
-    when(() => mockLoanService.areAllFormatsAvailable(bookId, [format]))
-        .thenAnswer((_) async => true);
+    when(() => mockLoanService.areAllFormatsAvailable(bookId, [format])).thenAnswer((_) async => true);
 
     // Mock notificación
-    when(() => mockNotificationController.createNotification(any(), any(), any(), any()))
-        .thenAnswer((_) async => {'success': true});
+    when(() => mockNotificationController.createNotification(any(), any(), any(), any())).thenAnswer((_) async => {'success': true});
 
-    // Injectar dependencias
+    // Inyectar dependencias
     controller.accountController = mockAccountController;
     controller.loanService = mockLoanService;
     controller.bookService = mockBookService;
@@ -895,19 +837,16 @@ void main() {
     verify(() => mockReminderController.removeFromReminder(bookId, 'user2', format)).called(1);
   });
 
-// NUEVO 1: El usuario no es dueño de ningún préstamo, no debe notificar
+// El usuario no es dueño de ningún préstamo, no debe notificar
   test('updateLoanStateByUser no realiza acciones si el usuario no es dueño del préstamo', () async {
     const loanId = 10;
     const compensationLoanId = 20;
     const userId = 'externalUser';
 
     when(() => mockAccountController.getCurrentUserId()).thenAnswer((_) async => userId);
-    when(() => mockLoanService.updateLoanStateByUser(userId, loanId, compensationLoanId, 'Devuelto'))
-        .thenAnswer((_) async => Future.value());
-    when(() => mockLoanService.getLoanById(loanId))
-        .thenAnswer((_) async => {'data': {'ownerId': 'otherUser'}});
-    when(() => mockLoanService.getLoanById(compensationLoanId))
-        .thenAnswer((_) async => {'data': {'ownerId': 'someoneElse'}});
+    when(() => mockLoanService.updateLoanStateByUser(userId, loanId, compensationLoanId, 'Devuelto')).thenAnswer((_) async => Future.value());
+    when(() => mockLoanService.getLoanById(loanId)).thenAnswer((_) async => {'data': {'ownerId': 'otherUser'}});
+    when(() => mockLoanService.getLoanById(compensationLoanId)).thenAnswer((_) async => {'data': {'ownerId': 'someoneElse'}});
 
     controller.accountController = mockAccountController;
     controller.loanService = mockLoanService;
@@ -917,7 +856,7 @@ void main() {
     verifyNever(() => mockNotificationController.createNotification(any(), any(), any(), any()));
   });
 
-// NUEVO 2: Rechazo notifica al solicitante y marca como disponible
+// Rechazo notifica al solicitante y marca como disponible
   test('updateLoanStateByUser notifica rechazo y cambia estado del libro si es dueño', () async {
     const loanId = 10;
     const compensationLoanId = 20;
@@ -927,8 +866,7 @@ void main() {
     const format = 'Físico';
 
     when(() => mockAccountController.getCurrentUserId()).thenAnswer((_) async => userId);
-    when(() => mockLoanService.updateLoanStateByUser(userId, loanId, compensationLoanId, 'Rechazado'))
-        .thenAnswer((_) async => Future.value());
+    when(() => mockLoanService.updateLoanStateByUser(userId, loanId, compensationLoanId, 'Rechazado')).thenAnswer((_) async => Future.value());
     
     when(() => mockLoanService.getLoanById(loanId)).thenAnswer((_) async => {
       'data': {
@@ -952,11 +890,9 @@ void main() {
       'data': {'id': bookId, 'title': title, 'currentHolderId': 'holderUser'}
     });
     
-    when(() => mockNotificationController.createNotification(any(), any(), any(), any()))
-        .thenAnswer((_) async => {'success': true});
+    when(() => mockNotificationController.createNotification(any(), any(), any(), any())).thenAnswer((_) async => {'success': true});
     
-    when(() => mockBookController.changeState(bookId, 'Disponible'))
-        .thenAnswer((_) async => {'success': true});
+    when(() => mockBookController.changeState(bookId, 'Disponible')).thenAnswer((_) async => {'success': true});
 
     controller.accountController = mockAccountController;
     controller.loanService = mockLoanService;
@@ -976,8 +912,7 @@ void main() {
     verify(() => mockBookController.changeState(bookId, 'Disponible')).called(1);
   });
 
-
-// NUEVO 3: Recordatorios NO se eliminan si no están todos los formatos disponibles
+// Recordatorios NO se eliminan si no están todos los formatos disponibles
   test('updateLoanStateByUser no elimina recordatorios si no están todos los formatos disponibles', () async {
     const loanId = 10;
     const compensationLoanId = 20;
@@ -987,8 +922,7 @@ void main() {
     const title = 'El Principito';
 
     when(() => mockAccountController.getCurrentUserId()).thenAnswer((_) async => userId);
-    when(() => mockLoanService.updateLoanStateByUser(userId, loanId, compensationLoanId, 'Devuelto'))
-        .thenAnswer((_) async => Future.value());
+    when(() => mockLoanService.updateLoanStateByUser(userId, loanId, compensationLoanId, 'Devuelto')).thenAnswer((_) async => Future.value());
     when(() => mockLoanService.getLoanById(loanId)).thenAnswer((_) async => {
       'data': {
         'ownerId': userId,
@@ -997,8 +931,7 @@ void main() {
         'currentHolderId': 'someoneElse'
       }
     });
-    when(() => mockLoanService.getLoanById(compensationLoanId))
-        .thenAnswer((_) async => {'data': {'ownerId': 'otro'}});
+    when(() => mockLoanService.getLoanById(compensationLoanId)).thenAnswer((_) async => {'data': {'ownerId': 'otro'}});
     when(() => mockBookService.getBookById(bookId)).thenAnswer((_) async => {
       'data': {'id': bookId, 'title': title}
     });
@@ -1006,14 +939,10 @@ void main() {
     final reminders = [
       Reminder(id: 1, userId: 'user1', format: format, notified: false, bookId: bookId)
     ];
-    when(() => mockReminderController.getRemindersByBook(bookId))
-        .thenAnswer((_) async => reminders);
-    when(() => mockReminderController.markAsNotified(bookId, 'user1', format))
-        .thenAnswer((_) async => {'success': true});
-    when(() => mockLoanService.areAllFormatsAvailable(bookId, [format]))
-        .thenAnswer((_) async => false);
-    when(() => mockNotificationController.createNotification(any(), any(), any(), any()))
-        .thenAnswer((_) async => {'success': true});
+    when(() => mockReminderController.getRemindersByBook(bookId)).thenAnswer((_) async => reminders);
+    when(() => mockReminderController.markAsNotified(bookId, 'user1', format)).thenAnswer((_) async => {'success': true});
+    when(() => mockLoanService.areAllFormatsAvailable(bookId, [format])).thenAnswer((_) async => false);
+    when(() => mockNotificationController.createNotification(any(), any(), any(), any())).thenAnswer((_) async => {'success': true});
 
     controller.accountController = mockAccountController;
     controller.loanService = mockLoanService;
@@ -1034,11 +963,9 @@ void main() {
     const userId = 'ownerCompensationUser';
     const title = 'Cien Años de Soledad';
 
-    when(() => mockAccountController.getCurrentUserId())
-        .thenAnswer((_) async => userId);
+    when(() => mockAccountController.getCurrentUserId()).thenAnswer((_) async => userId);
 
-    when(() => mockLoanService.updateLoanStateByUser(userId, loanId, compensationLoanId, 'Devuelto'))
-        .thenAnswer((_) async => Future.value());
+    when(() => mockLoanService.updateLoanStateByUser(userId, loanId, compensationLoanId, 'Devuelto')).thenAnswer((_) async => Future.value());
 
     when(() => mockLoanService.getLoanById(loanId)).thenAnswer((_) async => {
           'data': {
@@ -1066,20 +993,15 @@ void main() {
       Reminder(id: 1, userId: 'userA', format: format, notified: false, bookId: bookId),
     ];
 
-    when(() => mockReminderController.getRemindersByBook(bookId))
-        .thenAnswer((_) async => reminders);
+    when(() => mockReminderController.getRemindersByBook(bookId)).thenAnswer((_) async => reminders);
 
-    when(() => mockReminderController.markAsNotified(any(), any(), any()))
-        .thenAnswer((_) async => Future.value({'success': true}));
+    when(() => mockReminderController.markAsNotified(any(), any(), any())).thenAnswer((_) async => Future.value({'success': true}));
 
-    when(() => mockReminderController.removeFromReminder(any(), any(), any()))
-        .thenAnswer((_) async => {'success': true});
+    when(() => mockReminderController.removeFromReminder(any(), any(), any())).thenAnswer((_) async => {'success': true});
 
-    when(() => mockLoanService.areAllFormatsAvailable(bookId, [format]))
-        .thenAnswer((_) async => true);
+    when(() => mockLoanService.areAllFormatsAvailable(bookId, [format])).thenAnswer((_) async => true);
 
-    when(() => mockNotificationController.createNotification(any(), any(), any(), any()))
-        .thenAnswer((_) async => {'success': true});
+    when(() => mockNotificationController.createNotification(any(), any(), any(), any())).thenAnswer((_) async => {'success': true});
 
     controller.accountController = mockAccountController;
     controller.loanService = mockLoanService;
@@ -1107,17 +1029,14 @@ void main() {
     verify(() => mockReminderController.removeFromReminder(bookId, 'userA', format)).called(1);
   });
 
-
   test('updateLoanStateByUser no notifica ni cambia estado con estado no esperado', () async {
     const loanId = 10;
     const compensationLoanId = 20;
     const userId = 'ownerUser';
 
-    when(() => mockAccountController.getCurrentUserId())
-        .thenAnswer((_) async => userId);
+    when(() => mockAccountController.getCurrentUserId()).thenAnswer((_) async => userId);
 
-    when(() => mockLoanService.updateLoanStateByUser(userId, loanId, compensationLoanId, 'Pendiente'))
-        .thenAnswer((_) async => Future.value());
+    when(() => mockLoanService.updateLoanStateByUser(userId, loanId, compensationLoanId, 'Pendiente')).thenAnswer((_) async => Future.value());
 
     when(() => mockLoanService.getLoanById(loanId)).thenAnswer((_) async => {
           'data': {'ownerId': userId, 'bookId': 1, 'format': 'Físico', 'currentHolderId': 'userX'}
@@ -1127,7 +1046,6 @@ void main() {
           'data': {'ownerId': 'otro'}
         });
 
-    // Este mock es necesario para evitar error de tipo null
     when(() => mockBookService.getBookById(any())).thenAnswer((_) async => {'data': {}});
 
     controller.accountController = mockAccountController;
@@ -1142,7 +1060,6 @@ void main() {
     verifyNever(() => mockReminderController.removeFromReminder(any(), any(), any()));
   });
 
-  
   group('updateLoanState', () {
     const loanId = 1;
     const compensation = 'Libro a cambio';
@@ -1186,7 +1103,6 @@ void main() {
           }
         };
       }
-      // Devolver un mapa con datos dummy para evitar null
       return {
         'data': {
           'name': 'Unknown',
@@ -1197,50 +1113,37 @@ void main() {
     }
 
     test('no hace nada si getLoanById devuelve null data', () async {
-      when(() => mockLoanService.getLoanById(loanId))
-          .thenAnswer((_) async => {'data': null});
+      when(() => mockLoanService.getLoanById(loanId)).thenAnswer((_) async => {'data': null});
       await controller.updateLoanState(loanId, 'Aceptado');
       verifyNever(() => mockLoanService.updateLoanState(any(), any()));
     });
 
     test('no hace nada si getBookById devuelve null data', () async {
-      when(() => mockLoanService.getLoanById(loanId))
-          .thenAnswer((_) async => {'data': loanDataPhysical});
-      when(() => mockBookService.getBookById(bookId))
-          .thenAnswer((_) async => {'data': null});
+      when(() => mockLoanService.getLoanById(loanId)).thenAnswer((_) async => {'data': loanDataPhysical});
+      when(() => mockBookService.getBookById(bookId)).thenAnswer((_) async => {'data': null});
       await controller.updateLoanState(loanId, 'Aceptado');
       verifyNever(() => mockLoanService.updateLoanState(any(), any()));
     });
 
     test('no hace nada si currentHolderId es null', () async {
       final loanDataNullHolder = {...loanDataPhysical, 'currentHolderId': null};
-      when(() => mockLoanService.getLoanById(loanId))
-          .thenAnswer((_) async => {'data': loanDataNullHolder});
-      when(() => mockBookService.getBookById(bookId))
-          .thenAnswer((_) async => {'data': bookDataPhysical});
+      when(() => mockLoanService.getLoanById(loanId)).thenAnswer((_) async => {'data': loanDataNullHolder});
+      when(() => mockBookService.getBookById(bookId)).thenAnswer((_) async => {'data': bookDataPhysical});
       await controller.updateLoanState(loanId, 'Aceptado');
       verifyNever(() => mockLoanService.updateLoanState(any(), any()));
     });
 
     test('actualiza estado y notifica con compensación y formato físico', () async {
-      when(() => mockLoanService.getLoanById(loanId))
-          .thenAnswer((_) async => {'data': loanDataPhysical});
-      when(() => mockBookService.getBookById(bookId))
-          .thenAnswer((_) async => {'data': bookDataPhysical});
+      when(() => mockLoanService.getLoanById(loanId)).thenAnswer((_) async => {'data': loanDataPhysical});
+      when(() => mockBookService.getBookById(bookId)).thenAnswer((_) async => {'data': bookDataPhysical});
 
-      when(() => mockUserService.getUserById(any()))
-          .thenAnswer((invocation) => mockGetUserById(invocation.positionalArguments.first as String));
+      when(() => mockUserService.getUserById(any())).thenAnswer((invocation) => mockGetUserById(invocation.positionalArguments.first as String));
 
-      when(() => mockLoanService.updateLoanState(loanId, 'Aceptado'))
-          .thenAnswer((_) async => Future.value());
-      when(() => mockLoanChatService.createChatIfNotExists(loanId, 'owner1', 'user1', null))
-          .thenAnswer((_) async => 123);
-      when(() => mockNotificationController.createNotification(any(), any(), any(), any()))
-          .thenAnswer((_) async => Future.value());
-      when(() => mockChatMessageController.createChatMessage(any(), any(), any()))
-          .thenAnswer((_) async => Future.value());
-      when(() => mockLoanService.updateCompensation(compensation, loanId))
-          .thenAnswer((_) async => Future.value());
+      when(() => mockLoanService.updateLoanState(loanId, 'Aceptado')).thenAnswer((_) async => Future.value());
+      when(() => mockLoanChatService.createChatIfNotExists(loanId, 'owner1', 'user1', null)).thenAnswer((_) async => 123);
+      when(() => mockNotificationController.createNotification(any(), any(), any(), any())).thenAnswer((_) async => Future.value());
+      when(() => mockChatMessageController.createChatMessage(any(), any(), any())).thenAnswer((_) async => Future.value());
+      when(() => mockLoanService.updateCompensation(compensation, loanId)).thenAnswer((_) async => Future.value());
 
       try {
         await controller.updateLoanState(loanId, 'Aceptado', compensation: compensation);
@@ -1251,18 +1154,13 @@ void main() {
     });
 
     test('actualiza estado y notifica sin compensación y formato digital', () async {
-      when(() => mockLoanService.getLoanById(loanId))
-          .thenAnswer((_) async => {'data': loanDataDigital});
-      when(() => mockBookService.getBookById(bookId))
-          .thenAnswer((_) async => {'data': bookDataDigital});
+      when(() => mockLoanService.getLoanById(loanId)).thenAnswer((_) async => {'data': loanDataDigital});
+      when(() => mockBookService.getBookById(bookId)).thenAnswer((_) async => {'data': bookDataDigital});
 
-      when(() => mockUserService.getUserById(any()))
-          .thenAnswer((invocation) => mockGetUserById(invocation.positionalArguments.first as String));
+      when(() => mockUserService.getUserById(any())).thenAnswer((invocation) => mockGetUserById(invocation.positionalArguments.first as String));
 
-      when(() => mockLoanService.updateLoanState(loanId, 'Aceptado'))
-          .thenAnswer((_) async => Future.value());
-      when(() => mockNotificationController.createNotification(any(), any(), any(), any()))
-          .thenAnswer((_) async => Future.value());
+      when(() => mockLoanService.updateLoanState(loanId, 'Aceptado')).thenAnswer((_) async => Future.value());
+      when(() => mockNotificationController.createNotification(any(), any(), any(), any())).thenAnswer((_) async => Future.value());
 
       try {
         await controller.updateLoanState(loanId, 'Aceptado');
@@ -1279,18 +1177,13 @@ void main() {
     });
 
     test('actualiza estado y notifica estado Rechazado', () async {
-      when(() => mockLoanService.getLoanById(loanId))
-          .thenAnswer((_) async => {'data': loanDataDigital});
-      when(() => mockBookService.getBookById(bookId))
-          .thenAnswer((_) async => {'data': bookDataDigital});
+      when(() => mockLoanService.getLoanById(loanId)).thenAnswer((_) async => {'data': loanDataDigital});
+      when(() => mockBookService.getBookById(bookId)).thenAnswer((_) async => {'data': bookDataDigital});
 
-      when(() => mockUserService.getUserById(any()))
-          .thenAnswer((invocation) => mockGetUserById(invocation.positionalArguments.first as String));
+      when(() => mockUserService.getUserById(any())).thenAnswer((invocation) => mockGetUserById(invocation.positionalArguments.first as String));
 
-      when(() => mockLoanService.updateLoanState(loanId, 'Rechazado'))
-          .thenAnswer((_) async => Future.value());
-      when(() => mockNotificationController.createNotification(any(), any(), any(), any()))
-          .thenAnswer((_) async => Future.value());
+      when(() => mockLoanService.updateLoanState(loanId, 'Rechazado')).thenAnswer((_) async => Future.value());
+      when(() => mockNotificationController.createNotification(any(), any(), any(), any())).thenAnswer((_) async => Future.value());
 
       try {
         await controller.updateLoanState(loanId, 'Rechazado');
@@ -1306,4 +1199,5 @@ void main() {
       )).called(1);
     });
   });
+  
 }

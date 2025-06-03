@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
+// Widget para la subida de la imagen de portada de un libro
 class BookCoverPickerWidget extends StatefulWidget {
   final File? initialCoverImage;
   final String? coverImageUrl;
@@ -54,22 +55,21 @@ class _BookCoverPickerWidgetState extends State<BookCoverPickerWidget> {
         ),
         const SizedBox(height: 5),
         
-        // Aquí centramos solo la imagen
         Center(  
           child: GestureDetector(
             onTap: _pickCoverImage, // Acción para seleccionar la portada
             child: Container(
-              width: 100, // Ajusta el tamaño del cuadrado
-              height: 150, // Ajusta el tamaño del cuadrado
+              width: 100,
+              height: 150, 
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(10),
                 image: DecorationImage(
                   image: _coverImageFile != null
-                      ? FileImage(_coverImageFile!) // Si hay un archivo, lo mostramos
+                      ? FileImage(_coverImageFile!)
                       : widget.coverImageUrl != null && widget.coverImageUrl!.isNotEmpty && widget.coverImageUrl!.startsWith('http')
-                          ? NetworkImage(widget.coverImageUrl!) // Si hay una URL válida, la mostramos
-                          : const AssetImage('assets/images/portada.png') as ImageProvider, // Si no, mostramos una imagen predeterminada
-                  fit: BoxFit.cover, // Cambié a BoxFit.cover para que la imagen se recorte apropiadamente si es necesario
+                          ? NetworkImage(widget.coverImageUrl!)
+                          : const AssetImage('assets/images/portada.png') as ImageProvider, 
+                  fit: BoxFit.cover, 
                   alignment: Alignment.center,
                 ),
               ),
@@ -79,4 +79,5 @@ class _BookCoverPickerWidgetState extends State<BookCoverPickerWidget> {
       ],
     );
   }
+
 }

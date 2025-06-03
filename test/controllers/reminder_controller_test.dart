@@ -31,8 +31,7 @@ void main() {
       const userId = 'user1';
       final mockReminders = <Reminder>[];
 
-      when(() => mockService.getRemindersByBookAndUser(bookId, userId))
-          .thenAnswer((_) async => mockReminders);
+      when(() => mockService.getRemindersByBookAndUser(bookId, userId)).thenAnswer((_) async => mockReminders);
 
       final result = await controller.getRemindersByBookAndUser(bookId, userId);
 
@@ -46,8 +45,7 @@ void main() {
       const bookId = 1;
       final mockReminders = <Reminder>[];
 
-      when(() => mockService.getRemindersByBook(bookId))
-          .thenAnswer((_) async => mockReminders);
+      when(() => mockService.getRemindersByBook(bookId)).thenAnswer((_) async => mockReminders);
 
       final result = await controller.getRemindersByBook(bookId);
 
@@ -60,8 +58,7 @@ void main() {
       const bookId = 1;
       final mockUserIds = ['user1', 'user2'];
 
-      when(() => mockService.getUsersIdForReminder(bookId))
-          .thenAnswer((_) async => mockUserIds);
+      when(() => mockService.getUsersIdForReminder(bookId)).thenAnswer((_) async => mockUserIds);
 
       final result = await controller.getUsersIdForReminder(bookId);
 
@@ -75,8 +72,7 @@ void main() {
       const userId = 'user1';
       const format = 'Digital';
 
-      when(() => mockService.addReminder(any()))
-          .thenAnswer((_) async => Future.value());
+      when(() => mockService.addReminder(any())).thenAnswer((_) async => Future.value());
 
       final result = await controller.addReminder(bookId, userId, format);
 
@@ -90,8 +86,7 @@ void main() {
       const userId = 'user1';
       const format = 'Digital';
 
-      when(() => mockService.addReminder(any()))
-          .thenThrow(Exception('Error'));
+      when(() => mockService.addReminder(any())).thenThrow(Exception('Error'));
 
       final result = await controller.addReminder(bookId, userId, format);
 
@@ -105,8 +100,7 @@ void main() {
       const userId = 'user1';
       const format = 'Digital';
 
-      when(() => mockService.removeFromReminder(bookId, userId, format))
-          .thenAnswer((_) async => Future.value());
+      when(() => mockService.removeFromReminder(bookId, userId, format)).thenAnswer((_) async => Future.value());
 
       final result = await controller.removeFromReminder(bookId, userId, format);
 
@@ -119,8 +113,7 @@ void main() {
       const userId = 'user1';
       const format = 'Digital';
 
-      when(() => mockService.removeFromReminder(bookId, userId, format))
-          .thenThrow(Exception('No se pudo eliminar'));
+      when(() => mockService.removeFromReminder(bookId, userId, format)).thenThrow(Exception('No se pudo eliminar'));
 
       final result = await controller.removeFromReminder(bookId, userId, format);
 
@@ -133,8 +126,7 @@ void main() {
       const userId = 'user1';
       const format = 'Digital';
 
-      when(() => mockService.markAsNotified(bookId, userId, format))
-          .thenAnswer((_) async => Future.value());
+      when(() => mockService.markAsNotified(bookId, userId, format)).thenAnswer((_) async => Future.value());
 
       await controller.markAsNotified(bookId, userId, format);
 
@@ -151,11 +143,9 @@ void main() {
         Reminder(id: 2, bookId: bookId, userId: 'user2', format: 'Digital', notified: true),
       ];
 
-      when(() => mockService.getRemindersByBook(bookId))
-          .thenAnswer((_) async => reminderList);
+      when(() => mockService.getRemindersByBook(bookId)).thenAnswer((_) async => reminderList);
 
-      when(() => mockService.updateReminderNotificationStatus(1, notified))
-          .thenAnswer((_) async => Future.value());
+      when(() => mockService.updateReminderNotificationStatus(1, notified)).thenAnswer((_) async => Future.value());
 
       await controller.updateReminderStateForAllUsers(bookId, notified);
 
@@ -165,4 +155,5 @@ void main() {
       print('Estado de recordatorios actualizado');
     });
   });
+  
 }

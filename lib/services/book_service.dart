@@ -9,23 +9,7 @@ import 'package:diacritic/diacritic.dart';
 // Servicio con los métodos de negocio para la entidad Libro.
 class BookService extends BaseService{
 
-  /* Método asíncrono que permite añadir un nuevo libro.
-    Parámetros:
-      - title: Cadena con el tútlo del libro.
-      - author: Cadena con el nombre del autor.
-      - isbn: Cadena con el isbn del libro.
-      - pagesNumber: Entero con el número de páginas del libro.
-      - language: Cadena con el idioma del libro.
-      - format: Cadena con el formato del libro.
-      - file: Cadena con la ubicación del archivo del libro.
-      - summary: Cadena con un breve resumen del libro.
-      - categories: Cadena con los géneros seleccionados.
-    Return: 
-      Mapa con la clave:
-        - success: Indica si la creación del libro fue exitosa (true o false).
-        - message: Proporciona un mensaje de estado.
-        - data (Opcional): Información del libro creado si la operación fue exitosa.
-  */
+  // Método asíncrono que permite añadir un nuevo libro.
   Future<Map<String, dynamic>> addBook(CreateBookViewModel createBookViewModel) async {
     try {
       if (BaseService.client == null) {
@@ -80,11 +64,7 @@ class BookService extends BaseService{
     }
   }
 
-  /* Método para subir un archivo a Supabase Storage.
-     Parámetros:
-      - file: archivo del libro.
-      - title: título del libro para crear el nombre con el que se va a almacenar el archivo.
-  */
+  // Método para subir un archivo a Supabase Storage.
   Future<String?> uploadFile(File file, String bookTitle, String? userId) async {
     try {
       String sanitizedTitle = removeDiacritics(bookTitle).replaceAll(' ', '_');
@@ -139,9 +119,7 @@ class BookService extends BaseService{
       String fileName = "${sanitizedTitle}_${userId}_$timestamp.$fileExt";
 
       // Obtener lista de archivos actuales
-      final List<FileObject> existingFiles = await Supabase.instance.client.storage
-          .from('books')
-          .list(path: 'covers/');
+      final List<FileObject> existingFiles = await Supabase.instance.client.storage.from('books').list(path: 'covers/');
 
       // Eliminar archivos anteriores del mismo usuario/libro (optimizando la eliminación)
       final userFiles = existingFiles.where((file) =>
@@ -150,21 +128,15 @@ class BookService extends BaseService{
       if (userFiles.isNotEmpty) {
         // Realizamos la eliminación en bloque para evitar múltiples llamadas
         final fileNamesToDelete = userFiles.map((file) => 'covers/${file.name}').toList();
-        await Supabase.instance.client.storage
-            .from('books')
-            .remove(fileNamesToDelete);
+        await Supabase.instance.client.storage.from('books').remove(fileNamesToDelete);
         print("Portadas anteriores eliminadas: $fileNamesToDelete");
       }
 
       // Subir nuevo archivo con timestamp
-      final response = await Supabase.instance.client.storage
-          .from("books")
-          .upload("covers/$fileName", file);
+      final response = await Supabase.instance.client.storage.from("books").upload("covers/$fileName", file);
 
       // Obtener URL pública del archivo subido
-      final String publicUrl = Supabase.instance.client.storage
-          .from("books")
-          .getPublicUrl("covers/$fileName");
+      final String publicUrl = Supabase.instance.client.storage.from("books").getPublicUrl("covers/$fileName");
 
       print("Portada subida correctamente: $fileName");
       return publicUrl;
@@ -183,13 +155,7 @@ class BookService extends BaseService{
       }
 
       // Llamada a la base de datos para obtener los datos del libro.
-      final response = await BaseService.client
-          .from('Book')
-          .select()
-          .eq('id', bookId)
-          .maybeSingle();
-
-      print("Respuesta de Supabase: $response");
+      final response = await BaseService.client.from('Book').select().eq('id', bookId).maybeSingle();
 
       // Verificamos si la respuesta contiene datos.
       if (response != null && response.isNotEmpty) {
@@ -203,23 +169,7 @@ class BookService extends BaseService{
     }
   }
 
-  /* Método asíncrono que permite editar un libro.
-    Parámetros:
-      - title: Cadena con el tútlo del libro.
-      - author: Cadena con el nombre del autor.
-      - isbn: Cadena con el isbn del libro.
-      - pagesNumber: Entero con el número de páginas del libro.
-      - language: Cadena con el idioma del libro.
-      - format: Cadena con el formato del libro.
-      - file: Cadena con la ubicación del archivo del libro.
-      - summary: Cadena con un breve resumen del libro.
-      - categories: Cadena con los géneros seleccionados.
-    Return: 
-      Mapa con la clave:
-        - success: Indica si la edición del libro fue exitosa (true o false).
-        - message: Proporciona un mensaje de estado.
-        - data (Opcional): Información del libro editado si la operación fue exitosa.
-  */
+  // Método asíncrono que permite editar un libro.
   Future<Map<String, dynamic>> editBook(EditBookViewModel editBookViewModel) async {
     try {
       // Comprobamos si la conexión a Supabase está activa.
@@ -227,18 +177,12 @@ class BookService extends BaseService{
         return {'success': false, 'message': 'Error de conexión a la base de datos.'};
       }
 
-      print("Iniciando edición del libro...");
-      print("ID del libro a editar: ${editBookViewModel.id}");
-
       // Obtener el ID del usuario autenticado
       final currentUser = BaseService.client.auth.currentUser;
       if (currentUser == null) {
         print("Error: Usuario no autenticado");
         return {'success': false, 'message': 'Usuario no autenticado'};
       }
-
-      print("ID del usuario autenticado (auth.uid): ${currentUser.id}");
-      print("Email del usuario autenticado: ${currentUser.email}");
 
       // Verificar que el libro existe
       print("Verificando existencia del libro...");
@@ -296,12 +240,7 @@ class BookService extends BaseService{
 
       // Actualizar el usuario y obtener los datos actualizados en una sola operación
       print("Intentando actualizar libro...");
-      final response = await BaseService.client
-          .from('Book')
-          .update(updateData)
-          .eq('id', editBookViewModel.id)
-          .select()
-          .single();
+      final response = await BaseService.client.from('Book').update(updateData).eq('id', editBookViewModel.id).select().single();
 
       print("Respuesta de la actualización: $response");
 
@@ -340,13 +279,9 @@ class BookService extends BaseService{
 
   // Método asíncrono que obtiene los libros relacionados con una categoría.
   Future<List<Map<String, dynamic>>> getBooksByCategories(List<String> categories) async {
-    // Creamos el filtro compuesto
     final filters = categories.map((cat) => "categories.ilike.%$cat%").join(',');
 
-    final List<dynamic> response = await Supabase.instance.client
-        .from('Book')
-        .select()
-        .or(filters);
+    final List<dynamic> response = await Supabase.instance.client.from('Book').select().or(filters);
 
     return response.map((e) => Map<String, dynamic>.from(e)).toList();
 
@@ -364,32 +299,22 @@ class BookService extends BaseService{
     return response.map((e) => Map<String, dynamic>.from(e)).toList();
   }
 
-
   // Método asíncrono que busca los libros por título o autor
   Future<List<Map<String, dynamic>>> searchBooksByTitleOrAuthor(String query) async {
     // Creamos el filtro compuesto para búsqueda por título o autor
-    final filters = [
-      "title.ilike.%$query%",
-      "author.ilike.%$query%",
-    ].join(',');
+    final filters = ["title.ilike.%$query%","author.ilike.%$query%",].join(',');
 
-    // Realizamos la consulta a la base de datos usando Supabase
-    final List<dynamic> response = await BaseService.client
-        .from('Book')
-        .select()
-        .or(filters); // Aplicamos el filtro OR con el título o autor
+    // Realizamos la consulta a la base de datos
+    final List<dynamic> response = await BaseService.client.from('Book').select().or(filters); // Aplicamos el filtro OR con el título o autor
 
     // Devolvemos los resultados como una lista de mapas
     return response.map((e) => Map<String, dynamic>.from(e)).toList();
   }
 
-  // Obtener los libros del usuario
+  // Método asíncrono para obtener los libros del usuario
   Future<List<Book>> getBooksForUser(String userId) async {
     try {
-      final response = await BaseService.client
-          .from('Book')
-          .select()
-          .eq('owner_id', userId);
+      final response = await BaseService.client.from('Book').select().eq('owner_id', userId);
 
       // Verificamos si la respuesta es nula o si no contiene datos
       if (response == null || response.isEmpty) {
@@ -405,12 +330,10 @@ class BookService extends BaseService{
     }
   }
 
+  // Método asíncrono para obtener los libros físicos de un usuario.
   Future<List<Book>> getUserPhysicalBooks(String userId) async {
     try {
-      final response = await BaseService.client
-          .from('Book')
-          .select()
-          .eq('owner_id', userId).like('format', '%Físico%');
+      final response = await BaseService.client.from('Book').select().eq('owner_id', userId).like('format', '%Físico%');
 
       // Verificamos si la respuesta es nula o si no contiene datos
       if (response == null || response.isEmpty) {
@@ -426,15 +349,11 @@ class BookService extends BaseService{
     }
   }
 
+  // Método asíncrono para obtener los libros físicos disponibles del usuario.
   Future<List<Book>> getUserAvailablePhysicalBooks(String userId) async {
     try {
-      final response = await BaseService.client
-          .from('Book')
-          .select()
-          .eq('owner_id', userId).eq('state', 'Disponible').like('format', '%Físico%');
-          //.eq('format', 'Físico');
-          //.like('format', '%Físico%');
-          
+      final response = await BaseService.client.from('Book').select().eq('owner_id', userId).eq('state', 'Disponible').like('format', '%Físico%');
+      //.eq('format', 'Físico');    
 
       // Verificamos si la respuesta es nula o si no contiene datos
       if (response == null || response.isEmpty) {
@@ -450,8 +369,7 @@ class BookService extends BaseService{
     }
   }
 
-
-  // Obtener los libros de un usuario y filtrar por categoría
+  // Método asíncrono para obtener los libros de un usuario y filtrar por categoría
   Future<List<Book>> getBooksByCategoryForUser(String userId, String categoryName) async {
     try {
       // Primero obtenemos todos los libros del usuario
@@ -479,41 +397,26 @@ class BookService extends BaseService{
     }
   }
 
+  // Método asíncrono para eliminar un libro
   Future<Map<String, dynamic>> deleteBook(int bookId) async {
     try {
       // Paso 1: Obtener todos los préstamos asociados con el libro
-      final loans = await BaseService.client
-          .from('Loan')
-          .select('id')
-          .eq('bookId', bookId);
+      final loans = await BaseService.client.from('Loan').select('id').eq('bookId', bookId);
 
       //Paso 2: Eliminar los préstamos asociados al libro
-      await BaseService.client
-          .from('Loan')
-          .delete()
-          .eq('bookId', bookId);
+      await BaseService.client.from('Loan').delete().eq('bookId', bookId);
 
       // Paso 3: Eliminar reseñas
-      await BaseService.client
-          .from('Review')
-          .delete()
-          .eq('bookId', bookId);
+      await BaseService.client.from('Review').delete().eq('bookId', bookId);
 
       // Paso 4: Eliminar notificaciones
-     for (var loan in loans) {
-      final loanId = loan['id']; // Obtenemos el id de cada préstamo
-      await BaseService.client
-          .from('Notifications')
-          .delete()
-          .eq('relatedId', loanId); // Eliminar las notificaciones cuyo relatedId es el loanId
-    }
+      for (var loan in loans) {
+        final loanId = loan['id']; // Obtenemos el id de cada préstamo
+        await BaseService.client.from('Notifications').delete().eq('relatedId', loanId); // Eliminar las notificaciones cuyo relatedId es el loanId
+      }
 
       // Paso 5: Eliminar el libro
-      final bookResponse = await BaseService.client
-          .from('Book')
-          .delete()
-          .eq('id', bookId)
-          .select();
+      final bookResponse = await BaseService.client.from('Book').delete().eq('id', bookId).select();
 
       if (bookResponse.isNotEmpty) {
         return {'success': true};
@@ -528,7 +431,7 @@ class BookService extends BaseService{
     }
   }
 
-
+  // Método asíncrono para obtener todos los libros existentes.
   Future<List<Map<String, dynamic>>> fetchAllBooks() async {
     try {
       final response = await Supabase.instance.client.from('Book').select();
@@ -544,16 +447,12 @@ class BookService extends BaseService{
     }
   }
 
-
+  // Método asíncrono para cambiar el estado de un libro.
   Future<void> changeState(int bookId, String state) async {
     try {
       print('Intentando actualizar el estado del libro $bookId a "$state"...');
 
-      final response = await BaseService.client
-          .from('Book')
-          .update({'state': state})
-          .eq('id', bookId)
-          .select();
+      final response = await BaseService.client.from('Book').update({'state': state}).eq('id', bookId).select();
 
       print('Respuesta de Supabase al cambiar el estado: $response');
     } catch (e) {
@@ -561,32 +460,30 @@ class BookService extends BaseService{
     }
   }
 
-
+  // Método asíncrono que obtiene el id de un libro por título y propietario
   Future<int?> getBookIdByTitleAndOwner(String title, String ownerId) async {
     try {
-      print('🔍 Buscando libro con título: "$title", owner_id: "$ownerId"');
-
       final response = await BaseService.client
           .from('Book')
           .select('id')
           .eq('title', title.trim())
           .eq('owner_id', ownerId)
           .limit(1)
-          .maybeSingle(); // <- esto evita la excepción si no hay resultado
+          .maybeSingle();
 
       if (response == null) {
-        print('⚠️ No se encontró ningún libro con ese título y owner_id');
+        print(' No se encontró ningún libro con ese título y owner_id');
         return null;
       }
 
       return response['id'] as int?;
     } catch (e) {
-      print('❌ Error obteniendo ID del libro: $e');
+      print(' Error obteniendo ID del libro: $e');
       return null;
     }
   }
 
-
+  // Método asíncrono que comprueba si un título ya existe.
   Future<bool> checkTitleExists(String title, String ownerId) async {
     final response = await Supabase.instance.client
       .from('Book')
@@ -596,6 +493,5 @@ class BookService extends BaseService{
 
     return response != null;
   }
-
 
 }

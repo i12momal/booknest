@@ -8,6 +8,7 @@ import 'package:booknest/widgets/custom_text_field.dart';
 import 'package:booknest/widgets/language_dropdown.dart';
 import 'package:booknest/controllers/book_controller.dart';
 
+// Widget para la vista de datos generales del libro durante su edición
 class BookInfoFormEdit extends StatefulWidget {
   final TextEditingController titleController;
   final TextEditingController authorController;
@@ -28,7 +29,7 @@ class BookInfoFormEdit extends StatefulWidget {
   final String? coverImageUrl; 
   final Function(File?) onCoverPicked; 
 
-  // Nuevo parámetro para saber si estamos en modo de edición
+  // Parámetro para saber si estamos en modo de edición
   final bool isEditMode;
 
   const BookInfoFormEdit({
@@ -105,7 +106,7 @@ class _BookInfoFormEditState extends State<BookInfoFormEdit> {
     }
   }
 
-
+  // Validar isbn
   String? validateISBN(String? value) {
     final trimmed = value?.trim() ?? '';
 
@@ -128,6 +129,7 @@ class _BookInfoFormEditState extends State<BookInfoFormEdit> {
     return isbn13RegEx.hasMatch(value) || isbn10RegEx.hasMatch(value);
   }
 
+  // Cargar los datos del libro
   void loadBookData(Book book) {
     final formatoList = book.format.toLowerCase().split(',').map((e) => e.trim()).toList();
     final fileUrl = book.file;
@@ -142,7 +144,6 @@ class _BookInfoFormEditState extends State<BookInfoFormEdit> {
       if (dotIndex != -1) {
         final nameParts = rawName.substring(0, dotIndex).split('_');
 
-        // Asume que los últimos dos elementos son UID y timestamp
         if (nameParts.length > 2) {
           final cleanedName = nameParts.sublist(0, nameParts.length - 2).join('_');
           final extension = rawName.substring(dotIndex);
@@ -167,7 +168,7 @@ class _BookInfoFormEditState extends State<BookInfoFormEdit> {
       }
 
       if (widget.coverImageUrl != null) {
-        // Verifica si coverImageUrl es una URL (por ejemplo, comienza con 'http')
+        // Verifica si coverImageUrl es una URL
         if (widget.coverImageUrl!.startsWith('http') || widget.coverImageUrl!.startsWith('https')) {
           // Es una URL, se debe usar NetworkImage
           coverImage = null;
@@ -179,6 +180,7 @@ class _BookInfoFormEditState extends State<BookInfoFormEdit> {
     });
   }
 
+  // Obtener el id del usuario actual
   void _loadUserId() async {
     final id = await AccountController().getCurrentUserId();
     setState(() {
@@ -192,6 +194,7 @@ class _BookInfoFormEditState extends State<BookInfoFormEdit> {
     super.dispose();
   }
 
+  // Validar el título
   Future<void> validateTitle(String title) async {
     final trimmed = title.trim();
 
@@ -531,7 +534,7 @@ class _BookInfoFormEditState extends State<BookInfoFormEdit> {
                           }
                           print("Validación de formato: $hasFormat");
 
-                          // Validar archivo digital si es necesario SOLO al pulsar el botón
+                          // Validar archivo digital 
                           bool isDigitalSelected = widget.selectedFormats.contains('Digital');
                           bool hasFileIfDigital = isDigitalSelected && (uploadedFileName == null || uploadedFileName!.isEmpty);
                           if (hasFileIfDigital) {
@@ -581,6 +584,7 @@ class _BookInfoFormEditState extends State<BookInfoFormEdit> {
     );
   }
 
+  // Widget para el diseño de los campos a ingresar
   Widget _buildTextField(String label, IconData? icon, TextEditingController controller, {String? Function(String?)? validator, ValueChanged<String>? onChanged, FocusNode? focusNode}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -617,6 +621,7 @@ class _BookInfoFormEditState extends State<BookInfoFormEdit> {
 
   }
 
+  // Función para seleccionar una imagen o archivo
   void _pickFile() async {
     setState(() {
       isUploading = true;

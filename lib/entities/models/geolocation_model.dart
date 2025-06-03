@@ -1,5 +1,6 @@
 import 'package:booknest/entities/models/book_model.dart';
 
+// Define la entidad Geolocalización en el modelo de datos.
 class Geolocation {
   final String userId;
   final String userName;

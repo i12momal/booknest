@@ -27,8 +27,7 @@ void main() {
         ],
       };
 
-      when(() => mockCategoryService.getCategories())
-          .thenAnswer((_) async => mockResponse);
+      when(() => mockCategoryService.getCategories()).thenAnswer((_) async => mockResponse);
 
       final categories = await controller.getCategories();
 
@@ -39,8 +38,7 @@ void main() {
     test('getCategories devuelve lista vacía cuando falla', () async {
       final mockResponse = {'success': false};
 
-      when(() => mockCategoryService.getCategories())
-          .thenAnswer((_) async => mockResponse);
+      when(() => mockCategoryService.getCategories()).thenAnswer((_) async => mockResponse);
 
       final categories = await controller.getCategories();
 
@@ -48,4 +46,5 @@ void main() {
       verify(() => mockCategoryService.getCategories()).called(1);
     });
   });
+  
 }

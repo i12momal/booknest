@@ -14,6 +14,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:booknest/widgets/background.dart';
 import '../controllers/home_controller.dart';
 
+// Vista para las acciones de la Página Home
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
 
@@ -52,6 +53,7 @@ class _HomeViewState extends State<HomeView> {
   String? selectedLanguage;
   String? selectedFormat;
 
+  // Método para cargar las categorias y los libros
   Future<void> _loadCategoriesAndBooks() async {
     final userId = Supabase.instance.client.auth.currentUser?.id;
     if (userId != null) {
@@ -109,7 +111,7 @@ class _HomeViewState extends State<HomeView> {
     });
   }
 
-
+  // Función para obtener el id del usuario actual
   Future<void> _loadUserId() async {
     final id = await AccountController().getCurrentUserId();
     setState(() {
@@ -117,6 +119,7 @@ class _HomeViewState extends State<HomeView> {
     });
   }
 
+  // Responsividad
   int _calculateCrossAxisCount(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
 
@@ -127,6 +130,7 @@ class _HomeViewState extends State<HomeView> {
     return 3;
   }
 
+  // Función que muestra el diálogo con los filtros de idioma y formato
   void _showLanguageFilterPopup(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
@@ -240,9 +244,7 @@ class _HomeViewState extends State<HomeView> {
     );
   }
 
-
-
-
+  // Función para aplicar los filtros seleccionados sobre los libros
   void _applyFilters() {
     List<Map<String, dynamic>> books = selectedCategory != null
         ? allCategoryBooks.where((book) {
@@ -265,15 +267,13 @@ class _HomeViewState extends State<HomeView> {
       }).toList();
     }
 
-
     setState(() {
       filteredBooks = books;
       currentPage = 1;
     });
   }
 
-
-
+  // Función para mostrar el diálogo de selección de categorías
   void _showCategorySelectionPopup(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
@@ -309,10 +309,10 @@ class _HomeViewState extends State<HomeView> {
               allCategories: allCategories,
               selectedCategories: categories.map((c) => c['name'].toString()).toList(),
               onSave: (newSelectedCategories) async {
-                Navigator.pop(context); // Cierra el popup primero
+                Navigator.pop(context); 
 
                 setState(() {
-                  isLoading = true; // Muestra el loader
+                  isLoading = true;
                 });
 
                 final userId = Supabase.instance.client.auth.currentUser?.id;
@@ -337,8 +337,7 @@ class _HomeViewState extends State<HomeView> {
     );
   }
 
-
-
+  // Función para manejar la acción de filtrar los libros por la categoría seleccionada.
   void _toggleCategory(String category) {
     setState(() {
       if (selectedCategory == category) {
@@ -358,7 +357,7 @@ class _HomeViewState extends State<HomeView> {
     });
   }
 
-
+  // Función para paginación
   List<Map<String, dynamic>> get currentBooks {
     final start = (currentPage - 1) * booksPerPage;
     final end = (start + booksPerPage).clamp(0, filteredBooks.length);
@@ -674,6 +673,5 @@ class _HomeViewState extends State<HomeView> {
       )
     );
   }
-
 
 }

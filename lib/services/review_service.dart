@@ -1,9 +1,10 @@
 import 'package:booknest/entities/viewmodels/review_view_model.dart';
 import 'package:booknest/services/base_service.dart';
 
+// Servicio con los métodos de negocio para la entidad Reseña.
 class ReviewService extends BaseService {
 
-  // Método para obtener reseñas por ID de libro
+  // Método asíncrono para obtener reseñas por ID de libro
   Future<Map<String, dynamic>> fetchReviews(int bookId) async {
     try {
       if (BaseService.client == null) {
@@ -37,7 +38,7 @@ class ReviewService extends BaseService {
         return {'success': false, 'message': 'Error de conexión a la base de datos.'};
       }
 
-      // Crear el registro en la tabla Book 
+      // Crear el registro en la tabla Review 
       print("Creando registro en la tabla Review...");
       final Map<String, dynamic> reviewData = {
         'comment': createReviewViewModel.comment,
@@ -69,13 +70,10 @@ class ReviewService extends BaseService {
     }
   }
 
+  // Método asíncrono para eliminar una reseña
   Future<Map<String, dynamic>> deleteReview(int reviewId) async {
     try {
-      final reviewResponse = await BaseService.client
-          .from('Review')
-          .delete()
-          .eq('id', reviewId)
-          .select();
+      final reviewResponse = await BaseService.client.from('Review').delete().eq('id', reviewId).select();
 
       if (reviewResponse.isNotEmpty) {
         return {'success': true};
@@ -90,8 +88,8 @@ class ReviewService extends BaseService {
     }
   }
 
-
-   Future<Map<String, dynamic>> updateReview(EditReviewViewModel editReviewViewModel) async {
+  // Método asíncrono para editar una reseña
+  Future<Map<String, dynamic>> updateReview(EditReviewViewModel editReviewViewModel) async {
     try {
       // Comprobamos si la conexión a Supabase está activa.
       if (BaseService.client == null) {
@@ -144,6 +142,5 @@ class ReviewService extends BaseService {
       return {'success': false, 'message': ex.toString()};
     }
   }
-
 
 }

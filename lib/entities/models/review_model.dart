@@ -15,7 +15,6 @@ class Review{
   });
 
     factory Review.fromJson(Map<String, dynamic> json) {
-      // Directamente asignamos los valores de 'format' y 'categories' como String
       return Review(
         id: json['id'],
         comment: json['comment'] ?? '',

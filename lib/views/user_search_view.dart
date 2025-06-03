@@ -9,6 +9,7 @@ import 'package:booknest/widgets/footer.dart';
 import 'package:flutter/material.dart';
 import '../controllers/user_controller.dart';
 
+// Vista para la acción de Recuperación de Contraseña 
 class UserSearchView extends StatefulWidget {
   const UserSearchView({super.key});
 
@@ -30,11 +31,13 @@ class _UserSearchViewState extends State<UserSearchView> {
     _loadUserId();
   }
 
+  // Función para obtener el id del usuario actual
   Future<void> _loadUserId() async {
     userId = await AccountController().getCurrentUserId();
     setState(() {});
   }
 
+  // Función para buscar usuarios
   Future<void> _searchUsers(String query) async {
     setState(() {
       isLoading = true;
@@ -190,4 +193,5 @@ class _UserSearchViewState extends State<UserSearchView> {
       ),
     );
   }
+
 }

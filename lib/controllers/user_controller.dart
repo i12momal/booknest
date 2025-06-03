@@ -8,22 +8,7 @@ import 'package:booknest/controllers/account_controller.dart';
 // Controlador con los métodos de las acciones de Usuarios.
 class UserController extends BaseController{
   
-  /* Método asíncrono que permite editar los datos de un usuario.
-    Parámetros:
-      - id: Identificador del usuario.
-      - name: Cadena con el nombre completo del usuario.
-      - userName: Cadena con el nombre de usuario.
-      - email: Cadena con el email del usuario.
-      - phoneNumber: Entero con el número de teléfono del usuario.
-      - address: Cadena con la dirección del usuario.
-      - password: Cadena con la contraseña del usuario.
-      - image: Cadena con la ubicación de la imagen.
-    Return: 
-      Mapa con la clave:
-        - success: Indica si la edición fue exitosa (true o false).
-        - message: Proporciona un mensaje de estado.
-        - data (Opcional): Información del usuario actualizado si la operación fue exitosa.
-  */
+  // Método asíncrono que permite editar los datos de un usuario.
   Future<Map<String, dynamic>> editUser(String id, String name, String userName, String email, int phoneNumber, String address, String password, String confirmPassword,
     File? image, String genres, String description) async {
     String? imageUrl;
@@ -89,25 +74,11 @@ class UserController extends BaseController{
       description: description
     );
 
-    print("Contenido del viewModel:");
-    print("ID: ${editUserViewModel.id}");
-    print("Nombre: ${editUserViewModel.name}");
-    print("Nombre de usuario: ${editUserViewModel.userName}");
-    print("Email: ${editUserViewModel.email}");
-    print("Teléfono: ${editUserViewModel.phoneNumber}");
-    print("Dirección: ${editUserViewModel.address}");
-    print("Contraseña: ${editUserViewModel.password.isNotEmpty ? '*****' : '(No modificada)'}");
-    print("Confirmar contraseña: ${editUserViewModel.confirmPassword.isNotEmpty ? '*****' : '(No modificada)'}");
-    print("Imagen: ${editUserViewModel.image ?? '(No modificada)'}");
-    print("Géneros: ${editUserViewModel.genres}");
-    print("Rol: ${editUserViewModel.role}");
-
-
     // Llamada al servicio para actualizar el usuario
     return await userService.editUser(editUserViewModel);
   }
 
-  /* Método asíncrono que devuelve los datos de un usuario. */
+  // Método asíncrono que devuelve los datos de un usuario. 
   Future<User?> getUserById(String userId) async {
     var response = await userService.getUserById(userId);
     
@@ -119,7 +90,7 @@ class UserController extends BaseController{
     return null;
   }
 
-  // Método para obtener las categorías de los libros del usuario
+  // Método asíncrono para obtener las categorías de los libros del usuario.
   Future<List<Category>> getCategoriesFromBooks(String userId) async {
     try {
       final books = await bookService.getBooksForUser(userId);
@@ -136,13 +107,10 @@ class UserController extends BaseController{
 
       if (categoriesSet.isEmpty) return [];
 
-      // En lugar de hacer otra consulta por categoría, usamos tu método actual para traer todas
-      final result = await categoryService.getUserCategories(); // ya devuelve name + image
+      final result = await categoryService.getUserCategories();
 
       if (result['success']) {
-        final allCategories = (result['data'] as List<dynamic>)
-            .map((json) => Category.fromJson(json))
-            .toList();
+        final allCategories = (result['data'] as List<dynamic>).map((json) => Category.fromJson(json)).toList();
 
         // Filtrar solo las que están en los libros del usuario
         return allCategories.where((cat) => categoriesSet.contains(cat.name)).toList();
@@ -155,7 +123,7 @@ class UserController extends BaseController{
     }
   }
 
-  // Verificar si el libro está en los favoritos
+  // Método asíncrono para verificar si el libro está en los favoritos.
   Future<Map<String, dynamic>> isFavorite(int bookId) async {
     try {
       final response = await userService.getFavorites();
@@ -169,7 +137,7 @@ class UserController extends BaseController{
     }
   }
 
-  // Método para agregar a favoritos
+  // Método asíncrono para agregar un libro a favoritos.
   Future<Map<String, dynamic>> addToFavorites(int bookId) async {
     try {
       // Llamamos al servicio para agregar el libro a favoritos
@@ -180,7 +148,7 @@ class UserController extends BaseController{
     }
   }
 
-  // Método para eliminar de favoritos
+  // Método asíncrono para eliminar un libro de favoritos.
   Future<Map<String, dynamic>> removeFromFavorites(int bookId) async {
     try {
       // Llamamos al servicio para eliminar el libro de favoritos
@@ -191,27 +159,28 @@ class UserController extends BaseController{
     }
   }
 
-
+  // Método asíncrono para obtener el usuario actual por su id.
   Future<User?> getCurrentUserById(String? userId) async {
     final result = await userService.getCurrentUserById(userId);
     return result;
   }
 
-
+  // Método asíncrono que permite buscar usuarios según un filtro.
   Future<List<Map<String, dynamic>>> searchUsers(String query) async {
     return await userService.searchUsers(query);
   }
 
-  // Obtener los libros favoritos del usuario
+  // Método asíncrono para obtener los libros favoritos del usuario
   Future<Map<String, dynamic>> getFavorites() async {
     return await userService.getFavorites();
   }
 
-
+  // Método asíncrono para obtener el usuario actual.
   Future<User> getCurrentUser() async {
     return await userService.getCurrentUser();
   }
 
+  // Método asíncrono para obtener el nombre de un usuario por su id.
   Future<Map<String, dynamic>> getUserNameById(String userId) async {
     return await userService.getUserNameById(userId);
   }

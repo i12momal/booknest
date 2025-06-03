@@ -3,12 +3,7 @@ import 'package:booknest/controllers/base_controller.dart';
 // Controlador con los métodos de las acciones de la página Home.
 class HomeController extends BaseController {
 
-  /* Método asíncrono que obtiene los géneros seleccionados por el usuario.
-    Parámetros:
-      - userId: Cadena con el identificador del usuario.
-    Return:
-      - Lista con las categorías seleccionadas por el usuario.
-  */
+  // Método asíncrono que obtiene los géneros seleccionados por el usuario.
   Future<List<Map<String, dynamic>>> loadUserGenres(String userId) async {
     try {
       // Obtenemos los géneros de usuario
@@ -25,11 +20,11 @@ class HomeController extends BaseController {
             .where((category) => userGenres.contains(category['name']))
             .map((category) => {
                   'name': category['name'],
-                  'image': category['image'],  // Aseguramos que la imagen esté incluida
+                  'image': category['image'],
                 })
             .toList();
 
-        return userCategories;  // Esto ahora devuelve una lista de Map<String, dynamic>
+        return userCategories; 
       } else {
         throw Exception('Error al obtener las categorías');
       }
@@ -53,6 +48,7 @@ class HomeController extends BaseController {
     return await bookService.searchBooksByTitleOrAuthor(query);
   }
 
+  // Método para normalizar palabras
   String normalize(String input) {
     const Map<String, String> accentMap = {
       'á': 'a', 'à': 'a', 'ä': 'a', 'â': 'a', 'ã': 'a',

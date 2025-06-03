@@ -6,31 +6,13 @@ import 'package:supabase_flutter/supabase_flutter.dart' show UserAttributes;
 // Servicio con los métodos de negocio de la entidad Usuario.
 class UserService extends BaseService{
 
-  /* Método asíncrono que permite editar los datos de un usuario.
-    Parámetros:
-      - id: Identificador del usuario.
-      - name: Cadena con el nombre completo del usuario.
-      - userName: Cadena con el nombre de usuario.
-      - email: Cadena con el email del usuario.
-      - phoneNumber: Entero con el número de teléfono del usuario.
-      - address: Cadena con la dirección del usuario.
-      - password: Cadena con la contraseña del usuario.
-      - image: Cadena con la ubicación de la imagen.
-    Return: 
-      Mapa con la clave:
-        - success: Indica si la edición fue exitosa (true o false).
-        - message: Proporciona un mensaje de estado.
-        - data (Opcional): Información del usuario actualizado si la operación fue exitosa.
-  */
+  // Método asíncrono que permite editar los datos de un usuario.
   Future<Map<String, dynamic>> editUser(EditUserViewModel editUserViewModel) async {
     try {
       // Comprobamos si la conexión a Supabase está activa.
       if (BaseService.client == null) {
         return {'success': false, 'message': 'Error de conexión a la base de datos.'};
       }
-
-      print("Iniciando edición de usuario...");
-      print("ID del usuario a editar: ${editUserViewModel.id}");
 
       // Obtener el ID del usuario autenticado
       final currentUser = BaseService.client.auth.currentUser;
@@ -39,42 +21,17 @@ class UserService extends BaseService{
         return {'success': false, 'message': 'Usuario no autenticado'};
       }
 
-      print("ID del usuario autenticado (auth.uid): ${currentUser.id}");
-      print("Email del usuario autenticado: ${currentUser.email}");
-
       // Verificar que el usuario está intentando editar sus propios datos
       if (currentUser.id != editUserViewModel.id) {
-        print("Error: Intento de editar datos de otro usuario");
-        print("ID del usuario autenticado: ${currentUser.id}");
-        print("ID del usuario a editar: ${editUserViewModel.id}");
         return {'success': false, 'message': 'No tienes permiso para editar estos datos'};
       }
 
       // Verificar que el usuario existe
-      print("Verificando existencia del usuario...");
       final existingUser = await BaseService.client.from('User').select().eq('id', editUserViewModel.id).single();
       if (existingUser == null) {
         print("Error: Usuario no encontrado en la base de datos");
         return {'success': false, 'message': 'Usuario no encontrado'};
       }
-
-      print("Usuario encontrado en la base de datos:");
-      print("ID: ${existingUser['id']}");
-      print("Nombre: ${existingUser['name']}");
-      print("Email: ${existingUser['email']}");
-
-      print("Contenido del viewModel:");
-      print("ID: ${editUserViewModel.id}");
-      print("Nombre: ${editUserViewModel.name}");
-      print("Nombre de usuario: ${editUserViewModel.userName}");
-      print("Email: ${editUserViewModel.email}");
-      print("Teléfono: ${editUserViewModel.phoneNumber}");
-      print("Dirección: ${editUserViewModel.address}");
-      print("Contraseña: ${editUserViewModel.password.isNotEmpty ? '*****' : '(No modificada)'}");
-      print("Confirmar contraseña: ${editUserViewModel.confirmPassword.isNotEmpty ? '*****' : '(No modificada)'}");
-      print("Imagen: ${editUserViewModel.image ?? '(No modificada)'}");
-      print("Géneros: ${editUserViewModel.genres}");
-      print("Rol: ${editUserViewModel.role}");
 
       // Verificar que el nombre de usuario no está en uso por otro usuario
       if (existingUser['userName'] != editUserViewModel.userName) {
@@ -134,7 +91,6 @@ class UserService extends BaseService{
       }
 
       // Actualizar el usuario y obtener los datos actualizados en una sola operación
-      print("Intentando actualizar usuario...");
       final response = await BaseService.client
           .from('User')
           .update(updateData)
@@ -145,11 +101,6 @@ class UserService extends BaseService{
       print("Respuesta de la actualización: $response");
 
       if (response != null) {
-        print("Usuario actualizado exitosamente");
-        print("Nuevos datos:");
-        print("ID: ${response['id']}");
-        print("Nombre: ${response['name']}");
-        print("Email: ${response['email']}");
         return {'success': true, 'message': 'Usuario actualizado exitosamente', 'data': response};
       } else {
         print("Error: No se pudo actualizar el usuario");
@@ -161,7 +112,7 @@ class UserService extends BaseService{
     }
   }
 
-  // Método asíncrono que obtiene los datos de un usuario.
+  // Método asíncrono que obtiene los datos de un usuario por su id.
   Future<Map<String, dynamic>> getUserById(String userId) async {
     try {
       // Comprobamos si la conexión a Supabase está activa.
@@ -170,11 +121,7 @@ class UserService extends BaseService{
       }
 
       // Llamada a la base de datos para obtener los datos del usuario.
-      final response = await BaseService.client
-          .from('User')
-          .select()
-          .eq('id', userId)
-          .maybeSingle();
+      final response = await BaseService.client.from('User').select().eq('id', userId).maybeSingle();
 
       // Verificamos si la respuesta contiene datos.
       if (response != null && response.isNotEmpty) {
@@ -188,19 +135,10 @@ class UserService extends BaseService{
     }
   }
 
-  /* Método que obtiene los géneros seleccionados por el usuario.
-    Parámetros:
-      - userId: Cadena con el identificador del usuario.
-    Return:
-      - Lista con las categorías seleccionadas por el usuario.
-  */
+  // Método que obtiene los géneros seleccionados por el usuario.
   Future<List<String>> getUserGenres(String userId) async {
     try {
-      final response = await BaseService.client
-          .from('User')
-          .select('genres')
-          .eq('id', userId)
-          .single();
+      final response = await BaseService.client.from('User').select('genres').eq('id', userId).single();
 
       if (response == null || response['genres'] == null) {
         return [];
@@ -220,7 +158,7 @@ class UserService extends BaseService{
     }
   }
 
-  // Obtener la lista de libros favoritos del usuario
+  // Método asíncrono para obtener la lista de libros favoritos del usuario
   Future<Map<String, dynamic>> getFavorites() async {
     try {
       final currentUser = BaseService.client.auth.currentUser;
@@ -229,11 +167,7 @@ class UserService extends BaseService{
         return {'favorites': []};
       }
 
-      final response = await BaseService.client
-          .from('User')
-          .select('favorites')
-          .eq('id', currentUser.id)
-          .single();
+      final response = await BaseService.client.from('User').select('favorites').eq('id', currentUser.id).single();
 
       if (response != null && response['favorites'] != null) {
         return {'favorites': response['favorites']};
@@ -246,7 +180,7 @@ class UserService extends BaseService{
     }
   }
 
-  // Agregar un libro a los favoritos
+  // Método asíncrono para agregar un libro a los favoritos
   Future<void> addToFavorites(int bookId) async {
     try {
       final currentUser = BaseService.client.auth.currentUser;
@@ -256,11 +190,7 @@ class UserService extends BaseService{
       }
 
       // Obtener la lista actual de favoritos
-      final response = await BaseService.client
-          .from('User')
-          .select('favorites')
-          .eq('id', currentUser.id)
-          .single();
+      final response = await BaseService.client.from('User').select('favorites').eq('id', currentUser.id).single();
 
       if (response != null) {
         List<String> currentFavorites = List<String>.from(response['favorites'] ?? []);
@@ -273,11 +203,7 @@ class UserService extends BaseService{
           print("Nuevo favorito añadido: $bookId");
 
           // Actualizar la lista de favoritos como un array de texto
-          final updateResponse = await BaseService.client
-              .from('User')
-              .update({'favorites': currentFavorites})
-              .eq('id', currentUser.id)
-              .select();
+          final updateResponse = await BaseService.client.from('User').update({'favorites': currentFavorites}).eq('id', currentUser.id).select();
 
           print("Respuesta de actualización: $updateResponse");
           if (updateResponse != null) {
@@ -294,9 +220,7 @@ class UserService extends BaseService{
     }
   }
 
-
-
-  // Eliminar un libro de los favoritos
+  // Método asíncrono para eliminar un libro de los favoritos
   Future<void> removeFromFavorites(int bookId) async {
     try {
       final currentUser = BaseService.client.auth.currentUser;
@@ -306,11 +230,7 @@ class UserService extends BaseService{
       }
 
       // Obtener la lista actual de favoritos
-      final response = await BaseService.client
-          .from('User')
-          .select('favorites')
-          .eq('id', currentUser.id)
-          .single();
+      final response = await BaseService.client.from('User').select('favorites').eq('id', currentUser.id).single();
 
       if (response != null && response['favorites'] != null) {
         List<String> currentFavorites = List<String>.from(response['favorites']);
@@ -319,10 +239,7 @@ class UserService extends BaseService{
         currentFavorites.remove(bookId.toString());
 
         // Actualizar la lista de favoritos en la base de datos
-        await BaseService.client
-            .from('User')
-            .update({'favorites': currentFavorites})
-            .eq('id', currentUser.id);
+        await BaseService.client.from('User').update({'favorites': currentFavorites}).eq('id', currentUser.id);
 
         print("Libro eliminado de favoritos.");
       }
@@ -332,18 +249,14 @@ class UserService extends BaseService{
     }
   }
 
-
+  // Método asíncrono para obtener el usuario actual por su id.
   Future<User?> getCurrentUserById(String? userId) async {
     if (BaseService.client == null || userId == null) {
       return null;
     }
 
     try {
-      final response = await BaseService.client
-          .from("User")
-          .select()
-          .eq("id", userId)
-          .single();
+      final response = await BaseService.client.from("User").select().eq("id", userId).single();
 
       if (response != null) {
         return User.fromJson(response);
@@ -355,6 +268,7 @@ class UserService extends BaseService{
     return null;
   }
 
+  // Método asíncrono para buscar un usuario.
   Future<List<Map<String, dynamic>>> searchUsers(String query) async {
     // Creamos el filtro compuesto para búsqueda por nombre o nombre de usuario
     final filters = [
@@ -362,25 +276,18 @@ class UserService extends BaseService{
       "userName.ilike.%$query%",
     ].join(',');
 
-    // Realizamos la consulta a la base de datos usando Supabase
-    final List<dynamic> response = await BaseService.client
-        .from('User')
-        .select()
-        .or(filters);
+    // Realizamos la consulta a la base de datos 
+    final List<dynamic> response = await BaseService.client.from('User').select().or(filters);
 
     // Devolvemos los resultados como una lista de mapas
     return response.map((e) => Map<String, dynamic>.from(e)).toList();
   }
 
-
+  // Método asíncrono para obtener el usuario actual.
   Future<User> getCurrentUser() async {
     final userId = await getCurrentUser();
 
-    final response = await BaseService.client
-        .from('User') // Usa el nombre exacto de tu tabla en Supabase
-        .select()
-        .eq('id', userId)
-        .single();
+    final response = await BaseService.client.from('User').select().eq('id', userId).single();
 
     if (response == null) {
       throw Exception('Usuario no encontrado');
@@ -389,7 +296,7 @@ class UserService extends BaseService{
     return User.fromJson(response);
   }
 
-
+  // Método asíncrono para obtener el nombre de usuario por id
   Future<Map<String, dynamic>> getUserNameById(String userId) async {
     try {
       // Comprobamos si la conexión a Supabase está activa.
@@ -429,6 +336,7 @@ class UserService extends BaseService{
     }
   }
 
+  // Método para actualizar la contrasñea de un usuario.
   Future<void> updatePasswordSupabaseAuth(String password) async{
     await BaseService.client.auth.updateUser(UserAttributes(password: password));
   }

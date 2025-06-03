@@ -14,7 +14,6 @@ class User {
   final List<String> favorites;
   final String? description;
 
-//All required fields from class User
   User(
     {
     required this.id,

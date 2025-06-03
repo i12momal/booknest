@@ -1,3 +1,4 @@
+// Define la entidad Chat en el modelo de datos.
 class LoanChat {
   final int id;
   final int loanId;

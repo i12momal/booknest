@@ -73,11 +73,9 @@ void main() {
         }
       };
 
-      when(() => mockUserService.getUserById(userId))
-          .thenAnswer((_) async => currentUserResponse);
+      when(() => mockUserService.getUserById(userId)).thenAnswer((_) async => currentUserResponse);
 
-      when(() => mockUserService.editUser(any()))
-          .thenAnswer((_) async => editResponse);
+      when(() => mockUserService.editUser(any())).thenAnswer((_) async => editResponse);
 
       final result = await controller.editUser(
           userId,
@@ -104,9 +102,7 @@ void main() {
       const password = 'pass123';
       const confirmPassword = 'pass456';
 
-      // Stub para evitar error de Null
-      when(() => mockUserService.getUserById(userId))
-          .thenAnswer((_) async => {'success': true, 'data': {'image': 'http://oldimage.jpg'}});
+      when(() => mockUserService.getUserById(userId)).thenAnswer((_) async => {'success': true, 'data': {'image': 'http://oldimage.jpg'}});
 
       final result = await controller.editUser(
           userId,
@@ -126,7 +122,6 @@ void main() {
       verifyNever(() => mockUserService.editUser(any()));
     });
 
-
     test('getUserById devuelve usuario cuando éxito', () async {
       const userId = '123';
       final userData = {
@@ -139,15 +134,14 @@ void main() {
         'password': 'Admin@1234',
         'confirmPassword': 'Admin@1234',
         'image': 'assets/images/default.png',
-        'genres': ['Fiction', 'Mystery'], // Lista de strings
+        'genres': ['Fiction', 'Mystery'], 
         'role': 'usuario',
-        'favorites': [],                  // Lista vacía
+        'favorites': [],                 
         'description': 'Usuario de prueba',
       };
 
 
-      when(() => mockUserService.getUserById(userId))
-          .thenAnswer((_) async => {'success': true, 'data': userData});
+      when(() => mockUserService.getUserById(userId)).thenAnswer((_) async => {'success': true, 'data': userData});
 
       final user = await controller.getUserById(userId);
 
@@ -160,8 +154,7 @@ void main() {
     test('getUserById devuelve null cuando falla', () async {
       const userId = '123';
 
-      when(() => mockUserService.getUserById(userId))
-          .thenAnswer((_) async => {'success': false});
+      when(() => mockUserService.getUserById(userId)).thenAnswer((_) async => {'success': false});
 
       final user = await controller.getUserById(userId);
 
@@ -224,8 +217,7 @@ void main() {
       });
 
 
-      when(() => mockCategoryService.getUserCategories())
-          .thenAnswer((_) async => categoryResponse);
+      when(() => mockCategoryService.getUserCategories()).thenAnswer((_) async => categoryResponse);
 
       final categories = await controller.getCategoriesFromBooks(userId);
 
@@ -278,8 +270,7 @@ void main() {
     test('searchUsers devuelve lista vacía si servicio falla', () async {
       const query = 'John';
 
-      when(() => mockUserService.searchUsers(query))
-          .thenAnswer((_) async => []);
+      when(() => mockUserService.searchUsers(query)).thenAnswer((_) async => []);
 
       final result = await controller.searchUsers(query);
 
@@ -287,4 +278,5 @@ void main() {
       verify(() => mockUserService.searchUsers(query)).called(1);
     });
   });
+  
 }

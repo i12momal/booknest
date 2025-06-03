@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+// Widget para el resumen al añadir/editar un libro
 class SummaryInputWidget extends StatelessWidget {
   final TextEditingController controller;
   final VoidCallback onChanged;
@@ -89,4 +90,5 @@ class SummaryInputWidget extends StatelessWidget {
       ],
     );
   }
+  
 }

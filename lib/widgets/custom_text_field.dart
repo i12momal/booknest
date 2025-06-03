@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+// Widget para el diseño de los campos a introducir en un formulario
 class CustomTextField extends StatefulWidget {
   final IconData? icon;
   final String hint;
@@ -89,4 +90,5 @@ class _CustomTextFieldState extends State<CustomTextField> {
       validator: widget.validator,
     );
   }
+  
 }

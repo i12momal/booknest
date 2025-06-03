@@ -1,20 +1,17 @@
-// Servicio con los métodos de negocio para la entidad Notificación.
 import 'package:booknest/entities/viewmodels/notification_view_model.dart';
 import 'package:booknest/services/base_service.dart';
 
+// Servicio con los métodos de negocio para la entidad Notificación.
 class NotificationService extends BaseService{
 
-  // Marcar una notificación como leída
+  // Método asíncrono para marcar una notificación como leída
   Future<void> markNotificationAsRead(int notificationId) async {
     try {
       if (BaseService.client == null) {
         return;
       }
 
-      final response = await BaseService.client
-          .from('Notifications')
-          .update({'read': true})
-          .eq('id', notificationId).select();
+      final response = await BaseService.client.from('Notifications').update({'read': true}).eq('id', notificationId).select();
 
       if (response == null || response.isEmpty) {
         print('No se pudo actualizar la notificación');
@@ -24,7 +21,7 @@ class NotificationService extends BaseService{
     }
   }
 
-  // Crear una nueva notificación
+  // Método asíncrono para crear una nueva notificación
   Future<Map<String, dynamic>> createNotification(CreateNotificationViewModel createNotificationViewModel) async {
     try {
       if (BaseService.client == null) {
@@ -38,7 +35,7 @@ class NotificationService extends BaseService{
         return {'success': false, 'message': 'El usuario no está autenticado.'};
       }
 
-      // Crear el registro en la tabla Book 
+      // Crear el registro en la tabla Notification 
       print("Creando registro en la tabla Notification...");
       final Map<String, dynamic> notificationData = {
         'userId': createNotificationViewModel.userId,
@@ -71,7 +68,7 @@ class NotificationService extends BaseService{
     }
   }
 
-  // Obtener las notificaciones de un usuario
+  // Método asíncrono para obtener las notificaciones de un usuario
   Future<List<Map<String, dynamic>>> getNotifications(String userId) async {
     try {
       if (BaseService.client == null) {
@@ -92,7 +89,7 @@ class NotificationService extends BaseService{
     }
   }
 
-  // Obtener las notificaciones no leídas de un usuario
+  // Método asíncrono para obtener las notificaciones no leídas de un usuario
   Future<List<Map<String, dynamic>>> getUnreadNotifications(String userId) async {
     try {
       if (BaseService.client == null) {
@@ -114,9 +111,9 @@ class NotificationService extends BaseService{
     }
   }
 
+  // Método asíncrono para eliminar una notificación
   Future<Map<String, dynamic>> deleteNotification(int notificationId) async {
     try {
-      
       final notificationResponse = await BaseService.client
           .from('Notifications')
           .delete()
@@ -136,17 +133,14 @@ class NotificationService extends BaseService{
     }
   }
 
-
-   Future<List<Map<String, dynamic>>> getNotificationsByLoanId (int loanId) async {
+  // Método asíncrono para obtener las notificaciones asociadas a una solicitud de préstamo.
+  Future<List<Map<String, dynamic>>> getNotificationsByLoanId (int loanId) async {
     try {
       if (BaseService.client == null) {
         return [];
       }
 
-      final response = await BaseService.client
-          .from('Notifications')
-          .select()
-          .eq('relatedId', loanId);
+      final response = await BaseService.client.from('Notifications').select().eq('relatedId', loanId);
 
       print("Notificaciones del préstamo $loanId: $response ");
 
@@ -156,4 +150,5 @@ class NotificationService extends BaseService{
       return [];
     }
   }
+
 }

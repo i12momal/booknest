@@ -2,27 +2,27 @@ import 'package:booknest/controllers/base_controller.dart';
 import 'package:booknest/entities/models/reminder_model.dart';
 import 'package:booknest/entities/viewmodels/reminder_view_model.dart';
 
-// Controlador con los métodos de las acciones de Préstamos.
+// Controlador con los métodos de las acciones de Recordatorios.
 class ReminderController extends BaseController{
 
-  // Obtener los ids de los usuarios que activaron un recordatorio para un libro
+  // Método asíncrono para obtener los recordatorios de un usuario sobre un libro.
   Future<List<Reminder>> getRemindersByBookAndUser(int bookId, String userId) async {
     return await reminderService.getRemindersByBookAndUser(bookId, userId);
   }
 
+  // Método asíncrono para obtener los recordatorios de un libro.
   Future<List<Reminder>> getRemindersByBook(int bookId) async {
     return await reminderService.getRemindersByBook(bookId);
   }
 
+  // Método asíncrono para obtener los ids de los usuarios que tienen activado un recordatorio para un libro.
   Future<List<String>> getUsersIdForReminder(int bookId) async {
     return await reminderService.getUsersIdForReminder(bookId);
   }
 
-
-  // Método para agregar un recordatorio
+  // Método asíncrono para agregar un recordatorio.
   Future<Map<String, dynamic>> addReminder(int bookId, String userId, String format) async {
     try {
-      // Crear un objeto de recordatorio que contenga los detalles necesarios
       final reminderData = CreateReminderViewModel(userId: userId, bookId: bookId, format:format);
 
       // Llamamos al servicio para agregar un recordatorio para el libro
@@ -34,7 +34,7 @@ class ReminderController extends BaseController{
     }
   }
 
-  // Método para eliminar de favoritos
+  // Método asíncrono para eliminar un libro de favoritos.
   Future<Map<String, dynamic>> removeFromReminder(int bookId, String userId, String format) async {
     try {
       // Llamamos al servicio para eliminar el libro de recordatorio
@@ -45,11 +45,12 @@ class ReminderController extends BaseController{
     }
   }
 
+  // Método asíncrono para confirmar que un recordatorio ha sido notificado.
   Future<void> markAsNotified(int bookId, String userId, String format) async {
   await reminderService.markAsNotified(bookId, userId, format);
   }
 
-
+  // Método asíncrono para actualizar el estado de un recordatorio para los usuarios que lo tuviesen activado para un libro determinado.
   Future<void> updateReminderStateForAllUsers(int bookId, bool notified) async {
     final reminders = await reminderService.getRemindersByBook(bookId);
     for (var reminder in reminders) {

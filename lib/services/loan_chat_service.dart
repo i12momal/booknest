@@ -1,8 +1,10 @@
 import 'package:booknest/entities/models/loan_chat_model.dart';
 import 'package:booknest/services/base_service.dart';
 
+// Servicio con los métodos de negocio de la entidad Chat.
 class LoanChatService extends BaseService {
 
+  // Método asíncrono para crear un chat
   Future<int> createChatIfNotExists(int loanId, String ownerId, String requesterId, int? compensationLoanId) async {
     final existing = await BaseService.client.from('LoanChat').select('id').eq('loanId', loanId).maybeSingle();
 
@@ -31,7 +33,7 @@ class LoanChatService extends BaseService {
     return response['id'] as int;
   }
 
-
+  // Método asíncrono para obtener los chats de un usuario
   Future<List<LoanChat>> getUserLoanChats(String userId, bool archived) async {
     final response = await BaseService.client.from('LoanChat').select().then((data) => data as List<dynamic>);
 
@@ -52,15 +54,10 @@ class LoanChatService extends BaseService {
     return chats;
   }
 
-
-
+  // Método asíncrono para gestionar la acción de archivar/desarchivar un chat.
   Future<void> toggleArchiveStatus(int chatId, String userId, bool archive) async {
     try {
-      final response = await BaseService.client
-          .from('LoanChat')
-          .select()
-          .eq('id', chatId)
-          .single();
+      final response = await BaseService.client.from('LoanChat').select().eq('id', chatId).single();
 
       final chat = LoanChat.fromJson(response);
 

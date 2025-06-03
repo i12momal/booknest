@@ -11,7 +11,8 @@ import 'package:booknest/services/account_service.dart';
 class MockBookService extends Mock implements BookService {}
 class MockAccountService extends Mock implements AccountService {}
 class MockFile extends Mock implements File {}
-// Define un Fake para File
+
+// Fake para File
 class FakeFile extends Fake implements File {}
 
 void main() {
@@ -87,13 +88,10 @@ void main() {
       final mockFile = MockFile();
       final mockCover = MockFile();
 
-      when(() => mockBookService.uploadFile(mockFile, any(), dummyUserId))
-          .thenAnswer((_) async => dummyFileUrl);
-      when(() => mockBookService.uploadCover(mockCover, any(), dummyUserId))
-          .thenAnswer((_) async => dummyCoverUrl);
+      when(() => mockBookService.uploadFile(mockFile, any(), dummyUserId)).thenAnswer((_) async => dummyFileUrl);
+      when(() => mockBookService.uploadCover(mockCover, any(), dummyUserId)).thenAnswer((_) async => dummyCoverUrl);
 
-      when(() => mockBookService.addBook(any()))
-          .thenAnswer((_) async => {'success': true});
+      when(() => mockBookService.addBook(any())).thenAnswer((_) async => {'success': true});
 
       final result = await controller.addBook(
         'title', 'author', 'isbn', 100, 'es', 'digital', mockFile, 'summary', 'categories', mockCover);
@@ -110,8 +108,7 @@ void main() {
       when(() => mockAccountService.getCurrentUserId()).thenAnswer((_) async => dummyUserId);
       final mockFile = MockFile();
 
-      when(() => mockBookService.uploadFile(mockFile, any(), dummyUserId))
-          .thenAnswer((_) async => null);
+      when(() => mockBookService.uploadFile(mockFile, any(), dummyUserId)).thenAnswer((_) async => null);
 
       final result = await controller.addBook(
         'title', 'author', 'isbn', 100, 'es', 'digital', mockFile, 'summary', 'categories', null);
@@ -125,10 +122,8 @@ void main() {
       final mockFile = MockFile();
       final mockCover = MockFile();
 
-      when(() => mockBookService.uploadFile(mockFile, any(), dummyUserId))
-          .thenAnswer((_) async => dummyFileUrl);
-      when(() => mockBookService.uploadCover(mockCover, any(), dummyUserId))
-          .thenAnswer((_) async => null);
+      when(() => mockBookService.uploadFile(mockFile, any(), dummyUserId)).thenAnswer((_) async => dummyFileUrl);
+      when(() => mockBookService.uploadCover(mockCover, any(), dummyUserId)).thenAnswer((_) async => null);
 
       final result = await controller.addBook(
         'title', 'author', 'isbn', 100, 'es', 'digital', mockFile, 'summary', 'categories', mockCover);
@@ -191,13 +186,11 @@ void main() {
     });
 
     test('Elimina archivo si formato es físico', () async {
-      when(() => mockBookService.getBookById(1))
-          .thenAnswer((_) async => dummyCurrentBookResponse);
+      when(() => mockBookService.getBookById(1)).thenAnswer((_) async => dummyCurrentBookResponse);
 
       when(() => mockBookService.deleteFile(any())).thenAnswer((_) async => true);
 
-      when(() => mockBookService.editBook(any()))
-          .thenAnswer((_) async => {'success': true});
+      when(() => mockBookService.editBook(any())).thenAnswer((_) async => {'success': true});
 
       final result = await controller.editBook(
         1, dummyTitle, 'author', 'isbn', 100, 'físico', 'físico', null, 'summary',
@@ -228,8 +221,7 @@ void main() {
         'ownerId': 'owner123',
       };
 
-      when(() => mockBookService.getBookById(1))
-          .thenAnswer((_) async => {'success': true, 'data': dummyBookData});
+      when(() => mockBookService.getBookById(1)).thenAnswer((_) async => {'success': true, 'data': dummyBookData});
 
       final book = await controller.getBookById(1);
 
@@ -239,8 +231,7 @@ void main() {
     });
 
     test('Retorna null si respuesta es error', () async {
-      when(() => mockBookService.getBookById(1))
-          .thenAnswer((_) async => {'success': false, 'message': 'Error'});
+      when(() => mockBookService.getBookById(1)).thenAnswer((_) async => {'success': false, 'message': 'Error'});
 
       final book = await controller.getBookById(1);
 
@@ -250,8 +241,7 @@ void main() {
 
   // Tests para métodos que delegan al servicio
   test('deleteBook delega al servicio', () async {
-    when(() => mockBookService.deleteBook(1))
-        .thenAnswer((_) async => {'success': true});
+    when(() => mockBookService.deleteBook(1)).thenAnswer((_) async => {'success': true});
 
     final result = await controller.deleteBook(1);
     expect(result['success'], true);
@@ -264,8 +254,7 @@ void main() {
       {'id': 2, 'title': 'Book 2'},
     ];
 
-    when(() => mockBookService.fetchAllBooks())
-        .thenAnswer((_) async => dummyList);
+    when(() => mockBookService.fetchAllBooks()).thenAnswer((_) async => dummyList);
 
     final result = await controller.fetchAllBooks();
     expect(result, dummyList);
@@ -275,8 +264,7 @@ void main() {
   test('getUserBooks delega al servicio', () async {
     final dummyBooks = <Book>[];
 
-    when(() => mockBookService.getBooksForUser('userId'))
-        .thenAnswer((_) async => dummyBooks);
+    when(() => mockBookService.getBooksForUser('userId')).thenAnswer((_) async => dummyBooks);
 
     final result = await controller.getUserBooks('userId');
     expect(result, dummyBooks);
@@ -286,8 +274,7 @@ void main() {
   test('getUserPhysicalBooks delega al servicio', () async {
     final dummyBooks = <Book>[];
 
-    when(() => mockBookService.getUserPhysicalBooks('userId'))
-        .thenAnswer((_) async => dummyBooks);
+    when(() => mockBookService.getUserPhysicalBooks('userId')).thenAnswer((_) async => dummyBooks);
 
     final result = await controller.getUserPhysicalBooks('userId');
     expect(result, dummyBooks);
@@ -297,8 +284,7 @@ void main() {
   test('getUserAvailablePhysicalBooks delega al servicio', () async {
     final dummyBooks = <Book>[];
 
-    when(() => mockBookService.getUserAvailablePhysicalBooks('userId'))
-        .thenAnswer((_) async => dummyBooks);
+    when(() => mockBookService.getUserAvailablePhysicalBooks('userId')).thenAnswer((_) async => dummyBooks);
 
     final result = await controller.getUserAvailablePhysicalBooks('userId');
     expect(result, dummyBooks);
@@ -306,26 +292,24 @@ void main() {
   });
 
   test('changeState delega al servicio', () async {
-    when(() => mockBookService.changeState(1, 'Disponible'))
-        .thenAnswer((_) async => null);
+    when(() => mockBookService.changeState(1, 'Disponible')).thenAnswer((_) async => null);
 
     await controller.changeState(1, 'Disponible');
     verify(() => mockBookService.changeState(1, 'Disponible')).called(1);
   });
 
   test('getBookIdByTitleAndOwner delega al servicio', () async {
-    when(() => mockBookService.getBookIdByTitleAndOwner('title', 'ownerId'))
-        .thenAnswer((_) async => 5);
+    when(() => mockBookService.getBookIdByTitleAndOwner('title', 'ownerId')).thenAnswer((_) async => 5);
 
     final result = await controller.getBookIdByTitleAndOwner('title', 'ownerId');
     expect(result, 5);
   });
 
   test('checkTitleExists delega al servicio', () async {
-    when(() => mockBookService.checkTitleExists('title', 'ownerId'))
-        .thenAnswer((_) async => true);
+    when(() => mockBookService.checkTitleExists('title', 'ownerId')).thenAnswer((_) async => true);
 
     final result = await controller.checkTitleExists('title', 'ownerId');
     expect(result, true);
   });
+
 }

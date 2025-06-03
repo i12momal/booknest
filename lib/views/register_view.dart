@@ -64,10 +64,8 @@ class _RegisterViewState extends State<RegisterView> {
 
   // Función para pasar a la página de selección de géneros desde la página de datos personales
   Future<void> nextPage() async {
-    // Primero cerramos el teclado
     FocusScope.of(context).unfocus();
 
-    // Hacemos una pequeña espera para asegurarnos de que el teclado se haya cerrado antes de cambiar de página
     await Future.delayed(const Duration(milliseconds: 500));
 
     if (_formKey.currentState?.validate() ?? false) {
@@ -92,10 +90,9 @@ class _RegisterViewState extends State<RegisterView> {
         _currentPage--;
       });
     } else {
-      Navigator.pop(context); // Sale de la pantalla si ya estás en la primera página
+      Navigator.pop(context);
     }
   }
-
 
   // Método que realiza la función de registro del usuario
   Future<void> _registerUser() async {
@@ -168,7 +165,6 @@ class _RegisterViewState extends State<RegisterView> {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        // Al tocar fuera del campo de texto, se oculta el teclado
         FocusScope.of(context).unfocus();
       },
       child: Background(
@@ -227,4 +223,5 @@ class _RegisterViewState extends State<RegisterView> {
       isLoading: _isLoading,
     );
   }
+  
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:booknest/views/login_view.dart';
 import 'package:booknest/widgets/genre_chip.dart';
 
+// Widget para el container de selección de categorías en el registro de un usuario
 class GenreSelectionRegisterWidget extends StatelessWidget {
   final List<String> genres;
   final List<String> selectedGenres;

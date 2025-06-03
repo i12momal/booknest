@@ -13,6 +13,7 @@ import 'package:booknest/widgets/footer.dart';
 import 'package:booknest/widgets/loan_state.dart';
 import 'package:flutter/material.dart';
 
+// Vista para las acciones de Notificaciones
 class NotificationsView extends StatefulWidget {
   const NotificationsView({super.key});
 
@@ -41,6 +42,7 @@ class _NotificationsViewState extends State<NotificationsView> {
     });
   }
 
+  // Función para obtener el id del usuario actual
   void _loadUserId() async {
     final id = await AccountController().getCurrentUserId();
     setState(() {
@@ -48,6 +50,7 @@ class _NotificationsViewState extends State<NotificationsView> {
     });
   }
 
+  // Función para obtener los libros ofrecidos como contraprestación en un intercambio físico
   List<String> _extractRelatedBooks(String message) {
     final match = RegExp(r'los siguientes libros físicos como contraprestación: (.+)').firstMatch(message);
     if (match != null) {
@@ -57,6 +60,7 @@ class _NotificationsViewState extends State<NotificationsView> {
     return [];
   }
 
+  // Función para mostrar el diálogo con los libros ofrecidos como contraprestación en un intercambio físico
   Future<bool?> _showCompensationDialog(Map<String, dynamic> notification, List<String> relatedBooks) async {
     String? selected = notification['compensationSelected'];
 
@@ -117,8 +121,7 @@ class _NotificationsViewState extends State<NotificationsView> {
     );
   }
 
-
-
+  // Método para obtener las notificaciones de un usuario
   Future<List<Map<String, dynamic>>> _loadNotifications() async {
     final userId = await AccountController().getCurrentUserId();
     if (userId == null) return [];
@@ -141,9 +144,6 @@ class _NotificationsViewState extends State<NotificationsView> {
           notification['ownerId'] = loan['ownerId'];
           notification['bookId'] = book!.id;
 
-          print('Mensaje cargado: ${notification['message']}');
-
-
           notification['compensationSelected'] = loan['compensation'];
           notification['compensationConfirmed'] = loan['compensation'] != null;
           notification['currentHolderId'] = loan['currentHolderId'];
@@ -153,12 +153,14 @@ class _NotificationsViewState extends State<NotificationsView> {
     return notifications;
   }
 
+  // Función de paginación
   List<Map<String, dynamic>> get paginatedNotifications {
     final start = (currentPage - 1) * notificationsPerPage;
     final end = (start + notificationsPerPage).clamp(0, allNotifications.length);
     return allNotifications.sublist(start, end);
   }
 
+  // Método para actualizar el estado de una solicitud de préstamo
   Future<void> _updateLoanState(Map<String, dynamic> loan, String newState, String? selectedCompensation, List<String> relatedBooks, String newHolderId) async {
     final loanId = loan['loanId'];
     final currentHolderId = loan['currentHolderId'] as String?;
@@ -196,7 +198,7 @@ class _NotificationsViewState extends State<NotificationsView> {
         }
 
         final response = await LoanController().createLoanFianza(bookId, requesterId, newHolderId, book.title);
-        print('CONTENIDO DE RESPONSE $response');
+        
         loan['selectedLoanId'] = response['data']['id'];
       } else {
         for (final title in relatedBooks) {
@@ -237,7 +239,6 @@ class _NotificationsViewState extends State<NotificationsView> {
       }
     }
 
-    print('compensationLoanId ${loan['selectedLoanId']}');
     await LoanController().updateLoanState(loanId, newState, compensation: selectedCompensation, compensationLoanId: loan['selectedLoanId']);
     
     setState(() {
@@ -248,7 +249,7 @@ class _NotificationsViewState extends State<NotificationsView> {
     });
   }
 
-
+  // Método para marcar una notificación como leída
   Future<void> _markAsRead(Map<String, dynamic> notification) async {
     if (!(notification['read'] ?? false)) {
       await NotificationController().markNotificationAsRead(notification['id']);
@@ -258,6 +259,7 @@ class _NotificationsViewState extends State<NotificationsView> {
     }
   }
 
+  // Método de confirmación para marcar varias notificaciones como leídas
   Future<void> _confirmMarkAsRead() async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -290,6 +292,7 @@ class _NotificationsViewState extends State<NotificationsView> {
     }
   }
 
+  // Método de confirmación para eliminar varias notificaciones
   Future<void> _confirmDelete() async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -323,7 +326,7 @@ class _NotificationsViewState extends State<NotificationsView> {
     }
   }
 
-
+  // Gestionar el color según el estado del préstamo
   Color _getStateColor(String state) {
     switch (state.toLowerCase()) {
       case 'pendiente':
@@ -594,7 +597,7 @@ class _NotificationsViewState extends State<NotificationsView> {
                       ),
                     ),
 
-                    // Paginador
+                    // Paginación
                     Padding(
                       padding: const EdgeInsets.only(top: 10),
                       child: Row(
@@ -660,4 +663,5 @@ class _NotificationsViewState extends State<NotificationsView> {
       )
     );
   }
+  
 }

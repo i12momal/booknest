@@ -10,16 +10,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 // Servicio con los métodos de negocio para el inicio de sesión y registro del Usuario.
 class AccountService extends BaseService {
 
-  /* Método asíncrono que permite el inicio de sesión de un usuario.
-    Parámetros:
-      - userName: Cadena con el nombre de usuario.
-      - password: Cadena con la contraseña del usuario.
-    Return: 
-      Mapa con la clave:
-        - success: Indica si el inicio de sesión fue exitoso (true o false).
-        - message: Proporciona un mensaje de estado.
-        - data (Opcional): Información del usuario registrado si la operación fue exitosa.
-  */
+  // Método asíncrono que permite el inicio de sesión de un usuario.
   Future<Map<String, dynamic>> loginUser(LoginUserViewModel loginUserViewModel) async {
     try {
       print('Verificando el login para: ${loginUserViewModel.userName}');
@@ -28,7 +19,7 @@ class AccountService extends BaseService {
         return {'success': false, 'message': 'Error de conexión a la base de datos.'};
       }
 
-      // Buscar el usuario por nombre de usuario en tu tabla
+      // Buscar el usuario por nombre de usuario en la tabla
       final userResponse = await BaseService.client
           .from('User')
           .select()
@@ -70,38 +61,15 @@ class AccountService extends BaseService {
     }
   }
 
-
-  /* Método asíncrono que permite el registro de un nuevo usuario.
-    Parámetros:
-      - name: Cadena con el nombre completo del usuario.
-      - userName: Cadena con el nombre de usuario.
-      - email: Cadena con el email del usuario.
-      - phoneNumber: Entero con el número de teléfono del usuario.
-      - address: Cadena con la dirección del usuario.
-      - password: Cadena con la contraseña del usuario.
-      - image: Cadena con la ubicación de la imagen.
-    Return: 
-      Mapa con la clave:
-        - success: Indica si el registro fue exitoso (true o false).
-        - message: Proporciona un mensaje de estado.
-        - data (Opcional): Información del usuario registrado si la operación fue exitosa.
-  */
+  // Método asíncrono que permite el registro de un nuevo usuario.
   Future<Map<String, dynamic>> registerUser(RegisterUserViewModel registerUserViewModel) async {
     try {
       if (BaseService.client == null) {
         return {'success': false, 'message': 'Error de conexión a la base de datos.'};
       }
 
-      print("Iniciando registro de usuario...");
-      print("Nombre de usuario: ${registerUserViewModel.userName}");
-      print("Email: ${registerUserViewModel.email}");
-      print("Contraseña original: ${registerUserViewModel.password}");
-
       // Verificar si el usuario ya existe
-      final existingUsers = await BaseService.client
-          .from('User')
-          .select('id')
-          .eq('userName', registerUserViewModel.userName);
+      final existingUsers = await BaseService.client.from('User').select('id').eq('userName', registerUserViewModel.userName);
 
       if (existingUsers.isNotEmpty) {
         print("El usuario ya existe en la tabla User");
@@ -131,9 +99,8 @@ class AccountService extends BaseService {
       }
 
       // Crear el registro en la tabla User usando el ID de Supabase Auth
-      print("Creando registro en la tabla User...");
       final Map<String, dynamic> userData = {
-        'id': authUserId, // Usar el ID de Supabase Auth
+        'id': authUserId,
         'name': registerUserViewModel.name,
         'userName': registerUserViewModel.userName,
         'email': registerUserViewModel.email,
@@ -146,20 +113,10 @@ class AccountService extends BaseService {
         'role': registerUserViewModel.role,
         'description': registerUserViewModel.description,
       };
-      print("Datos a insertar: $userData");
 
       final response = await BaseService.client.from('User').insert(userData).select().single();
 
-      print("Respuesta de la inserción en User: $response");
-
       if (response != null) {
-        print("Usuario registrado exitosamente");
-        print("ID en la tabla User: ${response['id']}");
-        print("Nombre: ${response['name']}");
-        print("Nombre de usuario: ${response['userName']}");
-        print("Email: ${response['email']}");
-        print("Contraseña hash: ${response['password']}");
-        
         // Iniciar sesión automáticamente después del registro
         await UserSession.setUserId(response['id']);
         print("User ID guardado en SharedPreferences: ${response['id']}");
@@ -180,11 +137,7 @@ class AccountService extends BaseService {
   }
 
 
-  /* Método para subir una imagen a Supabase Storage.
-     Parámetros:
-      - imageFile: archivo de la imagen.
-      - userName: nombre del usuario para crear el nombre con el que se va a almacenar la imagen.
-  */
+  // Método para subir una imagen a Supabase Storage.
   Future<String?> uploadProfileImage(File imageFile, String userName) async {
     try {
       if (!await imageFile.exists()) {
@@ -258,22 +211,15 @@ class AccountService extends BaseService {
     }
   }
 
-  /* Método para generar el hash de la contraseña */
+  // Método para generar el hash de la contraseña.
   String generatePasswordHash(String password) {
-    print("Generando hash para contraseña: $password");
     final bytes = utf8.encode(password);
-    print("Bytes generados: ${bytes.toString()}");
     final digest = sha256.convert(bytes);
-    print("Digest generado: ${digest.toString()}");
     final String hash = digest.toString();
-    print("Hash final: $hash");
     return hash;
   }
 
-  /* Método asíncrono que obtiene el ID del usuario actualmente autenticado.
-    Return: 
-      String con el ID del usuario autenticado o null si no hay usuario autenticado.
-  */
+  // Método asíncrono que obtiene el ID del usuario actualmente autenticado.
   Future<String?> getCurrentUserId() async {
     if (BaseService.client == null) {
       return null;
@@ -290,6 +236,7 @@ class AccountService extends BaseService {
     return currentUser?.id;
   }
 
+  // Método asíncrono que obtiene el ID del usuario actualmente autenticado.
   Future<String> getCurrentUserIdNonNull() async {
     if (BaseService.client == null) {
       return 'No se pudo establecer conexión';
@@ -306,6 +253,7 @@ class AccountService extends BaseService {
     return currentUser!.id;
   }
 
+  // Método asíncrono para el cierre de sesión de un usuario.
   Future<Map<String, dynamic>> logoutUser() async {
     try {
       // Cerrar sesión en Supabase Auth
@@ -322,7 +270,7 @@ class AccountService extends BaseService {
     }
   }
 
-
+  // Método asíncrono para comprobar si un nombre de usuario ya existe.
   Future<bool> checkUsernameExists(String username) async {
     final response = await Supabase.instance.client
       .from('User')
@@ -333,7 +281,7 @@ class AccountService extends BaseService {
     return response != null;
   }
 
-
+  // Método asíncrono para comprobar si un correo electrónico ya existe.
   Future<bool> checkEmailExists(String email) async {
     final response = await Supabase.instance.client
       .from('User')
@@ -344,6 +292,7 @@ class AccountService extends BaseService {
     return response != null;
   }
 
+  // Método asíncrono que obtiene el usuario actual.
   Future<user.User> getCurrentUser() async {
     final userId = await getCurrentUserIdNonNull();
 

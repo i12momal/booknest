@@ -6,6 +6,7 @@ import 'package:booknest/widgets/tap_bubble_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 
+// Vista para la acción de Añadir una nueva Reseña
 class AddReviewView extends StatefulWidget {
   final Book book;
 
@@ -52,7 +53,7 @@ class _AddReviewViewState extends State<AddReviewView> {
     );
   }
 
-
+  // Función para obtener el id del usuario actual
   Future<void> _loadUserId() async {
     final id = await AccountController().getCurrentUserId();
     setState(() {
@@ -316,4 +317,5 @@ class _AddReviewViewState extends State<AddReviewView> {
       ),
     );
   }
+
 }

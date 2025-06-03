@@ -10,6 +10,7 @@ import 'package:booknest/services/user_service.dart';
 import 'package:booknest/services/book_service.dart';
 import 'package:booknest/services/notification_service.dart';
 
+// Controlador Base con la definición de los servicios.
 abstract class BaseController {
   late AccountService accountService = AccountService();
   late CategoryService categoryService = CategoryService();

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+// Widget que muestra un dropdown con los lenguajes disponibles
 class LanguageDropdown extends StatelessWidget {
   final TextEditingController controller;
   final String? Function(String?)? validator;
@@ -68,4 +69,5 @@ class LanguageDropdown extends StatelessWidget {
       ),
     );
   }
+  
 }

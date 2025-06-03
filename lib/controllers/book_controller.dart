@@ -8,23 +8,7 @@ class BookController extends BaseController{
   bool isUploading = false;
   String? uploadedFileName;
 
-  /* Método asíncrono que permite añadir un nuevo libro.
-    Parámetros:
-      - title: Cadena con el tútlo del libro.
-      - author: Cadena con el nombre del autor.
-      - isbn: Cadena con el isbn del libro.
-      - pagesNumber: Entero con el número de páginas del libro.
-      - language: Cadena con el idioma del libro.
-      - format: Cadena con el formato del libro.
-      - file: Cadena con la ubicación del archivo del libro.
-      - summary: Cadena con un breve resumen del libro.
-      - categories: Cadena con los géneros seleccionados.
-    Return: 
-      Mapa con la clave:
-        - success: Indica si la creación del libro fue exitosa (true o false).
-        - message: Proporciona un mensaje de estado.
-        - data (Opcional): Información del libro creado si la operación fue exitosa.
-  */
+  // Método asíncrono que permite añadir un nuevo libro.
   Future<Map<String, dynamic>> addBook(String title, String author, String isbn, int pagesNumber,
     String language, String format, File? file, String summary, String categories, File? coverImage) async {
 
@@ -69,27 +53,11 @@ class BookController extends BaseController{
       ownerId: userId
     );
     
-    // Llamada al servicio para registrar al usuario
+    // Llamada al servicio para registrar el libro
     return await bookService.addBook(addBookViewModel);
   }
 
-  /* Método asíncrono que permite editar un libro.
-    Parámetros:
-      - title: Cadena con el tútlo del libro.
-      - author: Cadena con el nombre del autor.
-      - isbn: Cadena con el isbn del libro.
-      - pagesNumber: Entero con el número de páginas del libro.
-      - language: Cadena con el idioma del libro.
-      - format: Cadena con el formato del libro.
-      - file: Cadena con la ubicación del archivo del libro.
-      - summary: Cadena con un breve resumen del libro.
-      - categories: Cadena con los géneros seleccionados.
-    Return: 
-      Mapa con la clave:
-        - success: Indica si la edición del libro fue exitosa (true o false).
-        - message: Proporciona un mensaje de estado.
-        - data (Opcional): Información del libro editado si la operación fue exitosa.
-  */
+  // Método asíncrono que permite editar un libro.
   Future<Map<String, dynamic>> editBook(int id, String title, String author, String isbn, int pagesNumber, String language, String format, File? file, String summary,
     String genres, String state, String ownerId, File? coverImage) async {
     String? imageUrl;
@@ -208,29 +176,26 @@ class BookController extends BaseController{
     }
   }
 
-  /* Método asíncrono que devuelve los datos de un libro. */
+  // Método asíncrono que devuelve los datos de un libro en base a su id.
   Future<Book?> getBookById(int bookId) async {
     var response = await bookService.getBookById(bookId);
-
-    // Depuración para ver qué contiene 'response'
-    print("Respuesta de Supabase: $response");
 
     // Comprobar si 'response' tiene la estructura esperada
     if (response.containsKey('success') && response['success'] == true) {
       print("Éxito: Datos del libro obtenidos");
 
       if (response['data'] != null) {
-        print("Datos del libro: ${response['data']}");  // Diagnóstico
+        print("Datos del libro: ${response['data']}");
 
         // Convertir la respuesta en un objeto Book
         var book = Book.fromJson(response['data']);
         print("Libro convertido: ${book.title}, ${book.categories}, ${book.format}");
         return book;
       } else {
-        print("Datos del libro son null");  // Diagnóstico
+        print("Datos del libro son null");
       }
     } else {
-      print("Error al obtener el libro: ${response['message']}");  // Diagnóstico
+      print("Error al obtener el libro: ${response['message']}");
     }
     return null;
   }
@@ -246,10 +211,12 @@ class BookController extends BaseController{
     }
   }
 
+  // Método asíncrono para eliminar un libro en base a su id.
   Future<Map<String, dynamic>> deleteBook(int bookId) async {
     return await bookService.deleteBook(bookId);
   }
 
+  // Método asíncrono que obtiene todos los libros que hay en el sistema.
   Future<List<Map<String, dynamic>>> fetchAllBooks() async {
     return bookService.fetchAllBooks();
   }
@@ -265,6 +232,7 @@ class BookController extends BaseController{
     }
   }
 
+  // Método asíncrono que obtiene los libros físicos de un usuario.
   Future<List<Book>> getUserPhysicalBooks(String userId) async {
     try {
       // Llamamos al servicio para obtener los libros filtrados
@@ -275,6 +243,7 @@ class BookController extends BaseController{
     }
   }
 
+  // Método Asíncrono que obtiene los libros físicos disponibles del usuario.
   Future<List<Book>> getUserAvailablePhysicalBooks(String userId) async {
     try {
       // Llamamos al servicio para obtener los libros físicos disponibles filtrados
@@ -285,14 +254,17 @@ class BookController extends BaseController{
     }
   }
 
+  // Método asíncrono para cambiar el estado de un libro.
   Future<void> changeState(int bookId, String state) async {
     await bookService.changeState(bookId, state);
   }
 
+  // Método asíncrono para obtener el id de un libro por su título y propietario.
   Future<int?> getBookIdByTitleAndOwner(String title, String ownerId) async{
     return await bookService.getBookIdByTitleAndOwner(title, ownerId);
   }
 
+  // Método que comprueba si el título de un libro ya existe.
   Future<bool> checkTitleExists(String title, String ownerId) async {
     return await bookService.checkTitleExists(title, ownerId);
   }

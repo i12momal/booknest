@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+// Widget para la navegación entre páginas (progress bar)
 class PageNavigation extends StatelessWidget {
   final PageController pageController;
   final int currentPage;
@@ -36,4 +37,5 @@ class PageNavigation extends StatelessWidget {
       ],
     );
   }
+
 }

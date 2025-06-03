@@ -1,6 +1,7 @@
 import 'package:booknest/widgets/genre_chip.dart';
 import 'package:flutter/material.dart';
 
+// Widget que muestra un popup con las categorías existentes
 class CategorySelectionPopup extends StatefulWidget {
   final List<String> allCategories;
   final List<String> selectedCategories;
@@ -28,6 +29,7 @@ class _CategorySelectionPopupState extends State<CategorySelectionPopup> {
     _selectedCategories = List.from(widget.selectedCategories);
   }
 
+  // Función para manejar la selección/deselección de categorías
   void _toggleSelection(String category) {
     setState(() {
       if (_selectedCategories.contains(category)) {
@@ -127,4 +129,5 @@ class _CategorySelectionPopupState extends State<CategorySelectionPopup> {
       },
     );
   }
+  
 }

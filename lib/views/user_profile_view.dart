@@ -14,6 +14,7 @@ import 'package:booknest/widgets/footer.dart';
 import 'package:booknest/widgets/tap_bubble_text.dart';
 import 'package:flutter/material.dart';
 
+// Vista para la acción del Perfil de un Usuario cualquiera de la aplicación
 class UserProfileView extends StatefulWidget {
   final String userId;
   const UserProfileView({super.key, required this.userId});
@@ -59,7 +60,7 @@ class _UserProfileViewState extends State<UserProfileView> {
     }
   }
 
-
+  // Obtener los datos del usuario
   Future<void> _fetchUserData() async {
     setState(() {
       _isLoading = true;
@@ -134,7 +135,7 @@ class _UserProfileViewState extends State<UserProfileView> {
 
         _currentUserId = snapshot.data;
 
-        // RESPONSIVE CATEGORY LAYOUT
+        // Categorias responsive
         Widget categoryLayout;
 
         if (categories.isEmpty) {
@@ -298,9 +299,10 @@ class _UserProfileViewState extends State<UserProfileView> {
 
 }
 
+// Categorías
 class _CategoryItem extends StatelessWidget {
   final String label;
-  final String? imageUrl;  // URL de la imagen para la categoría
+  final String? imageUrl; 
 
   const _CategoryItem({
     required this.label,
@@ -310,41 +312,40 @@ class _CategoryItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 80,  // Limitar el ancho del contenedor para evitar desbordamientos
+      width: 80, 
       child: Column(
         children: [
-          // Contenedor con borde azul y circular para la imagen
           Container(
             width: 50,
             height: 50,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
-                color: const Color(0xFF112363),  // Borde azul
+                color: const Color(0xFF112363), 
                 width: 2,
               ),
             ),
             child: ClipOval(
               child: Image.network(
-                imageUrl ?? '',  // Si no hay URL, se muestra la imagen por defecto
+                imageUrl ?? '',
                 fit: BoxFit.cover,
               ),
             ),
           ),
           const SizedBox(height: 4),
-          // Texto con truncamiento en caso de ser muy largo
           Text(
             label,
             style: const TextStyle(
               fontSize: 12,
-              fontWeight: FontWeight.normal,  // El texto no se pone en negrita
+              fontWeight: FontWeight.normal,
               color: Colors.black87,
             ),
-            overflow: TextOverflow.ellipsis,  // Truncar texto si es largo
-            maxLines: 1,  // Asegurarnos que el texto no se extienda a más de una línea
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
           ),
         ],
       ),
     );
   }
+  
 }

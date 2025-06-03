@@ -5,7 +5,7 @@ import 'package:booknest/services/base_service.dart';
 // Servicio con los métodos de negocio para la entidad Recordatorio.
 class ReminderService extends BaseService{
 
-  // Obtener los ids de los usuarios que activaron un recordatorio para un libro
+  // Método asíncrono para obtener los ids de los usuarios que activaron un recordatorio para un libro
   Future<List<Reminder>> getRemindersByBookAndUser(int bookId, String userId) async {
     try {
       final response = await BaseService.client
@@ -25,13 +25,10 @@ class ReminderService extends BaseService{
     }
   }
 
-
+  // Método asíncrono para obtener los recordatorios activos sobre un libro.
   Future<List<Reminder>> getRemindersByBook(int bookId) async {
     try {
-      final response = await BaseService.client
-          .from('Reminder')
-          .select()
-          .eq('bookId', bookId);
+      final response = await BaseService.client.from('Reminder').select().eq('bookId', bookId);
 
       if (response == null || response.isEmpty) {
         return [];
@@ -44,19 +41,18 @@ class ReminderService extends BaseService{
     }
   }
 
-
+  // Método asíncrono que obtiene el id de los usuarios que tienen un recordatorio activo para un libro.
   Future<List<String>> getUsersIdForReminder(int bookId) async {
     try {
       final response = await BaseService.client
           .from('Reminder')
-          .select('userId') // Selecciona solo el campo 'userId'
-          .eq('bookId', bookId); // Filtra por 'bookId'
+          .select('userId') 
+          .eq('bookId', bookId);
 
       if (response == null || response.isEmpty) {
         return [];
       }
 
-      // Mapea la respuesta para obtener solo los 'userId' como List<String>
       return response.map<String>((item) => item['userId'] as String).toList();
     } catch (e) {
       print('Error al obtener recordatorios: $e');
@@ -64,7 +60,7 @@ class ReminderService extends BaseService{
     }
   }
 
-  // Agregar un libro a recordatorio
+  // Método asíncrono para agregar un recordatorio sobre un libro.
   Future<void> addReminder(CreateReminderViewModel createReminderViewModel) async {
     try {
       final currentUser = BaseService.client.auth.currentUser;
@@ -96,14 +92,10 @@ class ReminderService extends BaseService{
     }
   }
 
-
-  // Eliminar un recordatorio
+  // Método asíncrono para eliminar un recordatorio
   Future<void> removeFromReminder(int bookId, String userId, String format) async {
     try {
-      await BaseService.client
-          .from('Reminder')
-          .delete()
-          .eq('userId', userId).eq('bookId', bookId).eq('format', format);
+      await BaseService.client.from('Reminder').delete().eq('userId', userId).eq('bookId', bookId).eq('format', format);
 
     } catch (error) {
       print("Error al eliminar recordatorio: $error");
@@ -111,7 +103,7 @@ class ReminderService extends BaseService{
     }
   }
 
-
+  // Método asíncrono para marcar un recordatorio como notificado
   Future<void> markAsNotified(int bookId, String userId, String format) async {
     try {
       await BaseService.client
@@ -127,19 +119,13 @@ class ReminderService extends BaseService{
     }
   }
 
-
-
+  // Método asíncrono para actualizar el estado de un recordatorio cuando ha sido notificado
   Future<void> updateReminderNotificationStatus(int reminderId, bool notified) async {
     try {
-      await BaseService.client
-          .from('Reminder')
-          .update({'notified': notified})
-          .eq('id', reminderId);
+      await BaseService.client.from('Reminder').update({'notified': notified}).eq('id', reminderId);
     } catch (e) {
       print('Error al actualizar el estado del recordatorio: $e');
     }
   }
-
-
 
 }
