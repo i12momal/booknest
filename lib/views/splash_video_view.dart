@@ -168,131 +168,197 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
     double screenWidth = MediaQuery.of(context).size.width;
     double screenHeight = MediaQuery.of(context).size.height;
 
+    bool isMobile = screenWidth < 600;
+    bool isTablet = screenWidth >= 600 && screenWidth < 1024;
+
+    double maxContainerWidth = isMobile
+        ? screenWidth * 0.9
+        : isTablet
+            ? 450
+            : 500;
+
+    double horizontalPadding = isMobile ? screenWidth * 0.05 : 30;
+
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Center(
-          child: FadeTransition(
-            opacity: _fadeAnimation,
-            child: Container(
-              width: screenWidth * 0.98,
-              height: screenHeight * 0.95,
-              decoration: BoxDecoration(
-                border: Border.all(color: const Color(0xFF112363), width: 4),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 35),
-              child: Column(
-                children: [
-                  // Título con animación de desvanecimiento
-                  FadeTransition(
-                    opacity: _titleAnimation,
-                    child: Image.asset(
-                      'assets/images/titulo.png',
-                      width: double.infinity,
-                      height: screenHeight * 0.15,
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                  // Logo con animación de desvanecimiento
-                  Expanded(
-                    child: Center(
-                      child: FadeTransition(
-                        opacity: _logoAnimation,
-                        child: Image.asset(
-                          'assets/images/logo.png',
-                          width: screenWidth * 0.9,
-                          height: screenHeight * 0.6,
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                    ),
-                  ),
-                  // Contenedor de botones con animación de desvanecimiento
-                  FadeTransition(
-                    opacity: _buttonsAnimation,
-                    child: Container(
-                      width: screenWidth * 0.85,
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF687CFF), Color(0xFF2E3C94)],
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                        ),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: const Color(0xFF112363),
-                          width: 3,
-                        ),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Colors.black26,
-                            blurRadius: 5,
-                            spreadRadius: 2,
-                          ),
-                        ],
-                      ),
-                      padding: EdgeInsets.all(screenWidth * 0.05),
+      body: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        child: Transform.translate(
+          offset: const Offset(0, 11),
+          child: Center(
+            child: FadeTransition(
+              opacity: _fadeAnimation,
+              child: Container(
+                width: screenWidth * 0.99,
+                height: screenHeight * 0.95,
+                decoration: BoxDecoration(
+                  border: Border.all(color: const Color(0xFF112363), width: 4),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                clipBehavior: Clip.none,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 55),
                       child: Column(
                         children: [
-                          ElevatedButton(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const LoginView(),
-                                ),
-                              );
-                            },
-                            style: ElevatedButton.styleFrom(
-                              minimumSize: Size(screenWidth * 0.8, 50),
-                              backgroundColor: const Color(0xFFAD0000),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30),
-                                side: const BorderSide(color: Colors.white, width: 3),
-                              ),
-                            ),
-                            child: const Text(
-                              'Iniciar Sesión',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                              ),
+                          const SizedBox(height: 100),
+
+                          // Imagen de logo
+                          FadeTransition(
+                            opacity: _logoAnimation,
+                            child: Image.asset(
+                              'assets/images/logo.png',
+                              width: screenWidth * 0.9,
+                              height: screenHeight * 0.43,
+                              fit: BoxFit.contain,
                             ),
                           ),
-                          const SizedBox(height: 20),
-                          ElevatedButton(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const RegisterView(),
+                          
+                          // Botones
+                          FadeTransition(
+                            opacity: _buttonsAnimation,
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(maxWidth: maxContainerWidth),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      colors: [Color(0xFF687CFF), Color(0xFF2E3C94)],
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                    ),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: const Color(0xFF112363),
+                                      width: 3,
+                                    ),
+                                    boxShadow: const [
+                                      BoxShadow(
+                                        color: Colors.black26,
+                                        blurRadius: 5,
+                                        spreadRadius: 2,
+                                      ),
+                                    ],
+                                  ),
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: screenWidth * 0.05,
+                                    vertical: 50,
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      ElevatedButton(
+                                        onPressed: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => const LoginView(),
+                                            ),
+                                          );
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                          minimumSize: Size(screenWidth * 0.8, 50),
+                                          backgroundColor: const Color(0xFFAD0000),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(30),
+                                            side: const BorderSide(color: Colors.white, width: 3),
+                                          ),
+                                        ),
+                                        child: const Text(
+                                          'Iniciar Sesión',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 40),
+                                      ElevatedButton(
+                                        onPressed: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => const RegisterView(),
+                                            ),
+                                          );
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                          minimumSize: Size(screenWidth * 0.8, 50),
+                                          backgroundColor: const Color(0xFFAD0000),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(30),
+                                            side: const BorderSide(color: Colors.white, width: 3),
+                                          ),
+                                        ),
+                                        child: const Text(
+                                          'Registro',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              );
-                            },
-                            style: ElevatedButton.styleFrom(
-                              minimumSize: Size(screenWidth * 0.8, 50),
-                              backgroundColor: const Color(0xFFAD0000),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30),
-                                side: const BorderSide(color: Colors.white, width: 3),
-                              ),
-                            ),
-                            child: const Text(
-                              'Registro',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
                               ),
                             ),
                           ),
                         ],
                       ),
                     ),
-                  ),
-                ],
+
+                    // AppBar
+                      Container(
+                        height: 160,
+                        width: double.infinity,
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Color(0xFF112363), Color(0xFF2140AF)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.centerRight,
+                            stops: [0.42, 0.74],
+                          ),
+                          borderRadius: BorderRadius.only(
+                            bottomLeft: Radius.circular(12),
+                            bottomRight: Radius.circular(12),
+                            topLeft: Radius.circular(14),
+                            topRight: Radius.circular(14),
+                          ),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          widget.title,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+
+                    // Imagen encima del AppBar
+                    Positioned(
+                      top: 40,
+                      left: 0,
+                      right: 0,
+                      child: FadeTransition(
+                        opacity: _titleAnimation,
+                        child: Center(
+                          child: Image.asset(
+                            'assets/images/prueba.png',
+                            height: 80,
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -300,5 +366,5 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
       ),
     );
   }
-  
+
 }
