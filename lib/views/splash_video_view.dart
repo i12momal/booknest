@@ -24,11 +24,14 @@ class _SplashVideoPageState extends State<SplashVideoPage> with TickerProviderSt
 
     _controller = VideoPlayerController.asset('assets/gifs/plumas2.mp4')
       ..initialize().then((_) {
-        setState(() {});
-        _controller.play();
+        Future.delayed(Duration.zero, () {
+          if (mounted) {
+            setState(() {});
+            _controller.play();
+          }
+        });
       });
 
-    // Animation controller para desvanecer el video y la página de inicio
     _fadeController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1600),
@@ -39,7 +42,6 @@ class _SplashVideoPageState extends State<SplashVideoPage> with TickerProviderSt
       curve: Curves.easeInOut,
     );
 
-    // Animación de desvanecimiento del video (se vuelve más transparente)
     _videoFadeAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(
       CurvedAnimation(
         parent: _fadeController,
@@ -48,11 +50,12 @@ class _SplashVideoPageState extends State<SplashVideoPage> with TickerProviderSt
     );
 
     _controller.addListener(() {
-      if (_controller.value.position >= _controller.value.duration - const Duration(seconds: 2) && !_showHome) {
+      if (_controller.value.isInitialized &&
+          _controller.value.position >= _controller.value.duration - const Duration(seconds: 2) &&
+          !_showHome) {
         _fadeController.forward();
         _showHome = true;
 
-        // Esperar a que termine el fade y luego navegar
         Future.delayed(const Duration(milliseconds: 1600), () {
           Navigator.of(context).pushReplacement(
             PageRouteBuilder(
@@ -70,6 +73,7 @@ class _SplashVideoPageState extends State<SplashVideoPage> with TickerProviderSt
       }
     });
   }
+
 
   @override
   void dispose() {
@@ -349,10 +353,13 @@ class _MyHomePageState extends State<MyHomePage> with SingleTickerProviderStateM
                       child: FadeTransition(
                         opacity: _titleAnimation,
                         child: Center(
-                          child: Image.asset(
-                            'assets/images/prueba.png',
-                            height: 80,
-                            fit: BoxFit.contain,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: Image.asset(
+                              'assets/images/titulo.png',
+                              height: 80,
+                              fit: BoxFit.contain,
+                            ),
                           ),
                         ),
                       ),
