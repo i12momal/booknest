@@ -1,6 +1,7 @@
 import 'package:booknest/services/base_service.dart';
 import 'package:booknest/views/reset_password_view.dart';
 import 'package:booknest/views/splash_video_view.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:app_links/app_links.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -66,7 +67,7 @@ class _MyAppState extends State<MyApp> {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const SplashVideoPage(),
+      home: kIsWeb ? const MyHomePage(title: '') : const SplashVideoPage(),
     );
   }
 }

@@ -309,22 +309,6 @@ class _GeolocationMapState extends State<GeolocationMap> {
         ),
       )
       : GoogleMap(
-        /*onMapCreated: (GoogleMapController controller) {
-          mapController = controller;
-
-          if (_focusedMarkerId != null) {
-            Future.delayed(const Duration(milliseconds: 500), () {
-              final markerExists = _markers.any((m) => m.markerId == _focusedMarkerId);
-              if (markerExists) {
-                mapController.showMarkerInfoWindow(_focusedMarkerId!);
-              }
-            });
-          }
-           setState(() {
-            _isLoading = false;
-          });
-        },*/
-
         onMapCreated: (GoogleMapController controller) async {
           mapController = controller;
 
