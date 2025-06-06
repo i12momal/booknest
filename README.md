@@ -52,7 +52,7 @@ flutter run
 **iOS**
 ```bash
 flutter pub get
-cd iOS
+cd ios
 pod install
 flutter run
 ```
