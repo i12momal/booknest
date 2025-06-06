@@ -494,4 +494,15 @@ class BookService extends BaseService{
     return response != null;
   }
 
+  // Obtener la Url firmada de un archivo (web)
+  Future<String?> getSignedUrl(String filePath) async {
+    try {
+      final signedUrl = await BaseService.client.storage.from('books').createSignedUrl(filePath, 7200);
+      return signedUrl;
+    } catch (e) {
+      return null;
+    }
+  }
+
+
 }

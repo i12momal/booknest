@@ -21,6 +21,9 @@ import 'package:booknest/widgets/footer.dart';
 import 'package:booknest/widgets/success_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/foundation.dart' as kisweb;
+import 'package:universal_html/html.dart' as html;
+import 'package:http/http.dart' as http;
 
 // Vista para las acciones del Perfil del Usuario Propietario
 class OwnerProfileView extends StatefulWidget {
@@ -207,7 +210,6 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
     );
   }
 
-
   // Método para devolver un libro digital
   void _returnBook(int loanId) async {
     setState(() {
@@ -340,6 +342,18 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
       },
     );
   }
+
+  // Función para obtener la ruta relativa de un archivo a partir de su url pública
+  String getRelativePathFromUrl(String url) {
+    final uri = Uri.parse(url);
+    final segments = uri.pathSegments;
+
+    final publicIndex = segments.indexOf('public');
+    final relativeSegments = segments.sublist(publicIndex + 2); // saltar 'public' y 'books'
+
+    return relativeSegments.join('/');
+  }
+
 
 
   @override
@@ -623,34 +637,67 @@ class _OwnerProfileViewState extends State<OwnerProfileView> {
 
                           return GestureDetector(
                             onTap: () async {
-                              final url = book.file;
-                              if (url != null && url.isNotEmpty) {
-                                final uri = Uri.parse(url);
-                                if (await canLaunchUrl(uri)) {
-                                  if (!context.mounted) return;
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => BookReaderView(
-                                        bookId: book.id,
-                                        url: book.file,
-                                        initialPage: currentPage,
-                                        userId: widget.userId,
-                                        bookTitle: book.title,
-                                      ),
-                                    ),
-                                  ).then((returnedPage) {
-                                    if (returnedPage != null) {
-                                      LoanController().saveCurrentPageProgress(
-                                        widget.userId,
-                                        book.id,
-                                        returnedPage,
-                                      );
+                              String? url;
+
+                              if (kisweb.kIsWeb) {
+                                final relativePath = getRelativePathFromUrl(book.file);
+                                url = await BookController().getSignedUrl(relativePath);
+
+                                if (url == null || url.isEmpty) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Error obteniendo el archivo')),
+                                  );
+                                  return;
+                                }
+
+                                  final cleanTitle = book.title.replaceAll(' ', '_') + '.pdf';
+                                  final renamedUrl = '$url#filename=$cleanTitle';
+
+                                  try {
+                                    final res = await http.get(Uri.parse(url));
+                                    if (res.statusCode != 200) {
+                                      throw Exception("Archivo no disponible aún");
                                     }
-                                  });
+                                  } catch (e) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Esperando a que el archivo esté disponible...')),
+                                    );
+                                    return;
+                                  }
+
+                                  final viewerUrl = 'https://docs.google.com/gview?embedded=true&url=${Uri.encodeComponent(renamedUrl)}';
+                                  html.window.open(viewerUrl, '_blank');
+
+                              } else {
+                                // En móvil usa la URL directa
+                                url = book.file;
+
+                                if (url != null && url.isNotEmpty) {
+                                  final uri = Uri.parse(url);
+                                  if (await canLaunchUrl(uri)) {
+                                    if (!context.mounted) return;
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => BookReaderView(
+                                          bookId: book.id,
+                                          url: url!,
+                                          initialPage: currentPage,
+                                          userId: widget.userId,
+                                          bookTitle: book.title,
+                                        ),
+                                      ),
+                                    ).then((returnedPage) {
+                                      if (returnedPage != null) {
+                                        LoanController().saveCurrentPageProgress(widget.userId, book.id, returnedPage);
+                                      }
+                                    });
+                                  }
                                 }
                               }
                             },
+
+
                             child: Padding(
                               padding: const EdgeInsets.only(right: 12),
                               child: Column(

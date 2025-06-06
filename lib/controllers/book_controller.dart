@@ -268,4 +268,10 @@ class BookController extends BaseController{
   Future<bool> checkTitleExists(String title, String ownerId) async {
     return await bookService.checkTitleExists(title, ownerId);
   }
+
+  // Obtener la Url firmada de un archivo (web)
+   Future<String?> getSignedUrl(String filePath) {
+    return bookService.getSignedUrl(filePath);
+  }
+
 }
