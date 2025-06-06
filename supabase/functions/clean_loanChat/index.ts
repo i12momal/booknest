@@ -1,13 +1,9 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-// Variables de entorno
-const SUPABASE_URL = "https://ejqvfrjilmxuqrxnrvbs.supabase.co";
-const SUPABASE_SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVqcXZmcmppbG14dXFyeG5ydmJzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0MDY4MDQ3NywiZXhwIjoyMDU2MjU2NDc3fQ.uW_jpz89wCsKQ5gY1-0xql5Vj2F7X7ZqeUXJQUeBSCA";
-
-// Verificación
-console.log("SUPABASE_URL:", SUPABASE_URL);
-console.log("SUPABASE_SERVICE_ROLE_KEY:", SUPABASE_SERVICE_ROLE_KEY);
+// Cargar las variables de entorno
+const SUPABASE_URL = Deno.env.get("MY_SUPABASE_URL")!;
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("MY_SUPABASE_SERVICE_ROLE_KEY")!;
 
 serve(async (_req) => {
   try {
