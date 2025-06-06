@@ -43,9 +43,17 @@ cd booknest
 ```
 
 ### ▶️ Ejecutar la app
-**Android/IOS**
+**Android**
 ```bash
 flutter pub get
+flutter run
+```
+
+**iOS**
+```bash
+flutter pub get
+cd iOS
+pod install
 flutter run
 ```
 
