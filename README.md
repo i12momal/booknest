@@ -54,6 +54,7 @@ flutter run
 flutter pub get
 cd ios
 pod install
+cd ..
 flutter run
 ```
 
