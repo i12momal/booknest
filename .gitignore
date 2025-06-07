@@ -43,3 +43,8 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Archivos que contienen las API Keys de Google y variables de Supabase
+/ios/Runner/GoogleService-Info.plist
+/android/gradle.properties
+.env

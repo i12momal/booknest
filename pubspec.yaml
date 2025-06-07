@@ -50,6 +50,7 @@ dependencies:
   mocktail: ^1.0.0
   universal_html: ^2.0.8
   http: 1.4.0
+  flutter_dotenv: ^5.0.2
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -96,6 +97,7 @@ flutter:
    - assets/images/titulo.png
    - assets/images/icono_app.png
    - assets/gifs/plumas2.mp4
+   - .env
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
