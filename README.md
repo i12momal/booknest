@@ -1,6 +1,7 @@
 # 📚 BookNest
 
 **BookNest** es una aplicación móvil desarrollada en Flutter que conecta a amantes de la lectura para intercambiar libros, tanto físicos como digitales. A través de un sistema de geolocalización, permite encontrar lectores cercanos, visualizar bibliotecas y coordinar préstamos seguros. También incluye un sistema de reseñas y valoraciones donde los usuarios pueden dar sus opiniones sobre los libros leídos.
+
 BookNest es una aplicación multiplataforma, compatible con Android, iOS y navegadores web.
 
 ---
