@@ -1,0 +1,2 @@
+C:/Users/marti/OneDrive/Escritorio/BookNest/booknest/android/app/.cxx/RelWithDebInfo/51g6o1n5/x86_64/CMakeFiles/edit_cache.dir
+C:/Users/marti/OneDrive/Escritorio/BookNest/booknest/android/app/.cxx/RelWithDebInfo/51g6o1n5/x86_64/CMakeFiles/rebuild_cache.dir
