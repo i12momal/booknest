@@ -25,15 +25,11 @@ class BookInfoFormEdit extends StatefulWidget {
   final List<String> selectedFormats;
   final int bookId;
   final String? originalTitle;
-
-  // Imagen de portada (movil)
+  
   final File? coverFile;
-  // Imagen de portada (Web)
   final Uint8List? coverFileWebBytes;
-  // URL de imagen de portada si ya está en el servidor
   final String? coverImageUrl;
 
-  // Callback para cuando se seleccione una portada (movil o Web)
   final void Function(File?)? onCoverPickedMobile;
   final void Function(Uint8List?)? onCoverPickedWeb;
 
@@ -375,7 +371,6 @@ class _BookInfoFormEditState extends State<BookInfoFormEdit> {
                       onCoverImagePickedWeb: widget.onCoverPickedWeb,
                     ),
 
-            
                     const SizedBox(height: 15),
                     const Text(
                       'Formato',

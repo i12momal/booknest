@@ -49,6 +49,7 @@ class _EditBookViewState extends State<EditBookView> {
   List<String> genres = [];
   List<String> selectedGenres = [];
   String? currentImageUrl;
+
   Uint8List? coverImageBytesWeb; // Para Web
 
   List<String> selectedFormat = [];
@@ -95,7 +96,6 @@ class _EditBookViewState extends State<EditBookView> {
       coverImageBytesWeb = imageBytes;
     });
   }
-
 
   // Función para cargar datos del libro
   Future<void> _fetchBookData() async {

@@ -9,6 +9,7 @@ import 'package:booknest/widgets/background.dart';
 import 'package:booknest/widgets/page_navigation.dart';
 import 'package:booknest/widgets/book_info_form_add.dart';
 import 'package:booknest/widgets/success_dialog.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:booknest/widgets/genre_and_summary_selection.dart';
 
@@ -56,6 +57,9 @@ class _AddBookViewState extends State<AddBookView>{
 
   File? _coverImageFile;            // Para móvil
   Uint8List? _coverImageWebBytes;  // Para web
+
+  File? _digitalFileMobile;
+  Uint8List? _digitalFileWebBytes;
 
   @override
   void initState() {
@@ -169,10 +173,8 @@ class _AddBookViewState extends State<AddBookView>{
       hasError = true;
     }
 
-    // Si hay errores, salimos del método
     if (hasError) return;
 
-    // Limpiar mensajes de error y empezar a cargar
     setState(() {
       _summaryMessage = '';
       _message = '';
@@ -190,13 +192,22 @@ class _AddBookViewState extends State<AddBookView>{
     if (isPhysicalSelected) formats.add('Físico');
     if (isDigitalSelected) formats.add('Digital');
 
-    File? file;
-    if (isDigitalSelected && uploadedFileName?.isNotEmpty == true) {
-      file = File(uploadedFileName!);
-    }
+    File? fileToSend = isDigitalSelected ? _digitalFileMobile : null;
+    Uint8List? fileBytesToSend = isDigitalSelected ? _digitalFileWebBytes : null;
 
-    final result = await _bookController.addBook(title, author, isbn, pagesNumber, language, formats.join(", "), file, summary, 
-    selectedGenres.join(", "), _coverImageFile ?? _coverImageWebBytes);
+    final result = await _bookController.addBook(
+      title,
+      author,
+      isbn,
+      pagesNumber,
+      language,
+      formats.join(", "),
+      // Pasa el archivo físico o los bytes web:
+      kIsWeb ? fileBytesToSend : fileToSend,
+      summary,
+      selectedGenres.join(", "),
+      _coverImageFile ?? _coverImageWebBytes,
+    );
 
     setState(() {
       _isLoading = false;
@@ -246,12 +257,13 @@ class _AddBookViewState extends State<AddBookView>{
       formKey: _formKey,
       initialCoverImageFile: _coverImageFile,
       initialCoverImageWebBytes: _coverImageWebBytes,
-      onFileAndFormatChanged: (file, isPhysical, isDigital) {
+      onFileAndFormatChanged: (fileMobile, fileWebBytes, isPhysical, isDigital) {
         setState(() {
-          uploadedFileName = file;
+          _digitalFileMobile = fileMobile;
+          _digitalFileWebBytes = fileWebBytes;
           isPhysicalSelected = isPhysical;
           isDigitalSelected = isDigital;
-      });
+        });
       },
       onCoverImagePickedMobile: (imageFile) {
         setState(() {

@@ -110,6 +110,44 @@ class BookService extends BaseService{
     }
   }
 
+  Future<String?> uploadFileWeb(Uint8List bytes, String bookTitle, String? userId, {String fileExtension = 'pdf'}) async {
+    try {
+      // Normalizar el título para crear un nombre de archivo único
+      String sanitizedTitle = removeDiacritics(bookTitle).replaceAll(' ', '_');
+      int timestamp = DateTime.now().millisecondsSinceEpoch;
+      String fileName = "${sanitizedTitle}_${userId}_$timestamp.$fileExtension";
+
+      // Obtener lista de archivos actuales
+      final List<FileObject> existingFiles = await Supabase.instance.client.storage.from('books').list(path: 'books/');
+
+      // Eliminar archivos anteriores del mismo usuario/libro
+      final userFiles = existingFiles.where((file) => file.name.startsWith('${sanitizedTitle}_$userId')).toList();
+
+      if (userFiles.isNotEmpty) {
+        final fileNamesToDelete = userFiles.map((file) => 'books/${file.name}').toList();
+        await Supabase.instance.client.storage.from('books').remove(fileNamesToDelete);
+        print("Archivos anteriores eliminados: $fileNamesToDelete");
+      }
+
+      // Subir nuevo archivo como bytes
+      final response = await Supabase.instance.client.storage.from("books")
+        .uploadBinary(
+          "books/$fileName",
+          bytes,
+        );
+
+      // Obtener URL pública
+      final String publicUrl = Supabase.instance.client.storage.from("books").getPublicUrl("books/$fileName");
+
+      print("Archivo subido correctamente (web): $fileName");
+      return publicUrl;
+    } catch (e) {
+      print("Error al procesar el archivo desde web: $e");
+      return null;
+    }
+  }
+
+
   // Método asíncrono para subir una imagen de portada de libro a Supabase
   Future<String?> uploadCoverMobile(File file, String bookTitle, String? userId) async {
     try {

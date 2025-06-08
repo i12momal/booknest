@@ -11,7 +11,7 @@ class BookController extends BaseController{
 
   // Método asíncrono que permite añadir un nuevo libro.
   Future<Map<String, dynamic>> addBook(String title, String author, String isbn, int pagesNumber,
-    String language, String format, File? file, String summary, String categories, dynamic coverImage) async {
+    String language, String format, dynamic file, String summary, String categories, dynamic coverImage) async {
 
     String? fileUrl = '';
     String? coverImageUrl = '';
@@ -24,7 +24,14 @@ class BookController extends BaseController{
 
     // Si el usuario sube un archivo, la guardamos en Supabase
     if (file != null) {
-      fileUrl = await bookService.uploadFile(file, title, userId);
+      if (file is File) {
+        fileUrl = await bookService.uploadFile(file, title, userId);
+      } else if (file is Uint8List) {
+        fileUrl = await bookService.uploadFileWeb(file, title, userId);
+      } else {
+        return {'success': false, 'message': 'Tipo de archivo no soportado'};
+      }
+
       if (fileUrl == null) {
         return {'success': false, 'message': 'Error al subir el archivo'};
       }
