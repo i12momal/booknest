@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:booknest/controllers/account_controller.dart';
 import 'package:booknest/entities/models/book_model.dart';
 import 'package:booknest/views/book_details_owner_view.dart';
@@ -61,6 +60,7 @@ class _EditBookViewState extends State<EditBookView> {
   File? fileToSend;
   File? coverImage;
   String? currentCoverImageUrl;
+  Uint8List? digitalFileBytesWeb;
 
   String? _originalTitle;
 
@@ -289,7 +289,8 @@ class _EditBookViewState extends State<EditBookView> {
 
       // Mantener la imagen actual si no se ha seleccionado una nueva
       final isDigital = selectedFormat.contains("Digital");
-      File? fileToSend = isDigital ? this.fileToSend : null;
+      File? fileToSend = isDigital && !kIsWeb ? this.fileToSend : null;
+      Uint8List? digitalBytesToSend = isDigital && kIsWeb ? digitalFileBytesWeb : null;
 
       print("Imagen: ${coverImage != null ? 'Nueva imagen de portada seleccionada' : 'Mantener imagen actual'}");
 
@@ -300,7 +301,7 @@ class _EditBookViewState extends State<EditBookView> {
       final isWeb = kIsWeb;
       final coverToSend = isWeb ? coverImageBytesWeb : coverImage;
 
-      final result = await _bookController.editBook(widget.bookId, title, author, isbn, pagesNumber, language, selectedFormat.join(", "), fileToSend,  
+      final result = await _bookController.editBook(widget.bookId, title, author, isbn, pagesNumber, language, selectedFormat.join(", "), digitalBytesToSend,  
         summary, selectedGenres.join(", "), state, userId ?? '', coverToSend);
 
       // Ocultar el spinner y mostrar el mensaje de éxito
@@ -380,6 +381,11 @@ class _EditBookViewState extends State<EditBookView> {
       onFilePicked: (file){
         setState((){
           fileToSend = file;
+        });
+      },
+      onFilePickedWeb: (bytes) {
+        setState(() {
+          digitalFileBytesWeb = bytes;
         });
       },
       coverFile: coverImage,

@@ -71,7 +71,7 @@ class BookController extends BaseController{
   }
 
   // Método asíncrono que permite editar un libro.
-  Future<Map<String, dynamic>> editBook(int id, String title, String author, String isbn, int pagesNumber, String language, String format, File? file, String summary,
+  Future<Map<String, dynamic>> editBook(int id, String title, String author, String isbn, int pagesNumber, String language, String format, dynamic file, String summary,
     String genres, String state, String ownerId, dynamic coverImage) async {
     String? imageUrl;
     String? coverUrl;
@@ -100,14 +100,26 @@ class BookController extends BaseController{
         await bookService.deleteFile(currentImageUrl);
       }
       imageUrl = null;
-    } else if (file != null && file.path.startsWith('/')) {
+    } else if (file != null) {
       try {
         if (currentImageUrl != null) {
           print("Reemplazando archivo anterior...");
           await bookService.deleteFile(currentImageUrl);
         }
 
-        imageUrl = await bookService.uploadFile(file, title, ownerId);
+        if (file is File && file.path.startsWith('/')) {
+          // Dispositivos móviles o escritorio
+          imageUrl = await bookService.uploadFile(file, title, ownerId);
+        } else if (file is Uint8List) {
+          // Flutter Web
+          imageUrl = await bookService.uploadFileWeb(file, title, ownerId);
+        } else {
+          print("Tipo de archivo no soportado: ${file.runtimeType}");
+          return {
+            'success': false,
+            'message': 'Tipo de archivo no soportado para el libro.'
+          };
+        }
 
         if (imageUrl == null) {
           print("Error al subir el archivo. La URL es nula.");
@@ -132,23 +144,22 @@ class BookController extends BaseController{
     // Subir la nueva portada si es necesario
     if (coverImage != null) {
       try {
-        // Si ya hay una portada anterior, eliminarla
         if (currentCoverImageUrl != null) {
           print("Eliminando portada anterior...");
           await bookService.deleteFile(currentCoverImageUrl);
         }
 
         if (coverImage is File) {
-          // Para dispositivos móviles o escritorio
+          // Dispositivos móviles o escritorio
           coverUrl = await bookService.uploadCoverMobile(coverImage, title, ownerId);
         } else if (coverImage is Uint8List) {
-          // Para Flutter Web
+          // Flutter Web
           coverUrl = await bookService.uploadCoverWeb(coverImage, title, ownerId);
         } else {
           print("Tipo de portada no soportado: ${coverImage.runtimeType}");
           return {
             'success': false,
-            'message': 'Tipo de imagen no soportado para la portada.',
+            'message': 'Tipo de imagen no soportado para la portada.'
           };
         }
 

@@ -1,9 +1,9 @@
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:booknest/controllers/account_controller.dart';
 import 'package:booknest/entities/models/book_model.dart';
 import 'package:booknest/widgets/book_cover_picker.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:booknest/widgets/custom_text_field.dart';
 import 'package:booknest/widgets/language_dropdown.dart';
@@ -25,6 +25,7 @@ class BookInfoFormEdit extends StatefulWidget {
   final List<String> selectedFormats;
   final int bookId;
   final String? originalTitle;
+  final void Function(Uint8List?)? onFilePickedWeb;
   
   final File? coverFile;
   final Uint8List? coverFileWebBytes;
@@ -57,7 +58,8 @@ class BookInfoFormEdit extends StatefulWidget {
     this.originalTitle,
     this.coverFileWebBytes,
     this.onCoverPickedMobile,
-    this.onCoverPickedWeb
+    this.onCoverPickedWeb,
+    this.onFilePickedWeb
   });
 
   @override
@@ -633,40 +635,60 @@ class _BookInfoFormEditState extends State<BookInfoFormEdit> {
   void _pickFile() async {
     setState(() {
       isUploading = true;
+      fileErrorMessage = null;
     });
 
     FilePickerResult? result = await FilePicker.platform.pickFiles(
-      type: FileType.any,
+      type: FileType.custom,
+      allowedExtensions: ['pdf'],
+      withData: true,
     );
 
-    if (result != null && result.files.single.path != null) {
-      final filePath = result.files.single.path!;
-      final fileName = result.files.single.name;
+    if (result != null) {
+      final platformFile = result.files.single;
+      final fileName = platformFile.name;
 
-      // Validar que el archivo tenga extensión .pdf
       if (!fileName.toLowerCase().endsWith('.pdf')) {
         setState(() {
-          uploadedFileName = null;
           isUploading = false;
+          uploadedFileName = null;
           fileErrorMessage = 'El archivo debe ser un PDF';
         });
-
         widget.onFilePicked(null);
         return;
       }
 
-      setState(() {
-        uploadedFileName = fileName;
-        isUploading = false;
-        fileErrorMessage = null;
-      });
-
-      widget.onFilePicked(File(filePath));
+      if (kIsWeb && platformFile.bytes != null) {
+        // Web: pasar Uint8List
+        setState(() {
+          uploadedFileName = fileName;
+          isUploading = false;
+          fileErrorMessage = null;
+        });
+        widget.onFilePickedWeb?.call(platformFile.bytes);
+      }
+      else if (platformFile.path != null) {
+        // Mobile/desktop
+        setState(() {
+          uploadedFileName = fileName;
+          isUploading = false;
+          fileErrorMessage = null;
+        });
+        widget.onFilePicked(File(platformFile.path!));
+      } else {
+        setState(() {
+          isUploading = false;
+          uploadedFileName = null;
+          fileErrorMessage = 'No se pudo cargar el archivo';
+        });
+        widget.onFilePicked(null);
+      }
     } else {
       setState(() {
         isUploading = false;
+        uploadedFileName = null;
+        fileErrorMessage = null;
       });
-
       widget.onFilePicked(null);
     }
   }
