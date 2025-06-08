@@ -112,33 +112,36 @@ class _FavoritesViewState extends State<FavoritesView> {
     final reminders = await ReminderController().getRemindersByBookAndUser(bookId, userId!);
     final isActive = reminders.isNotEmpty;
 
-    final formats = (allFavorites[index]['format'] as String).split(',').map((f) => f.trim()).toList();
-
-    setState(() {
-      isReminderActiveList[index] = !isActive;
-    });
+    final formats = (allFavorites[index]['format'] as String)
+        .split(',')
+        .map((f) => f.trim())
+        .toList();
 
     if (isActive) {
-      // Elimina todos los recordatorios de ese libro para ese usuario
+      // Elimina todos los recordatorios
       for (final r in reminders) {
         await ReminderController().removeFromReminder(bookId, userId!, r.format);
       }
-    } else {
-      // Crea un recordatorio por cada formato disponible
-      for (final format in formats) {
-        await ReminderController().addReminder(bookId, userId!, format);
-      }
-    }
 
-    // Actualizar visualmente la campana si todos los formatos están disponibles
-    final allFormatsAvailable = await LoanController().areAllFormatsAvailable(bookId);
-    if (allFormatsAvailable) {
       setState(() {
-        isReminderActiveList[index] = false; // Cambia la campana a gris (inactiva)
+        isReminderActiveList[index] = false; // Campana gris
+      });
+    } else {
+      bool addedReminder = false;
+
+      for (final format in formats) {
+        final isLoaned = await LoanController().isFormatLoaned(bookId, format);
+        if (isLoaned) {
+          await ReminderController().addReminder(bookId, userId!, format);
+          addedReminder = true;
+        }
+      }
+
+      // Solo dejar la campana amarilla si al menos un formato está prestado
+      setState(() {
+        isReminderActiveList[index] = addedReminder;
       });
     }
-
-    setState(() {});
   }
 
 

@@ -582,4 +582,10 @@ class LoanController extends BaseController{
     }
   }
 
+  // Método que determina si hay algún formato prestado
+  Future<bool> isFormatLoaned(int bookId, String format) async {
+    final loans = await loanService.getLoansByBookAndFormat(bookId, format);
+    return loans.isNotEmpty;
+  }
+
 }

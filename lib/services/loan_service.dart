@@ -876,4 +876,21 @@ class LoanService extends BaseService{
     }
   }
 
+  // Método asíncrono que obtiene los préstamos de un libro por formato
+  Future<List<Map<String, dynamic>>> getLoansByBookAndFormat(int bookId, String format) async {
+    try {
+      final response = await BaseService.client
+          .from('Loan')
+          .select()
+          .eq('bookId', bookId)
+          .eq('format', format)
+          .filter('state', 'in', '("Aceptado","Pendiente")');
+
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      print('Error en LoanService.getLoansByBookAndFormat: $e');
+      return [];
+    }
+  }
+
 }

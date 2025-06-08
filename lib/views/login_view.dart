@@ -1,6 +1,7 @@
 import 'package:booknest/controllers/account_controller.dart';
 import 'package:booknest/views/home_view.dart';
 import 'package:booknest/views/splash_video_view.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:booknest/views/register_view.dart';
 import 'package:booknest/views/reset_password_view.dart';
@@ -158,25 +159,27 @@ class _LoginViewState extends State<LoginView> {
                             ),
                           ),
                         ),
-                        Align(
-                          alignment: Alignment.center,
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: TextButton(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(builder: (context) => const ResetPasswordView()),
-                                );
-                              },
-                              child: const Text(
-                                '¿Ha olvidado su contraseña?',
-                                style: TextStyle(color: Colors.white),
+                        if(!kIsWeb)...[
+                          Align(
+                            alignment: Alignment.center,
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: TextButton(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (context) => const ResetPasswordView()),
+                                  );
+                                },
+                                child: const Text(
+                                  '¿Ha olvidado su contraseña?',
+                                  style: TextStyle(color: Colors.white),
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                        SizedBox(height: screenHeight * 0.02),
+                          SizedBox(height: screenHeight * 0.02),
+                        ]else...[],
                         Center(
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
