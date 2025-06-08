@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:booknest/controllers/account_controller.dart';
 import 'package:booknest/entities/models/book_model.dart';
 import 'package:booknest/widgets/book_cover_picker.dart';
@@ -24,10 +25,17 @@ class BookInfoFormEdit extends StatefulWidget {
   final List<String> selectedFormats;
   final int bookId;
   final String? originalTitle;
-  
+
+  // Imagen de portada (movil)
   final File? coverFile;
-  final String? coverImageUrl; 
-  final Function(File?) onCoverPicked; 
+  // Imagen de portada (Web)
+  final Uint8List? coverFileWebBytes;
+  // URL de imagen de portada si ya está en el servidor
+  final String? coverImageUrl;
+
+  // Callback para cuando se seleccione una portada (movil o Web)
+  final void Function(File?)? onCoverPickedMobile;
+  final void Function(Uint8List?)? onCoverPickedWeb;
 
   // Parámetro para saber si estamos en modo de edición
   final bool isEditMode;
@@ -45,13 +53,15 @@ class BookInfoFormEdit extends StatefulWidget {
     required this.formKey,
     required this.onFormatChanged,
     required this.onFilePicked,
-    required this.onCoverPicked,
     required this.isEditMode,
     required this.coverFile,
     this.coverImageUrl,
     this.selectedFormats = const [],
     required this.bookId,
-    this.originalTitle
+    this.originalTitle,
+    this.coverFileWebBytes,
+    this.onCoverPickedMobile,
+    this.onCoverPickedWeb
   });
 
   @override
@@ -358,10 +368,13 @@ class _BookInfoFormEditState extends State<BookInfoFormEdit> {
                     const SizedBox(height: 15),
 
                     BookCoverPickerWidget(
-                      initialCoverImage: coverImage,
-                      onCoverImagePicked: widget.onCoverPicked,
+                      initialCoverImage: widget.coverFile,
+                      initialCoverImageWebBytes: widget.coverFileWebBytes,
                       coverImageUrl: widget.coverImageUrl,
+                      onCoverImagePickedMobile: widget.onCoverPickedMobile,
+                      onCoverImagePickedWeb: widget.onCoverPickedWeb,
                     ),
+
             
                     const SizedBox(height: 15),
                     const Text(

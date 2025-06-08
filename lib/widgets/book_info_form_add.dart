@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:booknest/controllers/account_controller.dart';
 import 'package:booknest/widgets/book_cover_picker.dart';
 import 'package:file_picker/file_picker.dart';
@@ -17,11 +18,13 @@ class BookInfoForm extends StatefulWidget {
   final TextEditingController formatController;
   final VoidCallback onNext;
   final GlobalKey<FormState> formKey;
-  final File? coverImage;
+  final File? initialCoverImageFile;
+  final Uint8List? initialCoverImageWebBytes;
+  final ValueChanged<File?>? onCoverImagePickedMobile;
+  final ValueChanged<Uint8List?>? onCoverImagePickedWeb;
+
 
   final Function(String? file, bool isPhysical, bool isDigital) onFileAndFormatChanged;
-  final Function(File?) onCoverImageChanged;
-
 
   const BookInfoForm({
     super.key,
@@ -34,8 +37,11 @@ class BookInfoForm extends StatefulWidget {
     required this.onNext,
     required this.formKey,
     required this.onFileAndFormatChanged,
-    required this.coverImage,
-    required this.onCoverImageChanged,
+
+    this.initialCoverImageFile,
+    this.initialCoverImageWebBytes,
+    this.onCoverImagePickedMobile,
+    this.onCoverImagePickedWeb,
   });
 
   @override
@@ -56,7 +62,9 @@ class _BookInfoFormState extends State<BookInfoForm> {
   bool isUploading = false;
 
   late final BookController bookController;
-  File? coverImageFile;
+  File? _coverImageFile;
+  Uint8List? _coverImageWebBytes;
+
 
   String? coverImageErrorMessage;
   String? fileErrorMessage;
@@ -69,7 +77,8 @@ class _BookInfoFormState extends State<BookInfoForm> {
     super.initState();
     _titleFocusNode = FocusNode();
     bookController = BookController();
-    coverImageFile = widget.coverImage;
+    _coverImageFile = widget.initialCoverImageFile;
+    _coverImageWebBytes = widget.initialCoverImageWebBytes;
     _loadUserId();
 
     _titleFocusNode.addListener(() {
@@ -78,6 +87,25 @@ class _BookInfoFormState extends State<BookInfoForm> {
       }
     });
   }
+
+  void _onCoverImagePickedMobile(File? file) {
+    setState(() {
+      _coverImageFile = file;
+      _coverImageWebBytes = null;
+      coverImageErrorMessage = null;
+    });
+    widget.onCoverImagePickedMobile?.call(file);
+  }
+
+  void _onCoverImagePickedWeb(Uint8List? bytes) {
+    setState(() {
+      _coverImageWebBytes = bytes;
+      _coverImageFile = null;
+      coverImageErrorMessage = null;
+    });
+    widget.onCoverImagePickedWeb?.call(bytes);
+  }
+
 
   // Función para obtener el id del usuario actual
   void _loadUserId() async {
@@ -280,17 +308,19 @@ class _BookInfoFormState extends State<BookInfoForm> {
                     ),
 
                     BookCoverPickerWidget(
-                      initialCoverImage: coverImageFile, 
-                      onCoverImagePicked: (File? newImage) {
-                        setState(() {
-                          coverImageFile = newImage;
-                          if (newImage != null) {
-                            coverImageErrorMessage = null;
-                          }
-                        });
-                        widget.onCoverImageChanged(newImage);
-                      },
+                      initialCoverImage: _coverImageFile,
+                      initialCoverImageWebBytes: _coverImageWebBytes,
+                      onCoverImagePickedMobile: _onCoverImagePickedMobile,
+                      onCoverImagePickedWeb: _onCoverImagePickedWeb,
                     ),
+                    if (coverImageErrorMessage != null) ...[
+                      const SizedBox(height: 5),
+                      Text(
+                        coverImageErrorMessage!,
+                        style: const TextStyle(color: Colors.red),
+                      ),
+                    ],
+
 
                     if (coverImageErrorMessage != null) ...{
                       Padding(
@@ -444,7 +474,7 @@ class _BookInfoFormState extends State<BookInfoForm> {
                           final isFormValid = widget.formKey.currentState?.validate() ?? false;
 
                           // Validar portada
-                          bool hasCoverImage = coverImageFile != null;
+                          bool hasCoverImage = _coverImageFile != null || _coverImageWebBytes != null;
                           if (!hasCoverImage) {
                             coverImageErrorMessage = 'Por favor selecciona una imagen de portada';
                           }

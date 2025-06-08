@@ -89,7 +89,7 @@ void main() {
       final mockCover = MockFile();
 
       when(() => mockBookService.uploadFile(mockFile, any(), dummyUserId)).thenAnswer((_) async => dummyFileUrl);
-      when(() => mockBookService.uploadCover(mockCover, any(), dummyUserId)).thenAnswer((_) async => dummyCoverUrl);
+      when(() => mockBookService.uploadCoverMobile(mockCover, any(), dummyUserId)).thenAnswer((_) async => dummyCoverUrl);
 
       when(() => mockBookService.addBook(any())).thenAnswer((_) async => {'success': true});
 
@@ -123,7 +123,7 @@ void main() {
       final mockCover = MockFile();
 
       when(() => mockBookService.uploadFile(mockFile, any(), dummyUserId)).thenAnswer((_) async => dummyFileUrl);
-      when(() => mockBookService.uploadCover(mockCover, any(), dummyUserId)).thenAnswer((_) async => null);
+      when(() => mockBookService.uploadCoverMobile(mockCover, any(), dummyUserId)).thenAnswer((_) async => null);
 
       final result = await controller.addBook(
         'title', 'author', 'isbn', 100, 'es', 'digital', mockFile, 'summary', 'categories', mockCover);
@@ -158,7 +158,7 @@ void main() {
 
       when(() => mockBookService.uploadFile(mockFile, dummyTitle, dummyOwnerId)).thenAnswer((_) async => 'http://files.com/newfile.pdf');
 
-      when(() => mockBookService.uploadCover(mockCover, dummyTitle, dummyOwnerId)).thenAnswer((_) async => 'http://files.com/newcover.jpg');
+      when(() => mockBookService.uploadCoverMobile(mockCover, dummyTitle, dummyOwnerId)).thenAnswer((_) async => 'http://files.com/newcover.jpg');
 
       when(() => mockBookService.editBook(any())).thenAnswer((_) async => {'success': true});
 

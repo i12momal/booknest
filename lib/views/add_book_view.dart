@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:booknest/controllers/account_controller.dart';
 import 'package:booknest/controllers/categories_controller.dart';
 import 'package:booknest/controllers/book_controller.dart';
@@ -53,7 +54,8 @@ class _AddBookViewState extends State<AddBookView>{
   bool isPhysicalSelected = false;
   bool isDigitalSelected = false;
 
-  File? coverImage;
+  File? _coverImageFile;            // Para móvil
+  Uint8List? _coverImageWebBytes;  // Para web
 
   @override
   void initState() {
@@ -193,10 +195,8 @@ class _AddBookViewState extends State<AddBookView>{
       file = File(uploadedFileName!);
     }
 
-    final result = await _bookController.addBook(
-      title, author, isbn, pagesNumber, language, formats.join(", "),
-      file, summary, selectedGenres.join(", "), coverImage
-    );
+    final result = await _bookController.addBook(title, author, isbn, pagesNumber, language, formats.join(", "), file, summary, 
+    selectedGenres.join(", "), _coverImageFile ?? _coverImageWebBytes);
 
     setState(() {
       _isLoading = false;
@@ -243,8 +243,9 @@ class _AddBookViewState extends State<AddBookView>{
       languageController: _languageController,
       formatController: _formatController,
       onNext: nextPage,
-      coverImage: coverImage,
       formKey: _formKey,
+      initialCoverImageFile: _coverImageFile,
+      initialCoverImageWebBytes: _coverImageWebBytes,
       onFileAndFormatChanged: (file, isPhysical, isDigital) {
         setState(() {
           uploadedFileName = file;
@@ -252,11 +253,19 @@ class _AddBookViewState extends State<AddBookView>{
           isDigitalSelected = isDigital;
       });
       },
-      onCoverImageChanged: (image) {
+      onCoverImagePickedMobile: (imageFile) {
         setState(() {
-          coverImage = image; 
+          _coverImageFile = imageFile;
+          _coverImageWebBytes = null; // Reseteamos web si se usa mobile
         });
       },
+      onCoverImagePickedWeb: (imageBytes) {
+        setState(() {
+          _coverImageWebBytes = imageBytes;
+          _coverImageFile = null; // Reseteamos mobile si se usa web
+        });
+      },
+
     );
   }
 

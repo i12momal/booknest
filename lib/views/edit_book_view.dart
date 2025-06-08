@@ -1,10 +1,12 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:booknest/controllers/account_controller.dart';
 import 'package:booknest/entities/models/book_model.dart';
 import 'package:booknest/views/book_details_owner_view.dart';
 import 'package:booknest/views/login_view.dart';
 import 'package:booknest/widgets/book_info_form_edit.dart';
 import 'package:booknest/widgets/genre_and_summary_selection.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:booknest/controllers/book_controller.dart';
 import 'package:booknest/controllers/categories_controller.dart';
@@ -47,6 +49,7 @@ class _EditBookViewState extends State<EditBookView> {
   List<String> genres = [];
   List<String> selectedGenres = [];
   String? currentImageUrl;
+  Uint8List? coverImageBytesWeb; // Para Web
 
   List<String> selectedFormat = [];
 
@@ -86,6 +89,13 @@ class _EditBookViewState extends State<EditBookView> {
       coverImage = image;
     });
   }
+
+  void _handleImagePickedWeb(Uint8List? imageBytes) {
+    setState(() {
+      coverImageBytesWeb = imageBytes;
+    });
+  }
+
 
   // Función para cargar datos del libro
   Future<void> _fetchBookData() async {
@@ -287,8 +297,11 @@ class _EditBookViewState extends State<EditBookView> {
 
       print("Id del libro a editar ${widget.bookId}");
 
+      final isWeb = kIsWeb;
+      final coverToSend = isWeb ? coverImageBytesWeb : coverImage;
+
       final result = await _bookController.editBook(widget.bookId, title, author, isbn, pagesNumber, language, selectedFormat.join(", "), fileToSend,  
-        summary, selectedGenres.join(", "), state, userId ?? '', coverImage);
+        summary, selectedGenres.join(", "), state, userId ?? '', coverToSend);
 
       // Ocultar el spinner y mostrar el mensaje de éxito
       setState(() {
@@ -369,9 +382,11 @@ class _EditBookViewState extends State<EditBookView> {
           fileToSend = file;
         });
       },
-      onCoverPicked: _handleImagePicked,
       coverFile: coverImage,
+      coverFileWebBytes: coverImageBytesWeb,
       coverImageUrl: currentCoverImageUrl,
+      onCoverPickedMobile: _handleImagePicked,
+      onCoverPickedWeb: _handleImagePickedWeb,
     );
   }
 

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:booknest/controllers/base_controller.dart';
 import 'package:booknest/entities/models/book_model.dart';
 import 'package:booknest/entities/viewmodels/book_view_model.dart';
@@ -10,7 +11,7 @@ class BookController extends BaseController{
 
   // Método asíncrono que permite añadir un nuevo libro.
   Future<Map<String, dynamic>> addBook(String title, String author, String isbn, int pagesNumber,
-    String language, String format, File? file, String summary, String categories, File? coverImage) async {
+    String language, String format, File? file, String summary, String categories, dynamic coverImage) async {
 
     String? fileUrl = '';
     String? coverImageUrl = '';
@@ -29,9 +30,14 @@ class BookController extends BaseController{
       }
     }
 
-    // Si el usuario sube una portada, la guardamos también
+    // Subir portada (File o Uint8List)
     if (coverImage != null) {
-      coverImageUrl = await bookService.uploadCover(coverImage, title, userId);
+      if (coverImage is File) {
+        coverImageUrl = await bookService.uploadCoverMobile(coverImage, title, userId);
+      } else if (coverImage is Uint8List) {
+        coverImageUrl = await bookService.uploadCoverWeb(coverImage, title, userId);
+      }
+
       if (coverImageUrl == null) {
         return {'success': false, 'message': 'Error al subir la portada'};
       }
@@ -59,7 +65,7 @@ class BookController extends BaseController{
 
   // Método asíncrono que permite editar un libro.
   Future<Map<String, dynamic>> editBook(int id, String title, String author, String isbn, int pagesNumber, String language, String format, File? file, String summary,
-    String genres, String state, String ownerId, File? coverImage) async {
+    String genres, String state, String ownerId, dynamic coverImage) async {
     String? imageUrl;
     String? coverUrl;
 
@@ -117,14 +123,27 @@ class BookController extends BaseController{
     }
 
     // Subir la nueva portada si es necesario
-    if (coverImage != null && coverImage.path.startsWith('/')) {
+    if (coverImage != null) {
       try {
+        // Si ya hay una portada anterior, eliminarla
         if (currentCoverImageUrl != null) {
           print("Eliminando portada anterior...");
           await bookService.deleteFile(currentCoverImageUrl);
         }
 
-        coverUrl = await bookService.uploadCover(coverImage, title, ownerId);
+        if (coverImage is File) {
+          // Para dispositivos móviles o escritorio
+          coverUrl = await bookService.uploadCoverMobile(coverImage, title, ownerId);
+        } else if (coverImage is Uint8List) {
+          // Para Flutter Web
+          coverUrl = await bookService.uploadCoverWeb(coverImage, title, ownerId);
+        } else {
+          print("Tipo de portada no soportado: ${coverImage.runtimeType}");
+          return {
+            'success': false,
+            'message': 'Tipo de imagen no soportado para la portada.',
+          };
+        }
 
         if (coverUrl == null) {
           print("Error al subir la portada. La URL es nula.");

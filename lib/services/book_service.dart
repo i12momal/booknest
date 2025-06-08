@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:booknest/controllers/geolocation_controller.dart';
 import 'package:booknest/entities/models/book_model.dart';
 import 'package:booknest/entities/viewmodels/book_view_model.dart';
@@ -110,7 +111,7 @@ class BookService extends BaseService{
   }
 
   // Método asíncrono para subir una imagen de portada de libro a Supabase
-  Future<String?> uploadCover(File file, String bookTitle, String? userId) async {
+  Future<String?> uploadCoverMobile(File file, String bookTitle, String? userId) async {
     try {
       // Normalizamos el título para crear un nombre de archivo único
       String sanitizedTitle = removeDiacritics(bookTitle).replaceAll(' ', '_');
@@ -142,6 +143,45 @@ class BookService extends BaseService{
       return publicUrl;
     } catch (e) {
       print("Error al procesar la portada: $e");
+      return null;
+    }
+  }
+
+  // Método asíncrono para subir una imagen de portada de libro a Supabase (web)
+  Future<String?> uploadCoverWeb(Uint8List bytes, String bookTitle, String? userId) async {
+    try {
+      // Normalizar el título para crear un nombre de archivo único
+      String sanitizedTitle = removeDiacritics(bookTitle).replaceAll(' ', '_');
+      int timestamp = DateTime.now().millisecondsSinceEpoch;
+      String fileName = "${sanitizedTitle}_${userId}_$timestamp.jpg";
+
+      // Obtener lista de archivos actuales
+      final List<FileObject> existingFiles = await Supabase.instance.client.storage.from('books').list(path: 'covers/');
+
+      // Eliminar archivos anteriores del mismo usuario/libro
+      final userFiles = existingFiles.where((file) => file.name.startsWith('${sanitizedTitle}_$userId')).toList();
+
+      if (userFiles.isNotEmpty) {
+        final fileNamesToDelete = userFiles.map((file) => 'covers/${file.name}').toList();
+        await Supabase.instance.client.storage.from('books').remove(fileNamesToDelete);
+        print("Portadas anteriores eliminadas: $fileNamesToDelete");
+      }
+
+      // Subir nuevo archivo como bytes
+      final response = await Supabase.instance.client.storage.from("books")
+          .uploadBinary(
+            "covers/$fileName",
+            bytes,
+            fileOptions: const FileOptions(contentType: 'image/jpeg'),
+          );
+
+      // Obtener URL pública
+      final String publicUrl = Supabase.instance.client.storage.from("books").getPublicUrl("covers/$fileName");
+
+      print("Portada subida correctamente (web): $fileName");
+      return publicUrl;
+    } catch (e) {
+      print("Error al procesar la portada desde web: $e");
       return null;
     }
   }

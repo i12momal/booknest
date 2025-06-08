@@ -108,7 +108,7 @@ void main() {
     });
 
     test('Devuelve error si falla subida de imagen', () async {
-      when(() => mockService.uploadProfileImage(any(), any()))
+      when(() => mockService.uploadProfileImageMobile(any(), any()))
           .thenAnswer((_) async => null);
 
       final result = await controller.registerUser(
@@ -153,7 +153,7 @@ void main() {
     });
 
     test('Registro exitoso con imagen', () async {
-      when(() => mockService.uploadProfileImage(any(), any()))
+      when(() => mockService.uploadProfileImageMobile(any(), any()))
           .thenAnswer((_) async => 'http://image.url/perfil.jpg');
 
       when(() => mockService.registerUser(any()))
@@ -174,7 +174,7 @@ void main() {
 
       print('Test registro exitoso con imagen: $result');
       expect(result['success'], true);
-      verify(() => mockService.uploadProfileImage(any(), any())).called(1);
+      verify(() => mockService.uploadProfileImageMobile(any(), any())).called(1);
       verify(() => mockService.registerUser(any())).called(1);
     });
   });
