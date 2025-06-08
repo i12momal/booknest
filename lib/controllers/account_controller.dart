@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:booknest/entities/models/user_session.dart';
 import "package:booknest/entities/viewmodels/account_view_model.dart";
 import 'package:flutter/material.dart';
@@ -54,17 +56,21 @@ class AccountController extends BaseController{
 
   // Método asíncrono que permite el registro de un nuevo usuario.
   Future<Map<String, dynamic>> registerUser(String name, String userName, String email, int phoneNumber,
-    String address, String password, String confirmPassword, File? image, String genres, String description) async {
+    String address, String password, String confirmPassword, dynamic image, String genres, String description) async {
 
-    String? imageUrl;
+      String? imageUrl;
 
-    // Si el usuario sube una imagen, la guardamos en Supabase
-    if (image != null) {
-      imageUrl = await uploadProfileImage(image, userName);
-      if (imageUrl == null) {
-        return {'success': false, 'message': 'Error al subir la imagen'};
+      if (image != null) {
+        if (image is File) {
+          imageUrl = await uploadProfileImageMobile(image, userName);
+        } else if (image is Uint8List) {
+          imageUrl = await uploadProfileImageWeb(image, userName);
+        }
+
+        if (imageUrl == null) {
+          return {'success': false, 'message': 'Error al subir la imagen'};
+        }
       }
-    }
 
     // Creación del viewModel
     final registerUserViewModel = RegisterUserViewModel(
@@ -86,9 +92,14 @@ class AccountController extends BaseController{
     return response;
   }
 
-  // Método para guardar una imagen en Supabase.
-  Future<String?> uploadProfileImage(File imageFile, String userName) async {
-    return await accountService.uploadProfileImage(imageFile, userName);
+  // Función para subir imagen a supabase desde el móvil
+  Future<String?> uploadProfileImageMobile(File imageFile, String userName) async {
+    return await accountService.uploadProfileImageMobile(imageFile, userName);
+  }
+
+  // Función para subir imagen a supabase desde web
+  Future<String?> uploadProfileImageWeb(Uint8List imageBytes, String userName) async {
+    return await accountService.uploadProfileImageWeb(imageBytes, userName);
   }
 
   // Método para generar un hash seguro de la contraseña.

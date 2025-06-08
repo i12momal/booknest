@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:booknest/entities/models/category_model.dart';
 import 'package:booknest/entities/models/user_model.dart';
 import "package:booknest/entities/viewmodels/user_view_model.dart";
@@ -10,11 +12,10 @@ class UserController extends BaseController{
   
   // Método asíncrono que permite editar los datos de un usuario.
   Future<Map<String, dynamic>> editUser(String id, String name, String userName, String email, int phoneNumber, String address, String password, String confirmPassword,
-    File? image, String genres, String description) async {
+  dynamic image, String genres, String description) async {
     String? imageUrl;
     String? passwordHash;
 
-    // Obtener la URL de la imagen actual del usuario
     final currentUser = await userService.getUserById(id);
     String? currentImageUrl;
     if (currentUser['success'] && currentUser['data'] != null) {
@@ -22,16 +23,13 @@ class UserController extends BaseController{
       print("URL de la imagen actual: $currentImageUrl");
     }
 
-    // Si se proporciona una contraseña, validarla y encriptarla
     if (password.trim().isNotEmpty) {
       if (password != confirmPassword) {
         return {'success': false, 'message': 'Las contraseñas no coinciden'};
       }
 
-     try {
+      try {
         await userService.updatePasswordSupabaseAuth(password);
-
-        // Si se actualiza correctamente en Supabase Auth, actualizamos también nuestra tabla
         passwordHash = AccountController().generatePasswordHash(password);
       } catch (e) {
         return {
@@ -41,24 +39,31 @@ class UserController extends BaseController{
       }
     }
 
-    // Si el usuario sube una imagen, la subimos a Supabase
     if (image != null) {
       try {
-        imageUrl = await AccountController().uploadProfileImage(image, userName);
+        if (image is File) {
+          // Imagen móvil
+          imageUrl = await accountService.uploadProfileImageMobile(image, userName);
+        } else if (image is Uint8List) {
+          // Imagen web
+          imageUrl = await accountService.uploadProfileImageWeb(image, userName);
+        } else {
+          return {'success': false, 'message': 'Tipo de imagen no soportado'};
+        }
+
         if (imageUrl == null) {
           return {'success': false, 'message': 'Error al subir la imagen. Por favor, intente nuevamente.'};
         }
+
         print("Nueva URL de imagen: $imageUrl");
       } catch (e) {
         print("Error al procesar la imagen: $e");
         return {'success': false, 'message': 'Error al procesar la imagen. Por favor, intente nuevamente.'};
       }
     } else {
-      // Mantener la imagen actual si no se sube una nueva
       imageUrl = currentImageUrl;
     }
 
-    // Creación del viewModel
     final editUserViewModel = EditUserViewModel(
       id: id,
       name: name,
@@ -66,15 +71,14 @@ class UserController extends BaseController{
       email: email,
       phoneNumber: phoneNumber,
       address: address,
-      password: passwordHash ?? '',  // No enviar '' si no hay cambio
-      confirmPassword: passwordHash ?? '',  // No enviar '' si no hay cambio
+      password: passwordHash ?? '',
+      confirmPassword: passwordHash ?? '',
       image: imageUrl,
       genres: genres,
       role: 'usuario',
-      description: description
+      description: description,
     );
 
-    // Llamada al servicio para actualizar el usuario
     return await userService.editUser(editUserViewModel);
   }
 

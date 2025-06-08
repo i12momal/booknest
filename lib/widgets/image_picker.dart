@@ -1,14 +1,26 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'dart:typed_data';
+import 'dart:io' show File; // Solo para móvil
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 // Widget para gestionar el diseño y la subida de una imagen
 class ImagePickerWidget extends StatefulWidget {
   final File? initialImage;
+  final Uint8List? initialImageWebBytes; // Para web
   final String? imageUrl;
-  final ValueChanged<File?> onImagePicked;
+  final ValueChanged<File?>? onImagePickedMobile;
+  final ValueChanged<Uint8List?>? onImagePickedWeb;
 
-  const ImagePickerWidget({super.key, this.initialImage, this.imageUrl, required this.onImagePicked});
+  const ImagePickerWidget({
+    super.key,
+    this.initialImage,
+    this.initialImageWebBytes,
+    this.imageUrl,
+    this.onImagePickedMobile,
+    this.onImagePickedWeb,
+  });
 
   @override
   State<ImagePickerWidget> createState() => _ImagePickerWidgetState();
@@ -16,26 +28,59 @@ class ImagePickerWidget extends StatefulWidget {
 
 class _ImagePickerWidgetState extends State<ImagePickerWidget> {
   File? _imageFile;
+  Uint8List? _imageBytesWeb;
 
   @override
   void initState() {
     super.initState();
-    _imageFile = widget.initialImage;
+    if (kIsWeb) {
+      _imageBytesWeb = widget.initialImageWebBytes;
+    } else {
+      _imageFile = widget.initialImage;
+    }
   }
 
-  // Función para seleccionar una imagen de la galería
   Future<void> _pickImage() async {
     final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
-      setState(() {
-        _imageFile = File(pickedFile.path);
-      });
-      widget.onImagePicked(_imageFile);
+      if (kIsWeb) {
+        final bytes = await pickedFile.readAsBytes();
+        setState(() {
+          _imageBytesWeb = bytes;
+        });
+        if (widget.onImagePickedWeb != null) widget.onImagePickedWeb!(bytes);
+      } else {
+        final file = File(pickedFile.path);
+        setState(() {
+          _imageFile = file;
+        });
+        if (widget.onImagePickedMobile != null) widget.onImagePickedMobile!(file);
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    ImageProvider imageProvider;
+
+    if (kIsWeb) {
+      if (_imageBytesWeb != null) {
+        imageProvider = MemoryImage(_imageBytesWeb!);
+      } else if (widget.imageUrl != null && widget.imageUrl!.startsWith('http')) {
+        imageProvider = NetworkImage(widget.imageUrl!);
+      } else {
+        imageProvider = const AssetImage('assets/images/default.png');
+      }
+    } else {
+      if (_imageFile != null) {
+        imageProvider = FileImage(_imageFile!);
+      } else if (widget.imageUrl != null && widget.imageUrl!.startsWith('http')) {
+        imageProvider = NetworkImage(widget.imageUrl!);
+      } else {
+        imageProvider = const AssetImage('assets/images/default.png');
+      }
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -52,19 +97,13 @@ class _ImagePickerWidgetState extends State<ImagePickerWidget> {
             ),
           ],
         ),
-        // Mostrar la imagen en un CircleAvatar
         Center(
           child: CircleAvatar(
             radius: 50,
-            backgroundImage: _imageFile != null
-                ? FileImage(_imageFile!) // Imagen seleccionada
-                : (widget.imageUrl != null && widget.imageUrl!.isNotEmpty && widget.imageUrl!.startsWith('http'))
-                    ? NetworkImage(widget.imageUrl!) // Imagen de la URL si está disponible
-                    : const AssetImage('assets/images/default.png') as ImageProvider, // Imagen predeterminada
+            backgroundImage: imageProvider,
           ),
         ),
       ],
     );
   }
-
 }

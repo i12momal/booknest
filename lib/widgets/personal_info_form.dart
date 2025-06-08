@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:booknest/controllers/account_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:booknest/widgets/custom_text_field.dart';
@@ -14,8 +15,10 @@ class PersonalInfoForm extends StatefulWidget {
   final TextEditingController passwordController;
   final TextEditingController confirmPasswordController;
   final TextEditingController? descriptionController;
-  final File? imageFile;
-  final Function(File?) onImagePicked;
+  final File? initialImageFile;
+  final Uint8List? initialImageWebBytes;
+  final ValueChanged<File?>? onImagePickedMobile;
+  final ValueChanged<Uint8List?>? onImagePickedWeb;
   final VoidCallback onNext;
   final GlobalKey<FormState> formKey;
   final bool isEditMode;
@@ -33,8 +36,6 @@ class PersonalInfoForm extends StatefulWidget {
     required this.addressController,
     required this.passwordController,
     required this.confirmPasswordController,
-    required this.imageFile,
-    required this.onImagePicked,
     required this.onNext,
     required this.formKey, 
     required this.isEditMode,
@@ -42,6 +43,10 @@ class PersonalInfoForm extends StatefulWidget {
     this.descriptionController,
     this.originalEmail,
     this.originalUsername,
+    this.initialImageFile,
+    this.initialImageWebBytes,
+    this.onImagePickedMobile,
+    this.onImagePickedWeb,
   });
 
   @override
@@ -56,9 +61,14 @@ class _PersonalInfoFormState extends State<PersonalInfoForm> {
   String? _emailValidationMessage;
   late FocusNode _emailFocusNode;
 
+  File? _imageFileMobile;
+  Uint8List? _imageBytesWeb;
+
   @override
   void initState() {
     super.initState();
+    _imageFileMobile = widget.initialImageFile;
+    _imageBytesWeb = widget.initialImageWebBytes;
     _userNameFocusNode = FocusNode();
     _emailFocusNode = FocusNode();
 
@@ -81,6 +91,21 @@ class _PersonalInfoFormState extends State<PersonalInfoForm> {
     _emailFocusNode.dispose();
     super.dispose();
   }
+
+  void _onImagePickedMobile(File? file) {
+    setState(() {
+      _imageFileMobile = file;
+    });
+    if (widget.onImagePickedMobile != null) widget.onImagePickedMobile!(file);
+  }
+
+  void _onImagePickedWeb(Uint8List? bytes) {
+    setState(() {
+      _imageBytesWeb = bytes;
+    });
+    if (widget.onImagePickedWeb != null) widget.onImagePickedWeb!(bytes);
+  }
+
 
   // Validar el nombre de usuario
   Future<void> validateUserName(String username) async {
@@ -365,9 +390,11 @@ class _PersonalInfoFormState extends State<PersonalInfoForm> {
                     ),
                     const SizedBox(height: 15),
                     ImagePickerWidget(
-                      initialImage: widget.imageFile, 
-                      imageUrl: widget.imageUrl, 
-                      onImagePicked: widget.onImagePicked,
+                      initialImage: _imageFileMobile,
+                      initialImageWebBytes: _imageBytesWeb,
+                      imageUrl: widget.imageUrl,
+                      onImagePickedMobile: _onImagePickedMobile,
+                      onImagePickedWeb: _onImagePickedWeb,
                     ),
                     const SizedBox(height: 22),
                     Align(

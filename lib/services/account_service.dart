@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:booknest/entities/viewmodels/account_view_model.dart';
 import 'package:booknest/entities/models/user_session.dart';
 import 'package:booknest/entities/models/user_model.dart' as user;
@@ -138,7 +139,7 @@ class AccountService extends BaseService {
 
 
   // Método para subir una imagen a Supabase Storage.
-  Future<String?> uploadProfileImage(File imageFile, String userName) async {
+  Future<String?> uploadProfileImageMobile(File imageFile, String userName) async {
     try {
       if (!await imageFile.exists()) {
         print("El archivo no existe en la ruta: ${imageFile.path}");
@@ -206,6 +207,70 @@ class AccountService extends BaseService {
       }
     } catch (e, stacktrace) {
       print('Error general en uploadImageToSupabase: $e');
+      print('Detalles: $stacktrace');
+      return null;
+    }
+  }
+
+  // Función para subir imagen a supabase desde web
+  Future<String?> uploadProfileImageWeb(Uint8List imageBytes, String userName) async {
+    try {
+      const String fileExt = 'jpg';
+
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final fileName = 'profiles/${userName}_$timestamp.$fileExt';
+      print("Creando nombre de archivo: $fileName");
+
+      // Listar y eliminar imágenes antiguas igual que móvil
+      try {
+        final List<FileObject> existingFiles = await BaseService.client.storage
+            .from('avatars')
+            .list(path: 'profiles/');
+
+        final userFiles = existingFiles.where((file) =>
+            file.name.startsWith('${userName}_') &&
+            file.name.endsWith('.$fileExt')
+        ).toList();
+
+        if (userFiles.isNotEmpty) {
+          print("Encontradas ${userFiles.length} imágenes existentes del usuario");
+          for (var file in userFiles) {
+            try {
+              await BaseService.client.storage
+                  .from('avatars')
+                  .remove(['profiles/${file.name}']);
+              print("Imagen anterior eliminada: ${file.name}");
+            } catch (deleteError) {
+              print("Error al eliminar imagen anterior: $deleteError");
+            }
+          }
+        }
+      } catch (listError) {
+        print("Error al listar archivos existentes: $listError");
+      }
+
+      // Subir la imagen usando uploadBinary
+      try {
+        final response = await BaseService.client.storage.from('avatars').uploadBinary(
+          fileName,
+          imageBytes,
+          fileOptions: const FileOptions(
+            cacheControl: '3600',
+            upsert: true,
+          ),
+        );
+        print("Respuesta de la carga: $response");
+
+        final String imageUrl = BaseService.client.storage.from('avatars').getPublicUrl(fileName);
+        print("URL pública de la imagen: $imageUrl");
+
+        return imageUrl;
+      } catch (uploadError) {
+        print('Error al subir la nueva imagen: $uploadError');
+        return null;
+      }
+    } catch (e, stacktrace) {
+      print('Error general en uploadImageToSupabase (web): $e');
       print('Detalles: $stacktrace');
       return null;
     }

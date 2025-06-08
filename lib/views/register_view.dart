@@ -7,6 +7,7 @@ import 'package:booknest/widgets/background.dart';
 import 'package:booknest/widgets/page_navigation.dart';
 import 'package:booknest/widgets/genre_selection_register.dart';
 import 'package:booknest/widgets/personal_info_form.dart';
+import 'package:flutter/foundation.dart';
 
 // Vista para la acción de Registro de Usuario 
 class RegisterView extends StatefulWidget {
@@ -25,7 +26,8 @@ class _RegisterViewState extends State<RegisterView> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _descriptionController = TextEditingController();
-  File? _imageFile;
+  File? _imageFile;             // Para móvil
+  Uint8List? _imageWebBytes;    // Para web
   final _formKey = GlobalKey<FormState>();
 
   final PageController _pageController = PageController();
@@ -48,9 +50,15 @@ class _RegisterViewState extends State<RegisterView> {
   }
 
   // Función que maneja la imagen seleccionada
-  void _handleImagePicked(File? image) {
+  void _handleImagePickedMobile(File? image) {
     setState(() {
       _imageFile = image;
+    });
+  }
+
+  void _handleImagePickedWeb(Uint8List? bytes) {
+    setState(() {
+      _imageWebBytes = bytes;
     });
   }
 
@@ -115,11 +123,13 @@ class _RegisterViewState extends State<RegisterView> {
     final confirmPassword = _confirmPasswordController.text.trim();
     final description = _descriptionController.text.trim();
 
+    final imageToUpload = kIsWeb ? _imageWebBytes : _imageFile;
+
     setState(() {
       _isLoading = true;
     });
 
-    final result = await _accountController.registerUser(name, userName, email, phoneNumber, address, password, confirmPassword, _imageFile, selectedGenres.join(", "), description);
+    final result = await _accountController.registerUser(name, userName, email, phoneNumber, address, password, confirmPassword, imageToUpload, selectedGenres.join(", "), description);
 
     setState(() {
       _message = result['message'];
@@ -192,11 +202,16 @@ class _RegisterViewState extends State<RegisterView> {
       passwordController: _passwordController,
       confirmPasswordController: _confirmPasswordController,
       descriptionController: _descriptionController,
-      imageFile: _imageFile,
-      onImagePicked: _handleImagePicked,
+      initialImageFile: _imageFile,
+      initialImageWebBytes: _imageWebBytes,
+      onImagePickedMobile: _handleImagePickedMobile,
+      onImagePickedWeb: _handleImagePickedWeb,
       onNext: nextPage,
       formKey: _formKey,
       isEditMode: isEditMode,
+      originalEmail: null,
+      originalUsername: null,
+      imageUrl: null,
     );
   }
 

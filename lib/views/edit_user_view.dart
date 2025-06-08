@@ -1,7 +1,9 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:booknest/entities/models/user_model.dart';
 import 'package:booknest/views/login_view.dart';
 import 'package:booknest/views/owner_profile_view.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:booknest/controllers/user_controller.dart';
 import 'package:booknest/controllers/categories_controller.dart';
@@ -29,7 +31,8 @@ class _EditUserViewState extends State<EditUserView> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _descriptionController = TextEditingController();
-  File? _imageFile;
+  File? _imageFile; // Para móvil
+  Uint8List? _imageWebBytes;    // Para web
   final _formKey = GlobalKey<FormState>();
 
   final PageController _pageController = PageController();
@@ -71,9 +74,17 @@ class _EditUserViewState extends State<EditUserView> {
   }
 
   // Función que maneja la imagen seleccionada
-  void _handleImagePicked(File? image) {
+  void _handleImagePickedMobile(File? image) {
     setState(() {
       _imageFile = image;
+      _imageWebBytes = null; // Limpiar la otra si eliges móvil
+    });
+  }
+
+  void _handleImagePickedWeb(Uint8List? bytes) {
+    setState(() {
+      _imageWebBytes = bytes;
+      _imageFile = null; // Limpiar la otra si eliges web
     });
   }
 
@@ -219,14 +230,24 @@ class _EditUserViewState extends State<EditUserView> {
       final description = _descriptionController.text.trim();
       final phoneNumber = int.tryParse(_phoneNumberController.text.trim()) ?? 0;
       final address = _addressController.text.trim();
-      final password = _passwordController.text.isNotEmpty ? _passwordController.text.trim() : null;
-      final confirmPassword = _confirmPasswordController.text.isNotEmpty ? _confirmPasswordController.text.trim() : null;
+      final password = _passwordController.text.isNotEmpty ? _passwordController.text.trim() : '';
+      final confirmPassword = _confirmPasswordController.text.isNotEmpty ? _confirmPasswordController.text.trim() : '';
 
-      // Mantener la imagen actual si no se ha seleccionado una nueva
-      // final imageUrl = _imageFile ?? currentImageUrl ?? '';
+      final imageToUpload = kIsWeb ? _imageWebBytes : _imageFile;
 
-      final result = await _userController.editUser(widget.userId, name, userName, email, phoneNumber, address, password ?? '', confirmPassword ?? '', _imageFile,
-        selectedGenres.join(", "), description);
+      final result = await _userController.editUser(
+        widget.userId,
+        name,
+        userName,
+        email,
+        phoneNumber,
+        address,
+        password,
+        confirmPassword,
+        imageToUpload,
+        selectedGenres.join(", "),
+        description,
+      );
 
       if (result['success']) {
         _showSuccessDialog();
@@ -277,8 +298,10 @@ class _EditUserViewState extends State<EditUserView> {
       passwordController: _passwordController,
       confirmPasswordController: _confirmPasswordController,
       descriptionController: _descriptionController,
-      imageFile: _imageFile,
-      onImagePicked: _handleImagePicked,
+      initialImageFile: _imageFile,
+      initialImageWebBytes: _imageWebBytes,
+      onImagePickedMobile: _handleImagePickedMobile,
+      onImagePickedWeb: _handleImagePickedWeb,
       onNext: nextPage,
       formKey: _formKey,
       isEditMode: isEditMode,
