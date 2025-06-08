@@ -564,7 +564,7 @@ class LoanService extends BaseService{
           .select()
           .eq('bookId', bookId)
           .eq('format', format.toLowerCase())
-          .eq('state', 'Aceptado')
+          .filter('state', 'in', '(Aceptado,Pendiente)')
           .maybeSingle();
 
       return response != null;
@@ -847,6 +847,32 @@ class LoanService extends BaseService{
       }
     } catch (ex) {
       return {'success': false, 'message': ex.toString()};
+    }
+  }
+
+  // Método para eliminar una solicitud de préstamo
+  Future<void> deleteLoan(int loanId) async {
+    try {
+      // Obtener el id del libro asociado al préstamo
+      final response = await BaseService.client
+          .from('Loan')
+          .select('bookId')
+          .eq('id', loanId)
+          .limit(1)
+          .maybeSingle();
+
+      final bookId = response != null ? response['bookId'] : null;
+
+      // Eliminar préstamo
+      await BaseService.client.from('Loan').delete().eq('id', loanId);
+
+      // Si se obtuvo el bookId, actualizar su estado
+      if (bookId != null) {
+        await BaseService.client.from('Book').update({'state': 'Disponible'}).eq('id', bookId);
+      }
+
+    } catch (e) {
+      print('Error al eliminar loan: $e');
     }
   }
 

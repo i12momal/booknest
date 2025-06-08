@@ -350,7 +350,7 @@ class _HomeViewState extends State<HomeView> {
         selectedCategory = category;
         filteredBooks = allCategoryBooks.where((book) {
           return (book['categories'] as String).toLowerCase().contains(category.toLowerCase()) &&
-                book['owner_id'] != Supabase.instance.client.auth.currentUser?.id;
+                book['owner_id'] != Supabase.instance.client.auth.currentUser?.id && book['state'] == 'Disponible';
         }).toList();
       }
       currentPage = 1;

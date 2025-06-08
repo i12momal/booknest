@@ -228,17 +228,36 @@ class _NotificationsViewState extends State<NotificationsView> {
         }
       }
     }// Caso: RECHAZADO
-    else if (newState == 'Rechazado' && currentHolderId != null && relatedBooks.isNotEmpty) {
+    else if (newState == 'Rechazado' && currentHolderId != null) {
+      // Cambiar el estado del libro principal a disponible
       await BookController().changeState(loan['bookId'], 'Disponible');
-      for (final title in relatedBooks) {
-        final bookId = await BookController().getBookIdByTitleAndOwner(title, currentHolderId);
-        if (bookId == null || bookId == 0) continue;
 
-        await LoanController().deleteLoanByBookAndUser(bookId, requesterId);
-        await BookController().changeState(bookId, 'Disponible');
+      // Obtener los datos completos del préstamo principal
+      final fullLoan = await LoanController().getLoanById(loanId);
+      final offeredIdsRaw = fullLoan['data']['offeredLoanIds'] as String?;
+      print('OFFERED LOAN IDS RECHAZADO: $offeredIdsRaw');
+
+      if (offeredIdsRaw != null && offeredIdsRaw.trim().isNotEmpty) {
+        final offeredLoanIds = offeredIdsRaw
+            .split(',')
+            .map((e) => int.tryParse(e.trim()))
+            .whereType<int>();
+
+        for (final offeredLoanId in offeredLoanIds) {
+          // Obtener el préstamo ofrecido completo
+          final offeredLoan = await LoanController().getLoanById(offeredLoanId);
+          final int? bookId = offeredLoan['data']['bookId'];
+
+          if (bookId != null) {
+            await LoanController().deleteLoanByBookAndUser(bookId, requesterId);
+            await BookController().changeState(bookId, 'Disponible');
+          } else {
+            print('Advertencia: préstamo $offeredLoanId no tiene un bookId válido');
+          }
+        }
       }
     }
-
+    
     await LoanController().updateLoanState(loanId, newState, compensation: selectedCompensation, compensationLoanId: loan['selectedLoanId']);
     
     setState(() {

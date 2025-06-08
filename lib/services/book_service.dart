@@ -352,8 +352,8 @@ class BookService extends BaseService{
   // Método asíncrono para obtener los libros físicos disponibles del usuario.
   Future<List<Book>> getUserAvailablePhysicalBooks(String userId) async {
     try {
-      final response = await BaseService.client.from('Book').select().eq('owner_id', userId).eq('state', 'Disponible').like('format', '%Físico%');
-      //.eq('format', 'Físico');    
+      final response = await BaseService.client.from('Book').select().eq('owner_id', userId).eq('state', 'Disponible').eq('format', 'Físico');
+      //.like('format', '%Físico%');    
 
       // Verificamos si la respuesta es nula o si no contiene datos
       if (response == null || response.isEmpty) {

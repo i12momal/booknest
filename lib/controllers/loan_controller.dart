@@ -15,6 +15,14 @@ class LoanController extends BaseController{
   late BookController bookController;
   late ChatMessageController chatMessageController;
 
+  LoanController() {
+    notificationController = NotificationController();
+    reminderController = ReminderController();
+    accountController = AccountController();
+    bookController = BookController();
+    chatMessageController = ChatMessageController();
+  }
+
   // Método asíncrono para solicitar el préstamo de un libro.
     Future<Map<String, dynamic>> requestLoan(Book book, String format, List<Book>? selectedBooks) async {
       try {
@@ -254,6 +262,8 @@ class LoanController extends BaseController{
       if (newState == 'Rechazado') {
         String message = 'Tu solicitud de préstamo para el libro "$bookName" en formato ${loan['format']} ha sido rechazada.';
         await notificationController.createNotification(userId, 'Préstamo Rechazado', loanId, message);
+        // Marcar el libro como disponible
+        await bookController.changeState(loan['bookId'], 'Disponible');
       }
     } catch (e) {
       print('Error al actualizar el estado del préstamo: $e');
@@ -368,6 +378,11 @@ class LoanController extends BaseController{
   // Método asíncrono para eliminar una solicitud de préstamo sobre un libro.
   Future<Map<String, dynamic>> cancelLoanRequest(int bookId, int? notificationId, String? format) async {
     return await loanService.cancelLoan(bookId, notificationId, format);
+  }
+
+  // Método asíncrono para eliminar una solicitud de préstamo
+  Future<void> deleteLoan(int loanId) async {
+    await loanService.deleteLoan(loanId);
   }
 
   // Método asíncrono que comprueba si el usuario ya ha realizado una solicitud de préstamo para un libro.
