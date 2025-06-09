@@ -565,6 +565,9 @@ class _BookHeader extends StatelessWidget {
   Future<bool?> _showLoanInfoPopup(BuildContext context) async {
   List<Map<String, dynamic>> loans = await LoanController().getLoansByBookId(book.id);
 
+  // Filtrar solo los préstamos aceptados
+  loans = loans.where((loan) => loan['state'] == 'Aceptado').toList();
+
   if (loans.isEmpty) return false;
 
   final PageController pageController = PageController();

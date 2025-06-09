@@ -290,7 +290,7 @@ class _EditBookViewState extends State<EditBookView> {
       // Mantener la imagen actual si no se ha seleccionado una nueva
       final isDigital = selectedFormat.contains("Digital");
       File? fileToSend = isDigital && !kIsWeb ? this.fileToSend : null;
-      Uint8List? digitalBytesToSend = isDigital && kIsWeb ? digitalFileBytesWeb : null;
+      final digitalFile = kIsWeb ? digitalFileBytesWeb : fileToSend;
 
       print("Imagen: ${coverImage != null ? 'Nueva imagen de portada seleccionada' : 'Mantener imagen actual'}");
 
@@ -301,7 +301,7 @@ class _EditBookViewState extends State<EditBookView> {
       final isWeb = kIsWeb;
       final coverToSend = isWeb ? coverImageBytesWeb : coverImage;
 
-      final result = await _bookController.editBook(widget.bookId, title, author, isbn, pagesNumber, language, selectedFormat.join(", "), digitalBytesToSend,  
+      final result = await _bookController.editBook(widget.bookId, title, author, isbn, pagesNumber, language, selectedFormat.join(", "), digitalFile,  
         summary, selectedGenres.join(", "), state, userId ?? '', coverToSend);
 
       // Ocultar el spinner y mostrar el mensaje de éxito

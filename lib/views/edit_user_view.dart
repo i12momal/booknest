@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:booknest/entities/models/user_model.dart';
 import 'package:booknest/views/login_view.dart';
 import 'package:booknest/views/owner_profile_view.dart';
@@ -106,12 +105,17 @@ class _EditUserViewState extends State<EditUserView> {
           _phoneNumberController.text = userData.phoneNumber.toString();
           _addressController.text = userData.address;
           _descriptionController.text = userData.description!;
-          selectedGenres = List<String>.from(userData.genres);
           currentImageUrl = userData.image ?? '';
           _originalEmail = userData.email;
           _originalUsername = userData.userName;
           _isLoading = false;
         });
+
+        // Cargar géneros seleccionados
+        if (userData.genres.isNotEmpty) {
+          selectedGenres = userData.genres.split(',').map((genre) => genre.trim()).toList();
+        }
+
       } else {
         setState(() {
           _message = 'No se encontró la información del usuario. Por favor, intente nuevamente.';

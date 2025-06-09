@@ -9,7 +9,7 @@ class User {
   final String password;
   final String confirmPassword;
   final String? image;
-  final List<String> genres;
+  final String genres;
   final String role;
   final List<String> favorites;
   final String? description;
@@ -43,9 +43,7 @@ class User {
       password: json['password'] ?? '',
       confirmPassword: json['confirmPassword'] ?? '',
       image: json['image'],
-      genres: json['genres'] is String
-          ? json['genres'].split(', ')
-          : List<String>.from(json['genres'] ?? []),
+      genres: json['genres'] ?? '', 
       role: json['role'] ?? '',
       favorites: json['favorites'] is String
           ? json['favorites'].split(',').map((e) => e.trim()).toList()

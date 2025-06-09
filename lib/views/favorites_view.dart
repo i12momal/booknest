@@ -107,7 +107,7 @@ class _FavoritesViewState extends State<FavoritesView> {
     });
   }
 
-  // Función que maneja la letra seleccionada para el filtrado
+  // Función que maneja activar/desactivar un recordatorio
   Future<void> _toggleReminder(int bookId, int index) async {
     final reminders = await ReminderController().getRemindersByBookAndUser(bookId, userId!);
     final isActive = reminders.isNotEmpty;
@@ -118,13 +118,15 @@ class _FavoritesViewState extends State<FavoritesView> {
         .toList();
 
     if (isActive) {
-      // Elimina todos los recordatorios
-      for (final r in reminders) {
-        await ReminderController().removeFromReminder(bookId, userId!, r.format);
+      for (final format in formats) {
+        final exists = reminders.any((r) => r.format == format);
+        if (exists) {
+          await ReminderController().removeFromReminder(bookId, userId!, format);
+        }
       }
 
       setState(() {
-        isReminderActiveList[index] = false; // Campana gris
+        isReminderActiveList[index] = false;
       });
     } else {
       bool addedReminder = false;
@@ -137,13 +139,11 @@ class _FavoritesViewState extends State<FavoritesView> {
         }
       }
 
-      // Solo dejar la campana amarilla si al menos un formato está prestado
       setState(() {
         isReminderActiveList[index] = addedReminder;
       });
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
