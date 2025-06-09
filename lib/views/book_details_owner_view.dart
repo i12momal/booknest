@@ -767,6 +767,7 @@ Widget _styledInput(String text) {
     final List<String> availableFormats = allFormats.where((f) => !acceptedFormats.contains(f) && !pendingFormats.contains(f)).toList();
 
     String availabilityStatus;
+    final bool hasAcceptedLoans = loanedFormats.any((entry) => entry['state'] == 'Aceptado');
 
     if (availableFormats.isEmpty) {
       // No hay ningún formato disponible
@@ -908,7 +909,7 @@ Widget _styledInput(String text) {
                                   ],
                                 ),
                                 const SizedBox(width: 10),
-                                if (isOwner) ...[
+                                if (isOwner && hasAcceptedLoans) ...[
                                   const SizedBox(height: 4),
                                   GestureDetector(
                                     onTap: () async {
@@ -933,23 +934,25 @@ Widget _styledInput(String text) {
                                 const SizedBox(width: 4),
                                 const Text("Prestado", style: TextStyle(fontSize: 12)),
                                 const SizedBox(width: 12),
-                                GestureDetector(
-                                  onTap: () async {
-                                    final result = await _showLoanInfoPopup(context);
-                                    if (result == true) {
-                                      Navigator.of(context).pop();
-                                    }
-                                  },
-                                  child: const Text(
-                                    "Información préstamo",
-                                    style: TextStyle(
-                                      color: Color(0xFF112363),
-                                      fontWeight: FontWeight.bold,
-                                      decoration: TextDecoration.underline,
-                                      fontSize: 10,
+                                if (isOwner && hasAcceptedLoans) ...[
+                                  GestureDetector(
+                                    onTap: () async {
+                                      final result = await _showLoanInfoPopup(context);
+                                      if (result == true) {
+                                        Navigator.of(context).pop();
+                                      }
+                                    },
+                                    child: const Text(
+                                      "Información préstamo",
+                                      style: TextStyle(
+                                        color: Color(0xFF112363),
+                                        fontWeight: FontWeight.bold,
+                                        decoration: TextDecoration.underline,
+                                        fontSize: 10,
+                                      ),
                                     ),
                                   ),
-                                ),
+                                ]
                               ]
                             ],
                           ),
