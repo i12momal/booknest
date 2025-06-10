@@ -134,7 +134,7 @@ void main() {
         'password': 'Admin@1234',
         'confirmPassword': 'Admin@1234',
         'image': 'assets/images/default.png',
-        'genres': ['Fiction', 'Mystery'], 
+        'genres': 'Fiction, Mystery', 
         'role': 'usuario',
         'favorites': [],                 
         'description': 'Usuario de prueba',
