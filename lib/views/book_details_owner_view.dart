@@ -909,7 +909,7 @@ Widget _styledInput(String text) {
                                   ],
                                 ),
                                 const SizedBox(width: 10),
-                                if (isOwner && hasAcceptedLoans) ...[
+                                if (hasAcceptedLoans) ...[
                                   const SizedBox(height: 4),
                                   GestureDetector(
                                     onTap: () async {
@@ -934,7 +934,7 @@ Widget _styledInput(String text) {
                                 const SizedBox(width: 4),
                                 const Text("Prestado", style: TextStyle(fontSize: 12)),
                                 const SizedBox(width: 12),
-                                if (isOwner && hasAcceptedLoans) ...[
+                                if (hasAcceptedLoans) ...[
                                   GestureDetector(
                                     onTap: () async {
                                       final result = await _showLoanInfoPopup(context);
